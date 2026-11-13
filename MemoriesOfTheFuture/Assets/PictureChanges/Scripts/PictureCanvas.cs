@@ -11,7 +11,7 @@ namespace PictureChanges
     ///
     /// Controls (demo fallbacks):
     ///   Hold left grip + left thumbstick : nudge the painting 1 mm per click in the board plane.
-    ///   B button                          : forget the placement and scan again.
+    ///   B button / left index pinch held 1 s : forget the placement and scan again.
     /// </summary>
     public class PictureCanvas : MonoBehaviour
     {
@@ -62,21 +62,52 @@ namespace PictureChanges
 
         void OnLocked(BoardPoseEstimator.BoardPose pose)
         {
-            var layout = estimator.layout;
-            var right = pose.rotation * Vector3.right;
-            var up = pose.rotation * Vector3.up;
-
-            // A Unity quad faces -Z, so +Z (into the wall) keeps its visible side towards the viewer.
-            canvasRoot.SetPositionAndRotation(
-                pose.centre + right * layout.paintingOffset.x + up * layout.paintingOffset.y,
-                pose.rotation);
-
-            var size = layout.paintingSize - Vector2.one * (2f * layout.inset);
-            canvasQuad.transform.localScale = new Vector3(size.x, size.y, 1f);
+            // The root sits at the board origin; the painting mesh is built in board coordinates,
+            // so its four corners land exactly on the measured painted area (not a rectangle).
+            // +Z points into the wall, so the mesh's visible side faces the viewer.
+            canvasRoot.SetPositionAndRotation(pose.centre, pose.rotation);
+            canvasQuad.GetComponent<MeshFilter>().sharedMesh = BuildPaintingMesh(estimator.layout.PaintingCorners);
+            canvasQuad.transform.localScale = Vector3.one;
+            canvasQuad.transform.localRotation = Quaternion.identity;
             ApplyNudge();
 
             canvasRoot.gameObject.SetActive(true);
             StartCoroutine(CreateAnchor());
+        }
+
+        /// <summary>
+        /// Grid mesh over a four-corner (non-rectangular) area with bilinear positions, so the image
+        /// stretches smoothly with no fold along a diagonal. Corners TL, TR, BR, BL in board metres.
+        /// </summary>
+        static Mesh BuildPaintingMesh(Vector2[] c, int divisions = 8)
+        {
+            int n = divisions + 1;
+            var verts = new Vector3[n * n];
+            var uvs = new Vector2[n * n];
+            for (int j = 0; j < n; j++)          // j = 0 at the top
+            for (int i = 0; i < n; i++)
+            {
+                float u = i / (float)divisions, v = j / (float)divisions;
+                var top = Vector2.Lerp(c[0], c[1], u);
+                var bottom = Vector2.Lerp(c[3], c[2], u);
+                var p = Vector2.Lerp(top, bottom, v);
+                verts[j * n + i] = new Vector3(p.x, p.y, 0f);
+                uvs[j * n + i] = new Vector2(u, 1f - v);
+            }
+            var tris = new int[divisions * divisions * 6];
+            int t = 0;
+            for (int j = 0; j < divisions; j++)
+            for (int i = 0; i < divisions; i++)
+            {
+                int a = j * n + i, b = a + 1, d = a + n, e = d + 1;
+                // Clockwise as seen from the viewer (on the -Z side): top-left, top-right, bottom-right.
+                tris[t++] = a; tris[t++] = b; tris[t++] = e;
+                tris[t++] = a; tris[t++] = e; tris[t++] = d;
+            }
+            var mesh = new Mesh { name = "PaintingMesh", vertices = verts, uv = uvs, triangles = tris };
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
         }
 
         IEnumerator CreateAnchor()
@@ -96,9 +127,11 @@ namespace PictureChanges
 
         void HandleInput()
         {
-            if (OVRInput.GetDown(OVRInput.Button.Two))
+            var input = PictureChangesInput.Instance;
+            if (input != null && input.RescanRequested)
             {
                 Rescan();
+                input.Say("Rescanning");
                 return;
             }
             if (!estimator.IsLocked || !OVRInput.Get(OVRInput.Button.PrimaryHandTrigger)) return;

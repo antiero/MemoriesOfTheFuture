@@ -22,15 +22,22 @@ namespace PictureChanges.EditorTools
         [MenuItem("Tools/Picture Changes/Run Glyph Detector On Photos")]
         public static void RunMenu() => Debug.Log(Run());
 
-        public static string Run(int targetWidth = 1024)
+        [MenuItem("Tools/Picture Changes/Run Glyph Detector On Headset Captures")]
+        public static void RunCapturesMenu() => Debug.Log(Run(1280, "DebugOutput/headset", "*.png"));
+
+        public static string Run(int targetWidth = 1024) => Run(targetWidth, ArtworkFolder, "*.jpg");
+
+        /// <param name="folder">Searched recursively. Headset captures: pull them into DebugOutput/headset.</param>
+        public static string Run(int targetWidth, string folder, string pattern, GlyphDetector.Settings settings = null)
         {
             Directory.CreateDirectory(OutputFolder);
             var report = new StringBuilder();
-            var settings = new GlyphDetector.Settings();
+            settings = settings ?? new GlyphDetector.Settings();
             var board = BoardLayout.Default();
 
-            foreach (var file in Directory.GetFiles(ArtworkFolder, "*.jpg", SearchOption.AllDirectories))
+            foreach (var file in Directory.GetFiles(folder, pattern, SearchOption.AllDirectories))
             {
+                if (file.EndsWith("_detect.png")) continue;
                 var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
                 tex.LoadImage(File.ReadAllBytes(file));
                 int step = Mathf.Max(1, tex.width / targetWidth);
@@ -65,11 +72,11 @@ namespace PictureChanges.EditorTools
                     var cx = w * 0.5f; var cy = h * 0.5f;
                     var norm = new Vector2[4];
                     for (int k = 0; k < 4; k++) norm[k] = new Vector2((result.corners[k].x - cx) / f, (result.corners[k].y - cy) / f);
-                    if (PlanarPose.Solve(board.GlyphCentres, norm, out var pose))
+                    if (PlanarPose.Solve(board.MarkerCentres, norm, out var pose))
                     {
                         float tilt = Vector3.Angle(-pose.intoWall, -pose.position);
                         report.AppendLine($"   pose: distance {pose.position.magnitude:F2} m, board tilt vs view {tilt:F1} deg " +
-                                          $"(assumes {board.glyphSpacing.x * 1000:F0} x {board.glyphSpacing.y * 1000:F0} mm glyph spacing, phone focal)");
+                                          "(board marker-centre geometry, phone focal)");
                     }
                 }
 

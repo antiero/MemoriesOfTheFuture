@@ -383,6 +383,82 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4397664628265918113, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
   m_PrefabInstance: {fileID: 688772554}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &688772556 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2032031666409119128, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
+  m_PrefabInstance: {fileID: 688772554}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb7623a8f0b49cf4dbaa40aea4d4be64, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &688772557 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6518508909437870670, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
+  m_PrefabInstance: {fileID: 688772554}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb7623a8f0b49cf4dbaa40aea4d4be64, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!1 &784333096
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 784333098}
+  - component: {fileID: 784333097}
+  m_Layer: 0
+  m_Name: BoardDebugView
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &784333097
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 784333096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d8351bd167e14b629347ec97e10925e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PictureChanges.BoardDebugView
+  estimator: {fileID: 926963303}
+  head: {fileID: 963901708}
+  unlitMaterial: {fileID: 2100000, guid: dd2245643e43c48e6944df551b787ee6, type: 2}
+  visible: 1
+  panelOffset: {x: 0, y: -0.22, z: 0.65}
+  panelWidth: 0.34
+  panelDownsample: 2
+  followSpeed: 4
+  lineWidth: 0.003
+  staleAfter: 0.5
+--- !u!4 &784333098
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 784333096}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &869232204
 GameObject:
   m_ObjectHideFlags: 0
@@ -475,7 +551,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 16fba6d30ed741d4a9fdd6e79ee2f3ac, type: 3}
+  m_Resource: {fileID: 8300000, guid: 367d8c52ee1e5f4418f42261d090c04b, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
@@ -574,6 +650,7 @@ GameObject:
   - component: {fileID: 926963303}
   - component: {fileID: 926963302}
   - component: {fileID: 926963301}
+  - component: {fileID: 926963306}
   m_Layer: 0
   m_Name: PictureChanges
   m_TagString: Untagged
@@ -652,24 +729,50 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PictureChanges.BoardPoseEstimator
   cameraAccess: {fileID: 869232205}
   layout:
-    glyphSpacing: {x: 0.234, y: 0.31}
-    paintingSize: {x: 0.21, y: 0.297}
-    paintingOffset: {x: 0, y: 0}
+    useMeasuredGeometry: 1
+    markerInnerCorners:
+    - {x: -0.12096, y: 0.16592}
+    - {x: -0.09882, y: 0.16588}
+    - {x: -0.09785, y: 0.148}
+    - {x: -0.12121, y: 0.14768}
+    - {x: 0.10628, y: 0.16561}
+    - {x: 0.12355, y: 0.16481}
+    - {x: 0.12324, y: 0.14519}
+    - {x: 0.10536, y: 0.14583}
+    - {x: 0.10231, y: -0.14391}
+    - {x: 0.12219, y: -0.14479}
+    - {x: 0.12218, y: -0.16652}
+    - {x: 0.10207, y: -0.16623}
+    - {x: -0.126, y: -0.14755}
+    - {x: -0.10753, y: -0.14775}
+    - {x: -0.10852, y: -0.16618}
+    - {x: -0.12629, y: -0.16601}
+    paintingCorners:
+    - {x: -0.09894, y: 0.14281}
+    - {x: 0.09765, y: 0.142}
+    - {x: 0.10089, y: -0.1436}
+    - {x: -0.10442, y: -0.1443}
     inset: 0
+    glyphSpacing: {x: 0.227, y: 0.312}
+    markerSize: 0.024
+    markerLine: 0.002
+    paintingSize: {x: 0.201, y: 0.286}
+    paintingOffset: {x: 0, y: 0}
   detector:
-    inkContrast: 0.3
-    localWindowFraction: 0.03
-    joinRadius: 2
+    darkContrast: 0.25
+    localWindowFraction: 0.05
     minSideFraction: 0.006
-    maxSideFraction: 0.12
-    minInkFill: 0.06
-    maxInkFill: 0.55
-    ringFraction: 0.15
-    maxRingInk: 0.08
-    minPaperInkDelta: 60
-    maxCandidates: 24
-    expectedAspect: 0.755
+    maxSideFraction: 0.15
+    lineOverInner: 0.09
+    minRingDark: 0.7
+    minInteriorSolidity: 0.5
+    minInteriorDelta: 45
+    minQuadFill: 0.55
+    allowThreeMarkers: 1
+    maxCandidates: 20
+    expectedAspect: 0.727
     aspectTolerance: 1.8
+    expectedSideOverSpacing: 0.088
   downsample: 1
   imageRowsTopFirst: 0
   samplesNeeded: 30
@@ -678,6 +781,10 @@ MonoBehaviour:
   outlierDistance: 0.012
   maxRmsMm: 4
   logEachDetection: 0
+  statusInterval: 2
+  enableFrameCapture: 1
+  autoCaptureInterval: 2
+  autoCaptureMax: 40
 --- !u!114 &926963304
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -705,6 +812,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &926963306
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 926963300}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ae83a0e48a674f4ca30031bbdb305e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PictureChanges.PictureChangesInput
+  leftHand: {fileID: 688772557}
+  rightHand: {fileID: 688772556}
+  captureHold: 0.6
+  rescanHold: 1
+  toggleHold: 0.6
 --- !u!1001 &963901701
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -781,8 +905,32 @@ PrefabInstance:
       propertyPath: m_BackGroundColor.r
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2037080, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
+      propertyPath: m_AllowDynamicResolution
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400000, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
+      propertyPath: _enableDynamicResolution
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 11400000, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
       propertyPath: isInsightPassthroughEnabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400000, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
+      propertyPath: requestScenePermissionOnStartup
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400000, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
+      propertyPath: requestPassthroughCameraAccessPermissionOnStartup
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 20000010189485334, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
+      propertyPath: m_AllowDynamicResolution
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 20000012175207052, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
+      propertyPath: m_AllowDynamicResolution
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -1495,3 +1643,4 @@ SceneRoots:
   - {fileID: 5868144}
   - {fileID: 926963305}
   - {fileID: 963901701}
+  - {fileID: 784333098}
