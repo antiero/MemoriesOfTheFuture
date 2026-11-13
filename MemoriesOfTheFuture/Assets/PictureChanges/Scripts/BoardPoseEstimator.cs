@@ -141,8 +141,32 @@ namespace PictureChanges
 
         void Reset() => cameraAccess = FindAnyObjectByType<PassthroughCameraAccess>();
 
+        /// <summary>Test mode: no camera detection (the painting is placed virtually).</summary>
+        public bool SuspendDetection { get; set; }
+        /// <summary>True when the current lock came from ForceLock (test mode), not the camera.</summary>
+        public bool IsTestPlacement { get; private set; }
+
+        /// <summary>
+        /// Test mode: lock to a pose chosen by hand (e.g. on a scanned wall) instead of the camera.
+        /// Everything downstream (canvas, reveal, presence, trigger) behaves exactly as for a real lock.
+        /// </summary>
+        public void ForceLock(Pose pose)
+        {
+            var bp = new BoardPose { centre = pose.position, rotation = pose.rotation, rmsErrorMm = 0f, samples = 0 };
+            _samples.Clear();
+            LastSample = bp;
+            LastSampleTime = Time.time;
+            LastSampleAccepted = true;
+            LockedPose = bp;
+            IsLocked = true;
+            IsTestPlacement = true;
+            Debug.Log($"[BoardPose] TEST placement at {pose.position:F3}");
+            Locked?.Invoke(bp);
+        }
+
         public void Restart()
         {
+            IsTestPlacement = false;
             _samples.Clear();
             IsLocked = false;
             LastSample = null;
@@ -157,18 +181,14 @@ namespace PictureChanges
         {
             LogStatus();
             var input = PictureChangesInput.Instance;
-            if (enableFrameCapture && input != null && input.CaptureRequested)
-            {
-                var path = CaptureFrame("manual");
-                input.Say(path != null ? $"Captured frame #{_captureCount}" : "No camera frame yet");
-            }
+            if (enableFrameCapture && input != null && input.CaptureRequested) RequestCapture();
             if (!IsLocked && autoCaptureInterval > 0f && _captureCount < autoCaptureMax &&
                 _lastCandidates > 0 && Time.time >= _nextAutoCapture)
             {
                 _nextAutoCapture = Time.time + autoCaptureInterval;
                 CaptureFrame("auto");
             }
-            if (IsLocked || cameraAccess == null || !cameraAccess.IsPlaying) return;
+            if (IsLocked || SuspendDetection || cameraAccess == null || !cameraAccess.IsPlaying) return;
             if (!_loggedCameraInfo)
             {
                 _loggedCameraInfo = true;
@@ -345,6 +365,13 @@ namespace PictureChanges
             _nextStatus = Time.unscaledTime + statusInterval;
             if (cameraAccess == null) { Debug.LogWarning("[BoardPose] STATUS no PassthroughCameraAccess assigned"); return; }
             Debug.Log($"[BoardPose] STATUS locked={IsLocked} | {StatusText.Replace("\n", " | ")} | hint: {Hint}");
+        }
+
+        /// <summary>Hand-menu / controller capture with on-screen confirmation.</summary>
+        public void RequestCapture()
+        {
+            var path = CaptureFrame("manual");
+            PictureChangesInput.Instance?.Say(path != null ? $"Captured frame #{_captureCount}" : "No camera frame yet");
         }
 
         /// <summary>Saves the detector's current input frame as a greyscale PNG. Returns the path, or null.</summary>

@@ -24,7 +24,7 @@ namespace PictureChanges
         [SerializeField] Transform head;
         [Tooltip("URP Unlit material asset, referenced so the shader is kept in builds.")]
         [SerializeField] Material unlitMaterial;
-        [SerializeField] bool visible = true;
+        [SerializeField] bool visible = false;
 
         [Header("Panel")]
         [SerializeField] Vector3 panelOffset = new Vector3(0f, -0.22f, 0.65f);
@@ -81,6 +81,15 @@ namespace PictureChanges
             DrawOverlay();
         }
 
+        /// <summary>Debug panel + world overlay. Off by default; toggled from the hand menu.</summary>
+        public bool Visible
+        {
+            get => visible;
+            set { visible = value; ApplyVisibility(); }
+        }
+
+        public void Toggle() => Visible = !Visible;
+
         void ApplyVisibility()
         {
             if (_panelRoot != null) _panelRoot.gameObject.SetActive(visible);
@@ -104,7 +113,7 @@ namespace PictureChanges
             var textGo = new GameObject("Status");
             textGo.transform.SetParent(_panelRoot, false);
             _text = textGo.AddComponent<TextMeshPro>();
-            _text.fontSize = 0.6f;
+            _text.fontSize = UI.TextSize.ForCapHeight(0.0075f);
             _text.alignment = TextAlignmentOptions.BottomLeft;
             _text.rectTransform.sizeDelta = new Vector2(panelWidth * 1.6f, 0.12f);
             _text.rectTransform.pivot = new Vector2(0f, 0f);

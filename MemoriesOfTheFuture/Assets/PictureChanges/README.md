@@ -45,13 +45,49 @@ Wrong spacing/size scales the distance estimate, so the painting lands in front 
 | PictureChanges | Permissions, `BoardPoseEstimator`, `VideoPlayer` (painting.mp4), `PictureCanvas`, `PictureChangesInput` |
 | BoardDebugView | In-headset detector panel, status/hint text, world overlay of the detected board |
 
+## Visitor experience
+
+1. **Find the painting**: a quiet prompt floats low in view until the board is seen.
+2. **Locking on**: soft corner brackets appear around the real painting and close in as the estimate settles; a chime when it locks.
+3. **Reveal**: the virtual painting appears with a watercolour-bleed wash (`PictureChanges/Painting` shader: feathered edges, exposure/saturation matched to passthrough, fine grain).
+4. **Step closer**: an invitation below the painting until the visitor approaches and faces it; then the movie plays once and holds its last frame.
+
+## Hand menu (left palm up)
+
+Turn your **left palm towards your face**: the menu fades in just off the palm (Pezzi / Meta hand-menu convention, with enter/exit hysteresis). Press with your **right index finger**.
+
+| Button | Does |
+| --- | --- |
+| Replay | Back to the still; the transformation can trigger again |
+| Rescan | Forget the placement and find the board again (in Test mode: re-place the virtual painting) |
+| Test | Test mode on/off (below) |
+| Debug | Detector panel + world overlay (off by default) |
+| Grid | 10 mm alignment grid instead of the painting |
+| Capture | Save the detector's current camera frame |
+
+## Test mode (no physical painting needed)
+
+For debugging the proximity interaction without the board. Turn on **Test** in the hand menu, then point with the right hand at a wall
+(Quest scene model via MRUK) and **pinch** to hang a virtual painting there (no scene model: it is placed 1.2 m in front of you).
+Camera detection is suspended; everything downstream runs for real.
+
+A readout (lower right) shows live distance and angle, Near/Far, Facing/Away, dwell progress, movie state and recent events.
+
+`ViewerPresence` events (also logged as `[Presence] ...` and exposed as UnityEvents):
+
+| Event | When |
+| --- | --- |
+| Approach / Leave | Head within 1.5 m of the painting centre / beyond 1.7 m |
+| FaceToward / FaceAway | Head direction within 25° of the painting / beyond 35° |
+| Triggered | Near and Facing for 0.5 s (once, until Replay) |
+
 ## Controls (controllers or hands)
 
 | Action | Controller | Hand |
 | --- | --- | --- |
-| Capture detector frame | A | right index pinch, hold 0.6 s |
-| Rescan | B | left index pinch, hold 1 s |
-| Toggle debug view | Y | right middle-finger pinch, hold 0.6 s |
+| Capture detector frame | A | hand menu |
+| Rescan | B | hand menu (pinch shortcuts off by default) |
+| Toggle debug view | Y | hand menu |
 | Nudge painting 1 mm | left grip + left stick | - |
 
 Frames are also auto-captured every 2 s while searching (max 40 per session) to

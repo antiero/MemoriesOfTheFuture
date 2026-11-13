@@ -31,24 +31,61 @@ namespace PictureChanges
         [SerializeField] bool showAlignmentGrid;
 
         [Header("Trigger")]
-        [SerializeField] float triggerDistance = 1.5f;
-        [SerializeField] float triggerAngle = 25f;
-        [SerializeField] float dwell = 0.5f;
+        [Tooltip("Approach / face / dwell states. The movie plays on its Triggered event.")]
+        [SerializeField] ViewerPresence presence;
+
+        [Header("Soundtrack")]
+        [Tooltip("Looping audio that fades in when the transformation starts. Lives on the painting (spatial).")]
+        [SerializeField] AudioSource soundtrack;
+        [SerializeField, Range(0f, 1f)] float soundtrackVolume = 0.8f;
+        [SerializeField] float soundtrackFadeIn = 2f;
+        [SerializeField] float soundtrackFadeOut = 1.5f;
+
+        [Header("Reveal")]
+        [Tooltip("Seconds for the watercolour-bleed reveal after the painting is found.")]
+        [SerializeField] float revealDuration = 2.8f;
 
         [Header("Nudge")]
         [SerializeField] float nudgeStep = 0.001f;
 
+        static readonly int RevealId = Shader.PropertyToID("_Reveal");
+        Coroutine _reveal, _soundFade;
+
+        public bool HasPlayed => _played;
+        public bool IsPlaying => video != null && video.isPlaying;
+        public float TriggerDistance => presence != null ? presence.NearEnter : 1.5f;
+
+        /// <summary>Show the 10 mm alignment grid instead of the painting (for measuring registration).</summary>
+        public bool ShowAlignmentGrid
+        {
+            get => showAlignmentGrid;
+            set
+            {
+                showAlignmentGrid = value;
+                if (!IsPlaying) _material.mainTexture = StillTexture();
+            }
+        }
+
         OVRSpatialAnchor _anchor;
         Material _material;
         Vector2 _nudge;
-        float _facingTime;
         bool _played;
 
         void Awake()
         {
             _material = canvasQuad.material;   // instance, so the shared asset is untouched
             _material.mainTexture = StillTexture();
+            _material.SetFloat(RevealId, 0f);
             canvasRoot.gameObject.SetActive(false);
+            if (video != null) video.loopPointReached += _ => Debug.Log("[PictureCanvas] Transformation finished (holding last frame)");
+            if (soundtrack != null)
+            {
+                soundtrack.playOnAwake = false;
+                soundtrack.loop = true;
+                soundtrack.volume = 0f;
+                soundtrack.Stop();
+                if (soundtrack.clip != null) soundtrack.clip.LoadAudioData();   // ready before the trigger
+            }
         }
 
         void OnEnable() => estimator.Locked += OnLocked;
@@ -66,6 +103,8 @@ namespace PictureChanges
             // so its four corners land exactly on the measured painted area (not a rectangle).
             // +Z points into the wall, so the mesh's visible side faces the viewer.
             canvasRoot.SetPositionAndRotation(pose.centre, pose.rotation);
+            // The soundtrack sits on its own object (so hiding the painting doesn't cut it off mid-fade).
+            if (soundtrack != null) soundtrack.transform.position = pose.centre;
             canvasQuad.GetComponent<MeshFilter>().sharedMesh = BuildPaintingMesh(estimator.layout.PaintingCorners);
             canvasQuad.transform.localScale = Vector3.one;
             canvasQuad.transform.localRotation = Quaternion.identity;
@@ -73,6 +112,32 @@ namespace PictureChanges
 
             canvasRoot.gameObject.SetActive(true);
             StartCoroutine(CreateAnchor());
+            if (_reveal != null) StopCoroutine(_reveal);
+            _reveal = StartCoroutine(Reveal());
+        }
+
+        IEnumerator Reveal()
+        {
+            // Ease-in-out so the wash starts slowly, spreads, then settles.
+            for (float t = 0f; t < revealDuration; t += Time.deltaTime)
+            {
+                float x = t / revealDuration;
+                _material.SetFloat(RevealId, x * x * (3f - 2f * x));
+                yield return null;
+            }
+            _material.SetFloat(RevealId, 1f);
+            _reveal = null;
+        }
+
+        /// <summary>Back to the still, ready to transform again (the board stays locked).</summary>
+        public void Replay()
+        {
+            if (video != null) { video.Stop(); video.Prepare(); }
+            _played = false;
+            _material.mainTexture = StillTexture();
+            FadeSoundtrack(false);
+            presence?.Rearm();
+            Debug.Log("[PictureCanvas] Replay armed");
         }
 
         /// <summary>
@@ -122,7 +187,7 @@ namespace PictureChanges
         void Update()
         {
             HandleInput();
-            if (estimator.IsLocked && !_played) CheckTrigger();
+            if (estimator.IsLocked && !_played && _reveal == null) CheckTrigger();
         }
 
         void HandleInput()
@@ -154,24 +219,23 @@ namespace PictureChanges
         public void Rescan()
         {
             if (_anchor != null) { Destroy(_anchor); _anchor = null; }
+            if (_reveal != null) { StopCoroutine(_reveal); _reveal = null; }
+            _material.SetFloat(RevealId, 0f);
             canvasRoot.gameObject.SetActive(false);
             _played = false;
-            _facingTime = 0f;
             if (video != null) { video.Stop(); video.Prepare(); }
             _material.mainTexture = StillTexture();
+            FadeSoundtrack(false);
+            presence?.ResetState();
             estimator.Restart();
         }
 
         void CheckTrigger()
         {
-            if (video == null || head == null) return;
-            var toCanvas = canvasRoot.position - head.position;
-            bool facing = toCanvas.magnitude < triggerDistance &&
-                          Vector3.Angle(head.forward, toCanvas) < triggerAngle;
-            _facingTime = facing ? _facingTime + Time.deltaTime : 0f;
-            if (_facingTime < dwell || !video.isPrepared) return;
+            if (video == null || presence == null || !presence.HasTriggered || !video.isPrepared) return;
 
             _played = true;
+            Debug.Log("[PictureCanvas] Transformation started");
             video.isLooping = false;
             video.sendFrameReadyEvents = true;
             video.frameReady += OnFirstFrame;
@@ -185,6 +249,40 @@ namespace PictureChanges
             _material.mainTexture = source.texture;
             source.sendFrameReadyEvents = false;
             source.frameReady -= OnFirstFrame;
+            FadeSoundtrack(true);
+        }
+
+        /// <summary>Fade the looping soundtrack in (starting it) or out (stopping it when silent).</summary>
+        void FadeSoundtrack(bool fadeIn)
+        {
+            if (soundtrack == null || soundtrack.clip == null) return;
+            if (!fadeIn && !soundtrack.isPlaying) return;
+            if (_soundFade != null) StopCoroutine(_soundFade);
+            _soundFade = StartCoroutine(FadeRoutine(fadeIn));
+        }
+
+        IEnumerator FadeRoutine(bool fadeIn)
+        {
+            if (fadeIn && !soundtrack.isPlaying)
+            {
+                soundtrack.volume = 0f;
+                soundtrack.time = 0f;
+                soundtrack.Play();
+                Debug.Log("[PictureCanvas] Soundtrack fading in");
+            }
+            float from = soundtrack.volume, to = fadeIn ? soundtrackVolume : 0f;
+            float duration = Mathf.Max(0.01f, fadeIn ? soundtrackFadeIn : soundtrackFadeOut);
+            // Scale the time by how far there is to go, so a fade-out mid-fade-in doesn't take the full duration.
+            duration *= Mathf.Abs(to - from) / Mathf.Max(0.01f, soundtrackVolume);
+            for (float t = 0f; t < duration; t += Time.deltaTime)
+            {
+                float x = t / duration;
+                soundtrack.volume = Mathf.Lerp(from, to, x * x * (3f - 2f * x));
+                yield return null;
+            }
+            soundtrack.volume = to;
+            if (!fadeIn) { soundtrack.Stop(); Debug.Log("[PictureCanvas] Soundtrack faded out"); }
+            _soundFade = null;
         }
 
         Texture StillTexture() => showAlignmentGrid || stillImage == null ? MakeAlignmentGrid() : stillImage;

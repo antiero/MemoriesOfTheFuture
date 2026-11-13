@@ -405,6 +405,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb7623a8f0b49cf4dbaa40aea4d4be64, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &688772558 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1528346310, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
+  m_PrefabInstance: {fileID: 688772554}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7daff26e66096cd49a253ca3ab592c03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &688772559 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1610028817, guid: 0a7d2469f24041c4284c66706f84c45e, type: 3}
+  m_PrefabInstance: {fileID: 688772554}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7daff26e66096cd49a253ca3ab592c03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &784333096
 GameObject:
   m_ObjectHideFlags: 0
@@ -437,7 +459,7 @@ MonoBehaviour:
   estimator: {fileID: 926963303}
   head: {fileID: 963901708}
   unlitMaterial: {fileID: 2100000, guid: dd2245643e43c48e6944df551b787ee6, type: 2}
-  visible: 1
+  visible: 0
   panelOffset: {x: 0, y: -0.22, z: 0.65}
   panelWidth: 0.34
   panelDownsample: 2
@@ -651,6 +673,7 @@ GameObject:
   - component: {fileID: 926963302}
   - component: {fileID: 926963301}
   - component: {fileID: 926963306}
+  - component: {fileID: 926963307}
   m_Layer: 0
   m_Name: PictureChanges
   m_TagString: Untagged
@@ -677,9 +700,8 @@ MonoBehaviour:
   video: {fileID: 926963302}
   stillImage: {fileID: 2800000, guid: 035f3aa44a8d54236a62bdd30b4954f5, type: 3}
   showAlignmentGrid: 0
-  triggerDistance: 1.5
-  triggerAngle: 25
-  dwell: 0.5
+  presence: {fileID: 926963307}
+  revealDuration: 2.8
   nudgeStep: 0.001
 --- !u!328 &926963302
 VideoPlayer:
@@ -829,6 +851,42 @@ MonoBehaviour:
   captureHold: 0.6
   rescanHold: 1
   toggleHold: 0.6
+  enablePinchGestures: 0
+--- !u!114 &926963307
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 926963300}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c74b7bfd6c7df49e0b1bd315789c1def, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PictureChanges.ViewerPresence
+  estimator: {fileID: 926963303}
+  painting: {fileID: 5868144}
+  head: {fileID: 963901708}
+  nearEnter: 1.5
+  nearExit: 1.7
+  faceEnter: 25
+  faceExit: 35
+  dwell: 0.5
+  onApproach:
+    m_PersistentCalls:
+      m_Calls: []
+  onLeave:
+    m_PersistentCalls:
+      m_Calls: []
+  onFaceToward:
+    m_PersistentCalls:
+      m_Calls: []
+  onFaceAway:
+    m_PersistentCalls:
+      m_Calls: []
+  onTriggered:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1001 &963901701
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1068,6 +1126,11 @@ MonoBehaviour:
   edgeRenderingEnabled_: 0
   edgeColor_: {r: 1, g: 1, b: 1, a: 1}
   colorMapType: 0
+--- !u!4 &978464217 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4484591312116288, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
+  m_PrefabInstance: {fileID: 963901701}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1246796936
 GameObject:
   m_ObjectHideFlags: 0
@@ -1339,6 +1402,132 @@ Transform:
   m_Children:
   - {fileID: 1246796937}
   m_Father: {fileID: 963901706}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1837796096
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1837796101}
+  - component: {fileID: 1837796100}
+  - component: {fileID: 1837796099}
+  - component: {fileID: 1837796098}
+  - component: {fileID: 1837796097}
+  m_Layer: 0
+  m_Name: Experience
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1837796097
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837796096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6ac4b3a9e56442b08e282586cd767dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PictureChanges.UI.DemoMenu
+  menu: {fileID: 1837796100}
+  canvas: {fileID: 926963301}
+  debugView: {fileID: 784333097}
+  testMode: {fileID: 1837796099}
+--- !u!114 &1837796098
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837796096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b95883adf5d84474b0ef052473db48c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PictureChanges.UI.ScanGuide
+  estimator: {fileID: 926963303}
+  canvas: {fileID: 926963301}
+  head: {fileID: 963901708}
+  uiMaterial: {fileID: 2100000, guid: c81fd742ee8d64c389577e8a9f27e916, type: 2}
+  font: {fileID: 11400000, guid: f675742eaf9c20a4f909d78ee7a14fed, type: 2}
+  lockSound: {fileID: 8300000, guid: 6563b50a19a616142a1a693d7c0259cb, type: 3}
+  searchTitle: Find the painting
+  searchSubtitle: Stand about a metre away and look at it
+  approachText: Step closer
+  promptOffset: {x: 0, y: -0.18, z: 0.9}
+  bracketColour: {r: 1, g: 0.92, b: 0.78, a: 1}
+  bracketWidth: 0.004
+--- !u!114 &1837796099
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837796096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06b87143f76d448b290974035303328c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PictureChanges.UI.TestMode
+  estimator: {fileID: 926963303}
+  canvas: {fileID: 926963301}
+  presence: {fileID: 926963307}
+  handMenu: {fileID: 1837796100}
+  rightHand: {fileID: 688772558}
+  head: {fileID: 963901708}
+  rightControllerAnchor: {fileID: 978464217}
+  uiMaterial: {fileID: 2100000, guid: c81fd742ee8d64c389577e8a9f27e916, type: 2}
+  font: {fileID: 11400000, guid: f675742eaf9c20a4f909d78ee7a14fed, type: 2}
+  placeSound: {fileID: 8300000, guid: d14b106713a74b448bcab90869f1706e, type: 3}
+  fallbackDistance: 1.2
+  maxRayDistance: 8
+--- !u!114 &1837796100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837796096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f5cc32cd0cf04510880abe2a618ac91, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PictureChanges.UI.HandMenu
+  leftHand: {fileID: 688772559}
+  rightHand: {fileID: 688772558}
+  head: {fileID: 963901708}
+  uiMaterial: {fileID: 2100000, guid: c81fd742ee8d64c389577e8a9f27e916, type: 2}
+  font: {fileID: 11400000, guid: f675742eaf9c20a4f909d78ee7a14fed, type: 2}
+  clickSound: {fileID: 8300000, guid: d14b106713a74b448bcab90869f1706e, type: 3}
+  hoverSound: {fileID: 8300000, guid: b319a2e4ff8f5d840b82d8635b645d22, type: 3}
+  faceUserEnterDot: 0.55
+  faceUserExitDot: 0.35
+  fadeSpeed: 9
+  followSpeed: 14
+  palmOffset: 0.045
+  fingerwardOffset: 0.03
+  buttonSize: 0.045
+  buttonGap: 0.008
+--- !u!4 &1837796101
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837796096}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1954634562
 GameObject:
@@ -1644,3 +1833,4 @@ SceneRoots:
   - {fileID: 926963305}
   - {fileID: 963901701}
   - {fileID: 784333098}
+  - {fileID: 1837796101}

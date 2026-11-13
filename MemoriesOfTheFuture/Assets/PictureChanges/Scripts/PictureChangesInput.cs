@@ -23,6 +23,8 @@ namespace PictureChanges
         [SerializeField] float captureHold = 0.6f;
         [SerializeField] float rescanHold = 1.0f;
         [SerializeField] float toggleHold = 0.6f;
+        [Tooltip("Pinch-and-hold shortcuts. Off for demos: the palm-up hand menu replaces them.")]
+        [SerializeField] bool enablePinchGestures = false;
 
         public bool CaptureRequested { get; private set; }
         public bool RescanRequested { get; private set; }
@@ -64,9 +66,9 @@ namespace PictureChanges
 
         void Update()
         {
-            bool capturePinch = Pinching(rightHand, OVRHand.HandFinger.Index) && !Pinching(rightHand, OVRHand.HandFinger.Middle);
-            bool togglePinch = Pinching(rightHand, OVRHand.HandFinger.Middle);
-            bool rescanPinch = Pinching(leftHand, OVRHand.HandFinger.Index);
+            bool capturePinch = enablePinchGestures && Pinching(rightHand, OVRHand.HandFinger.Index) && !Pinching(rightHand, OVRHand.HandFinger.Middle);
+            bool togglePinch = enablePinchGestures && Pinching(rightHand, OVRHand.HandFinger.Middle);
+            bool rescanPinch = enablePinchGestures && Pinching(leftHand, OVRHand.HandFinger.Index);
 
             CaptureRequested = OVRInput.GetDown(OVRInput.Button.One) | _capture.Update(capturePinch, captureHold);
             RescanRequested = OVRInput.GetDown(OVRInput.Button.Two) | _rescan.Update(rescanPinch, rescanHold);
