@@ -16,6 +16,7 @@ namespace CupSpike
     public class CupDebugView : MonoBehaviour
     {
         [SerializeField] CupDetector detector;
+        [SerializeField] MugScream mugScream;
         [SerializeField] Transform head;
         [Tooltip("URP Unlit material asset, referenced so the shader is kept in builds.")]
         [SerializeField] Material unlitMaterial;
@@ -37,7 +38,7 @@ namespace CupSpike
         Transform _panelRoot, _worldRoot;
         Renderer _frameQuad;
         TextMeshPro _text;
-        LineRenderer _cupBox, _bestBox, _rayLine;
+        LineRenderer _cupBox, _bestBox, _rayLine, _gripX, _gripY, _gripZ;
         Transform _centreMarker, _depthMarker;
         float _panelHeight;
         int _seenVersion = -1;
@@ -61,6 +62,7 @@ namespace CupSpike
         void ApplyVisibility()
         {
             if (detector != null) detector.KeepDebugFrame = visible;
+            if (mugScream != null) mugScream.ShowZone = visible;
             if (_panelRoot != null) _panelRoot.gameObject.SetActive(visible);
             if (_worldRoot != null) _worldRoot.gameObject.SetActive(visible);
         }
@@ -108,6 +110,10 @@ namespace CupSpike
             _centreMarker = Marker("CupCentre", CentreColour, 0.012f);
             _depthMarker = Marker("DepthHit", DepthColour, 0.008f);
             _rayLine = Line("CameraRay", _worldRoot, 2, CentreColour, 0.001f, false);
+            // Held-mug gizmo at the mug centre: red = handle -> body (+X), green = mug up (+Y), blue = +Z (logo).
+            _gripX = Line("GripX", _worldRoot, 2, new Color(1f, 0.2f, 0.2f), 0.002f, false);
+            _gripY = Line("GripY", _worldRoot, 2, new Color(0.2f, 1f, 0.2f), 0.002f, false);
+            _gripZ = Line("GripZ", _worldRoot, 2, new Color(0.3f, 0.5f, 1f), 0.002f, false);
         }
 
         Transform Marker(string name, Color c, float size)
@@ -178,7 +184,7 @@ namespace CupSpike
                 !d.ModelReady ? d.Status :
                 d.Status.StartsWith("Waiting") ? "<color=#FF851B>Camera not running: check the camera permission</color>" :
                 d.TrackingSource == CupDetector.Source.Vision ? "<color=#2ECC40>Tracking cup (camera)</color>" :
-                d.TrackingSource == CupDetector.Source.Hand ? $"<color=#7FDBFF>Following {d.HoldingHand} hand (camera lost the cup)</color>" :
+                d.TrackingSource == CupDetector.Source.Hand ? $"<color=#7FDBFF>Held in {(d.HoldingHand == "L" ? "left" : "right")} hand (pose from hand joints)</color>" :
                 d.CupScore > 0.05f ? $"<color=#FF851B>Cup seen but weak ({d.CupScore:0.00}): get closer or turn it</color>" :
                 "Looking for a cup: look straight at it, 0.3-1.5 m away";
             string dist(float v) => float.IsNaN(v) ? "-" : $"{v:0.00} m";
@@ -187,8 +193,10 @@ namespace CupSpike
                 $"<size=80%>model {(d.ModelReady ? "ready" : "not ready")}  {d.AnalysedPerSecond:0.0}/s  {d.InferenceMs:0} ms  frames {d.FramesAnalysed}\n" +
                 $"cup {d.CupScore:0.00}   best: {d.BestLabel} {d.BestScore:0.00}\n" +
                 $"depth {d.DepthStatus} {dist(d.DepthDistance)}   size {dist(d.SizeDistance)}   using {d.DistanceSource} ({d.Mode})\n" +
-                $"source {d.TrackingSource}   hand {(d.HoldingHand == "" ? "none" : d.HoldingHand)}   nearest palm {dist(d.NearestHandDistance)}" +
+                $"source {d.TrackingSource}   held by {(d.HoldingHand == "" ? "-" : d.HoldingHand)}   {d.HandsText}" +
+                $"{(d.HoldingHand != "" ? $"\nfinger model off {d.PickUpModelError * 100f:0.0} cm at pick-up   camera corrected {d.HeldCorrection * 100f:0.0} cm   glitches ignored {d.GlitchesIgnored}" : "")}" +
                 $"{(d.Rejected != "" ? $"\n<color=#FF851B>ignored: {d.Rejected}</color>" : "")}" +
+                $"{(mugScream != null ? $"\n<color=#FF6F61>{mugScream.StatusLine}</color>" : "")}" +
                 $"{(d.Frozen ? "   <color=#7FDBFF>FROZEN</color>" : "")}</size>";
         }
 
@@ -206,6 +214,16 @@ namespace CupSpike
 
         void UpdateWorld()
         {
+            bool held = detector.TrackingSource == CupDetector.Source.Hand;
+            foreach (var (lr, axis) in new[] { (_gripX, Vector3.right), (_gripY, Vector3.up), (_gripZ, Vector3.forward) })
+            {
+                lr.enabled = held;
+                if (!held) continue;
+                var h = detector.HeldHole;
+                lr.SetPosition(0, h.position);
+                lr.SetPosition(1, h.position + h.rotation * axis * 0.04f);
+            }
+
             bool tracking = detector.Tracking;
             _centreMarker.gameObject.SetActive(tracking);
             _rayLine.enabled = tracking;

@@ -8,24 +8,26 @@ using UnityEngine;
 namespace CupSpike
 {
     /// <summary>
-    /// Finds the cup in the passthrough camera feed and places a target (the proxy mug) on it.
+    /// Finds the cup and places a target (the proxy mug) on it. Two sources:
     ///
+    /// <b>Camera</b> (cup not held):
     /// <code>
     /// PassthroughCameraAccess texture (1280x960) + camera pose at capture
     ///   -> YOLO11n (COCO, on-device, Unity Inference Engine, GPU) at 640x640
     ///   -> on the GPU: best "cup" box + best box of any class (for debugging), 11 floats read back
-    ///   -> ray through the box centre
-    ///   -> distance from environment depth (EnvironmentRaycastManager) and from the box's
-    ///      apparent height vs the real mug height; Auto prefers depth when the two agree
-    ///   -> cup centre
-    /// Hand hand-off: while the cup is seen with a tracked hand within reach, the cup's offset
-    /// from that wrist is remembered. When vision then loses it (a held mug is often seen as a
-    /// "mouse" or "cell phone", or not at all) the target follows the hand. A clear detection
-    /// takes over again; weak ones far from the hand are ignored.
+    ///   -> ray through the box centre; distance from environment depth or from the box height vs the
+    ///      mug's apparent height at that viewing angle (Auto prefers depth when the two agree)
+    ///   -> upright mug, logo towards the viewer
     /// </code>
     ///
-    /// Everything the debug view shows is public on this component, and each change of state
-    /// is logged with the prefix [CupDetector].
+    /// <b>Hand</b> (cup held by the handle): the pose comes only from the hand joints, through the
+    /// handle geometry (<see cref="MugGrip"/>). The camera only decides when the cup is picked up:
+    /// a gripping hand whose mug would sit inside the last detected cup box (projected into that
+    /// frame, so the camera's unreliable distance isn't used) attaches. Opening the hand lets go.
+    /// Detections of other cups can't break the hold.
+    ///
+    /// Everything the debug view shows is public here, and each change of state is logged with
+    /// the prefix [CupDetector].
     /// </summary>
     public class CupDetector : MonoBehaviour
     {
@@ -53,35 +55,48 @@ namespace CupSpike
         [Tooltip("Minimum 'cup' score. Tested on the headset recording: the mug on a table scores 0.7-0.93; " +
                  "a lamp base scored up to 0.35.")]
         [SerializeField, Range(0f, 1f)] float minScore = 0.45f;
-        [Tooltip("While following a hand, a detection further than this from the hand's estimate is ignored " +
-                 "unless it scores above Strong Score (m).")]
-        [SerializeField] float gateDistance = 0.3f;
-        [SerializeField, Range(0f, 1f)] float strongScore = 0.7f;
-        [Tooltip("While a tracked hand holds the cup, any detection further than this from it is ignored, " +
-                 "whatever its score: it's another cup or a bad distance (m).")]
-        [SerializeField] float holdGateDistance = 0.5f;
         [Tooltip("Vision counts as current for this long after the last accepted detection (s).")]
         [SerializeField] float visionFresh = 0.3f;
-        [Tooltip("Hide the target when there is no vision and no holding hand for this long (s).")]
+        [Tooltip("Hide the target when there is no current source for this long (s).")]
         [SerializeField] float lostAfter = 1.0f;
         [SerializeField] DistanceMode distanceMode = DistanceMode.Auto;
         [Tooltip("Editor only: analyse this image instead of the camera feed (e.g. a frame from a headset " +
                  "recording). Rays still use the (mock) camera, so distances are only indicative.")]
         [SerializeField] Texture editorTestImage;
 
-        [Header("Hand hand-off")]
-        [Tooltip("A hand whose palm is this close to the cup centre (m) when the cup is seen counts as holding it. " +
-                 "It lets go only when the cup is seen more than 1.5x this far from that hand while the hand is tracked.")]
-        [SerializeField] float attachRadius = 0.15f;
+        [Header("Holding (hand joints -> mug through the handle)")]
+        [SerializeField] MugGrip grip = new MugGrip();
+        [Tooltip("A gripping hand can pick up a cup seen within this long (s).")]
+        [SerializeField] float pickUpWindow = 1.0f;
+        [Tooltip("The detected box is grown by this fraction of its size when checking a hand's mug is inside it.")]
+        [SerializeField] float pickUpBoxMargin = 0.35f;
+        [Tooltip("...and the hand's mug must be within this distance of the camera estimate (m). Loose: the " +
+                 "camera's distance can be ~0.15 m out.")]
+        [SerializeField] float pickUpDepthTolerance = 0.3f;
+        [Tooltip("The hand must stay open this long to let go (s).")]
+        [SerializeField] float releaseAfterOpen = 0.25f;
+        [Tooltip("While held, a camera sighting within this distance sideways of the held mug nudges the " +
+                 "offset towards it (m). Further away: another cup, ignored.")]
+        [SerializeField] float correctionGate = 0.08f;
+        [Tooltip("Fraction of the sideways error corrected per sighting.")]
+        [SerializeField, Range(0f, 1f)] float correctionGain = 0.35f;
+        [Tooltip("Only correct while the wrist moves slower than this (m/s): camera frames are ~140 ms old.")]
+        [SerializeField] float correctionMaxWristSpeed = 0.15f;
+        [Tooltip("A held pose jumping further than this in one frame is a tracking glitch (m)...")]
+        [SerializeField] float glitchJump = 0.08f;
+        [Tooltip("...and is ignored for up to this long before it's accepted as real (s).")]
+        [SerializeField] float glitchHold = 0.25f;
 
         [Header("Real mug (m)")]
         [SerializeField] float mugHeight = 0.095f;
         [SerializeField] float mugRadius = 0.040f;
 
         [Header("Output")]
-        [Tooltip("Placed at the base centre of the cup, +Z towards the viewer (the proxy mug).")]
+        [Tooltip("Placed at the base centre of the cup (the proxy mug).")]
         [SerializeField] Transform target;
         [SerializeField] float followSpeed = 12f;
+        [Tooltip("While held, follow faster: the hand pose is already smooth (1/s).")]
+        [SerializeField] float heldFollowSpeed = 30f;
         [Tooltip("Jumps larger than this snap instead of gliding (m).")]
         [SerializeField] float snapDistance = 0.25f;
 
@@ -121,10 +136,21 @@ namespace CupSpike
         public bool Tracking => TrackingSource != Source.None;
         /// <summary>Current cup centre (from vision or the holding hand).</summary>
         public Vector3 CupCentre { get; private set; }
-        /// <summary>"L" or "R" while a hand is attached, else empty.</summary>
+        /// <summary>Current cup base pose (base centre, +Y up, handle on -X), valid while Tracking.</summary>
+        public Pose CupPose => _cupPose;
+        public float MugHeight => mugHeight;
+        public float MugRadius => mugRadius;
+        /// <summary>"L" or "R" while a hand holds the cup, else empty.</summary>
         public string HoldingHand => _holdHand == null ? "" : _holdHand == leftHand ? "L" : "R";
-        /// <summary>Palm-to-cup distance of the nearest tracked hand at the last detection, or NaN.</summary>
-        public float NearestHandDistance { get; private set; } = float.NaN;
+        /// <summary>Per-hand grip state for the debug panel, e.g. "L open 0.95  R grip 0.31".</summary>
+        public string HandsText { get; private set; } = "";
+        /// <summary>Held mug centre and rotation (for the debug gizmo).</summary>
+        public Pose HeldHole { get; private set; }
+        /// <summary>Held: how far the finger-only model was from the fused pose at pick-up, and the
+        /// total sideways camera correction since (m), for the debug panel.</summary>
+        public float PickUpModelError { get; private set; } = float.NaN;
+        public float HeldCorrection { get; private set; }
+        public int GlitchesIgnored { get; private set; }
 
         /// <summary>The frame the last result came from (copied only while Keep Debug Frame is on).</summary>
         public RenderTexture DebugFrame => _debugFrame;
@@ -150,10 +176,20 @@ namespace CupSpike
         Source _lastSource = Source.None;
 
         Hand _holdHand;
-        Pose _holdOffset;        // cup base pose in the holding hand's wrist space
-        Pose _cupPose;           // desired target pose this frame
-        float _handLostTime = -99f;
-        bool _loggedHandDropout, _loggedFarReject;
+        float _openSince = -1f;
+        float _lastHandPoseTime = -99f;
+        bool _loggedHandDropout;
+        bool _leftCurled, _rightCurled;
+        MugGrip.Result _left, _right;
+        Pose _cupPose;              // desired target pose this frame
+        Pose _holdOffset;           // held mug base pose in the holding wrist's space (fused at pick-up)
+        Vector3 _lastWristPos;
+        float _wristSpeed;
+        float _glitchSince = -1f;
+        // The last accepted detection, for picking up: box + camera pose + estimated distance.
+        Rect _pickBox;
+        Pose _pickPose;
+        float _pickDistance;
 
         void Reset()
         {
@@ -237,6 +273,8 @@ namespace CupSpike
             UpdateStatus();
             if (ModelReady && !_busy && cameraAccess != null && cameraAccess.IsPlaying && cameraAccess.IsUpdatedThisFrame)
                 StartCoroutine(Analyse());
+            UpdateHands();
+            UpdateHold();
             UpdateSource();
             UpdateTarget();
         }
@@ -247,10 +285,11 @@ namespace CupSpike
             if (cameraAccess == null) SetStatus("ERROR: no PassthroughCameraAccess");
             else if (!cameraAccess.IsPlaying) SetStatus("Waiting for camera (permission?)");
             else if (TrackingSource == Source.Vision) SetStatus("Tracking cup (camera)");
-            else if (TrackingSource == Source.Hand)
-                SetStatus(HoldingHand == "" ? "Tracking cup (holding last position)" : $"Tracking cup (following {HoldingHand} hand)");
+            else if (TrackingSource == Source.Hand) SetStatus($"Held in {(HoldingHand == "L" ? "left" : "right")} hand");
             else SetStatus("Looking for a cup");
         }
+
+        // ------------------------------------------------------------ camera
 
         IEnumerator Analyse()
         {
@@ -309,34 +348,16 @@ namespace CupSpike
 
             if (!EstimateCentre(pose, out var centre)) { Rejected = "distance " + DistanceSource; return; }
 
-            // While a tracked hand holds the cup, a detection far from that hand is a different cup
-            // (or a bad distance), whatever its score. Seen on device: "cups" ~3 m away broke the hold.
-            if (TryGetHeldCentre(out var held))
-            {
-                float off = Vector3.Distance(centre, held);
-                if (off > holdGateDistance)
-                {
-                    Rejected = $"{off:0.00} m from the held cup (score {CupScore:0.00}, {DistanceSource})";
-                    if (!_loggedFarReject) Debug.Log($"[CupDetector] Ignored a cup {off:0.00} m from the held one " +
-                                                     $"(score {CupScore:0.00}, distance from {DistanceSource})");
-                    _loggedFarReject = true;
-                    return;
-                }
-            }
-            _loggedFarReject = false;
-
-            // While following a hand, ignore a weak detection somewhere else (e.g. the lamp).
-            if (TrackingSource == Source.Hand && CupScore < strongScore &&
-                Vector3.Distance(centre, CupCentre) > gateDistance)
-            {
-                Rejected = $"{Vector3.Distance(centre, CupCentre):0.00} m from the hand's cup";
-                return;
-            }
+            // While held, the hand drives the mug; a sighting of it only corrects sideways drift.
+            // Other cups in the room can't move or release it (gated in CorrectHeldFromCamera).
+            if (_holdHand != null) { CorrectHeldFromCamera(pose); return; }
 
             Rejected = "";
             VisionCentre = centre;
             LastSeenTime = Time.time;
-            UpdateHold(VisionPose(centre));
+            _pickBox = CupViewportRect;
+            _pickPose = pose;
+            _pickDistance = Vector3.Distance(pose.position, centre);
         }
 
         /// <summary>YOLO box (input pixels, y down) to camera viewport (0..1, y up).</summary>
@@ -369,11 +390,16 @@ namespace CupSpike
             }
             else DepthStatus = EnvironmentRaycastHitStatus.NotSupported;
 
-            // 2. Size: the angle the box spans vertically vs the mug's real height.
+            // 2. Size: the angle the box spans vertically vs the mug's apparent height. Seen from
+            // above, the rim's ellipse adds to the height: apparent = H cos(e) + 2R sin(e), where e is
+            // the angle the view ray makes with the horizontal. Ignoring it put a mug seen from above
+            // much too close (0.45 m on device).
             var top = cameraAccess.ViewportPointToRay(new Vector2(box.center.x, box.yMax), pose).direction;
             var bottom = cameraAccess.ViewportPointToRay(new Vector2(box.center.x, box.yMin), pose).direction;
             float angle = Vector3.Angle(top, bottom) * Mathf.Deg2Rad;
-            SizeDistance = angle > 1e-4f ? mugHeight * 0.5f / Mathf.Tan(angle * 0.5f) : float.NaN;
+            float elevation = Mathf.Abs(Mathf.Asin(Mathf.Clamp(Vector3.Dot(ray.direction.normalized, Vector3.up), -1f, 1f)));
+            float apparent = mugHeight * Mathf.Cos(elevation) + 2f * mugRadius * Mathf.Sin(elevation);
+            SizeDistance = angle > 1e-4f ? apparent * 0.5f / Mathf.Tan(angle * 0.5f) : float.NaN;
 
             float d;
             switch (distanceMode)
@@ -403,98 +429,186 @@ namespace CupSpike
             return new Pose(centre - Vector3.up * (mugHeight * 0.5f), rot);
         }
 
-        // ------------------------------------------------------------ hand hand-off
+        // ------------------------------------------------------------ hands
 
-        /// <summary>On each accepted detection: attach to the nearest hand within reach, or let go.</summary>
-        void UpdateHold(Pose cupPose)
+        void UpdateHands()
         {
-            Hand nearest = null;
-            float best = float.MaxValue;
-            foreach (var h in new[] { leftHand, rightHand })
-            {
-                if (!TryGetPalm(h, out var palm, out _)) continue;
-                float d = Vector3.Distance(palm, cupPose.position + Vector3.up * (mugHeight * 0.5f));
-                if (d < best) { best = d; nearest = h; }
-            }
-            NearestHandDistance = nearest != null ? best : float.NaN;
-            var cupCentre = cupPose.position + Vector3.up * (mugHeight * 0.5f);
+            _left = grip.Evaluate(leftHand, true);
+            _right = grip.Evaluate(rightHand, false);
+            _leftCurled = Curled(_left, _leftCurled);
+            _rightCurled = Curled(_right, _rightCurled);
+            HandsText = $"L {HandState(_left, _leftCurled)}   R {HandState(_right, _rightCurled)}";
+        }
 
-            // Attach (or refresh the offset) when a tracked palm is within reach.
-            if (nearest != null && best < attachRadius && TryGetPalm(nearest, out _, out var wrist))
+        bool Curled(MugGrip.Result r, bool was)
+        {
+            if (!r.tracked) return was;   // keep the last state through dropouts
+            return was ? r.straightness < grip.openAbove : r.straightness < grip.curledBelow;
+        }
+
+        static string HandState(MugGrip.Result r, bool curled) =>
+            !r.tracked ? "not tracked" : $"{(curled ? "grip" : "open")} {r.straightness:0.00}";
+
+        void UpdateHold()
+        {
+            if (_holdHand == null)
             {
-                if (_holdHand != nearest) Debug.Log($"[CupDetector] Attached to {HandName(nearest)} hand ({best:0.00} m)");
-                _holdHand = nearest;
-                _holdOffset = new Pose(
-                    Quaternion.Inverse(wrist.rotation) * (cupPose.position - wrist.position),
-                    Quaternion.Inverse(wrist.rotation) * cupPose.rotation);
+                TryPickUp(leftHand, _left, _leftCurled);
+                if (_holdHand == null) TryPickUp(rightHand, _right, _rightCurled);
                 return;
             }
-            if (_holdHand == null) return;
 
-            // Let go only when the cup is seen clearly away from the holding hand while that hand is
-            // tracked (hysteresis: 1.5x the attach radius). Hand tracking often drops for a moment
-            // while fingers wrap round the mug; that must not release it (seen on device).
-            if (!TryGetPalm(_holdHand, out var holdPalm, out _))
+            var r = _holdHand == leftHand ? _left : _right;
+            bool curled = _holdHand == leftHand ? _leftCurled : _rightCurled;
+            if (!r.tracked)
             {
                 if (!_loggedHandDropout) Debug.Log($"[CupDetector] {HandName(_holdHand)} hand not tracked; keeping hold");
                 _loggedHandDropout = true;
+                // A long dropout while the camera can see a cup: trust the camera again.
+                if (Time.time - _lastHandPoseTime > lostAfter && CupInLastFrame) Release("hand lost, camera sees a cup");
                 return;
             }
             _loggedHandDropout = false;
-            float away = Vector3.Distance(holdPalm, cupCentre);
-            if (away > attachRadius * 1.5f)
+
+            if (curled) _openSince = -1f;
+            else if (_openSince < 0f) _openSince = Time.time;
+            else if (Time.time - _openSince > releaseAfterOpen) { Release($"hand opened ({r.straightness:0.00})"); return; }
+
+            // Follow the wrist with the offset fused at pick-up.
+            var candidate = Compose(r.wrist, _holdOffset);
+            if (Time.deltaTime > 0f) _wristSpeed = Vector3.Distance(r.wrist.position, _lastWristPos) / Time.deltaTime;
+            _lastWristPos = r.wrist.position;
+
+            // Glitch guard: a jump this big in one frame is bad tracking, unless it persists.
+            if (Vector3.Distance(candidate.position, _cupPose.position) > glitchJump)
             {
-                Debug.Log($"[CupDetector] Released from {HandName(_holdHand)} hand: cup seen {away:0.00} m from its palm");
-                _holdHand = null;
+                if (_glitchSince < 0f) _glitchSince = Time.time;
+                if (Time.time - _glitchSince < glitchHold) return;   // keep the last pose
+                Debug.Log($"[CupDetector] Accepted a {Vector3.Distance(candidate.position, _cupPose.position) * 100f:0} cm jump after {glitchHold:0.00} s");
             }
+            else if (_glitchSince >= 0f)
+            {
+                GlitchesIgnored++;
+                Debug.Log($"[CupDetector] Ignored a hand-tracking glitch ({(Time.time - _glitchSince) * 1000f:0} ms), total {GlitchesIgnored}");
+            }
+            _glitchSince = -1f;
+
+            _lastHandPoseTime = Time.time;
+            _cupPose = candidate;
+            HeldHole = new Pose(_cupPose.position + _cupPose.rotation * (Vector3.up * (mugHeight * 0.5f)), _cupPose.rotation);
+        }
+
+        static Pose Compose(Pose parent, Pose local) =>
+            new Pose(parent.position + parent.rotation * local.position, parent.rotation * local.rotation);
+
+        static Pose Relative(Pose parent, Pose world)
+        {
+            var inv = Quaternion.Inverse(parent.rotation);
+            return new Pose(inv * (world.position - parent.position), inv * world.rotation);
+        }
+
+        /// <summary>
+        /// The mug's pose at pick-up, from both sources. It's still upright on the table, so:
+        /// sideways and height from the camera ray through the detected box (accurate), distance
+        /// along that ray from the finger model (agreed with the camera to ~3 cm on device, and
+        /// steadier at close range), handle pointing at the fingers.
+        /// </summary>
+        Pose FusedPickUpPose(MugGrip.Result r)
+        {
+            var model = r.MugCentre(mugHeight);
+            var ray = cameraAccess.ViewportPointToRay(_pickBox.center, _pickPose);
+            var dir = ray.direction.normalized;
+            float along = Mathf.Max(0.1f, Vector3.Dot(model - ray.origin, dir));
+            var centre = ray.origin + dir * along;
+
+            // Handle (-X) points from the body centre to the fingers, horizontally.
+            var toFingers = Vector3.ProjectOnPlane(r.hole.position - centre, Vector3.up);
+            var x = toFingers.sqrMagnitude > 1e-6f ? -toFingers.normalized : Vector3.ProjectOnPlane(r.mugBase.rotation * Vector3.right, Vector3.up).normalized;
+            var rot = Quaternion.LookRotation(Vector3.Cross(x, Vector3.up), Vector3.up);
+            return new Pose(centre - Vector3.up * (mugHeight * 0.5f), rot);
+        }
+
+        /// <summary>
+        /// While held, a camera sighting of this mug nudges the wrist offset sideways (perpendicular to
+        /// the camera ray). Distance along the ray is left to the hand: the camera is weakest there.
+        /// </summary>
+        void CorrectHeldFromCamera(Pose framePose)
+        {
+            var r = _holdHand == leftHand ? _left : _right;
+            if (!r.tracked || _wristSpeed > correctionMaxWristSpeed) { Rejected = $"held: wrist moving {_wristSpeed:0.00} m/s"; return; }
+            var ray = cameraAccess.ViewportPointToRay(CupViewportRect.center, framePose);
+            var dir = ray.direction.normalized;
+            var held = CupCentre;
+            var onRay = ray.origin + dir * Vector3.Dot(held - ray.origin, dir);
+            var err = onRay - held;   // perpendicular to the ray
+            if (err.magnitude > correctionGate) { Rejected = $"held: sighting {err.magnitude * 100f:0} cm off (another cup?)"; return; }
+
+            var step = err * correctionGain;
+            _holdOffset.position += Quaternion.Inverse(r.wrist.rotation) * step;
+            HeldCorrection += step.magnitude;
+            Rejected = $"held: corrected {step.magnitude * 100f:0.0} cm sideways";
+        }
+
+        /// <summary>
+        /// A gripping hand picks the cup up if the mug it would hold sits inside the last detected cup
+        /// box (projected into that frame) at about the camera's distance.
+        /// </summary>
+        void TryPickUp(Hand hand, MugGrip.Result r, bool curled)
+        {
+            if (!curled || !r.tracked || Time.time - LastSeenTime > pickUpWindow) return;
+            var centre = r.MugCentre(mugHeight);
+            var vp = cameraAccess.WorldToViewportPoint(centre, _pickPose);
+            var box = _pickBox;
+            float mx = box.width * pickUpBoxMargin, my = box.height * pickUpBoxMargin;
+            bool inBox = vp.x > box.xMin - mx && vp.x < box.xMax + mx && vp.y > box.yMin - my && vp.y < box.yMax + my;
+            float dist = Vector3.Distance(_pickPose.position, centre);
+            bool depthOk = Mathf.Abs(dist - _pickDistance) < pickUpDepthTolerance;
+            if (!inBox || !depthOk) return;
+
+            var fused = FusedPickUpPose(r);
+            _holdOffset = Relative(r.wrist, fused);
+            _holdHand = hand;
+            _openSince = -1f;
+            _glitchSince = -1f;
+            _lastHandPoseTime = Time.time;
+            _lastWristPos = r.wrist.position;
+            _loggedHandDropout = false;
+            _cupPose = fused;
+            HeldCorrection = 0f;
+            PickUpModelError = Vector3.Distance(fused.position, r.mugBase.position);
+            float tilt = Quaternion.Angle(Quaternion.FromToRotation(Vector3.up, r.mugBase.rotation * Vector3.up), Quaternion.identity);
+            Debug.Log($"[CupDetector] Picked up by {HandName(hand)} hand (grip {r.straightness:0.00}, " +
+                      $"hand mug {dist:0.00} m vs camera {_pickDistance:0.00} m). Finger model was " +
+                      $"{PickUpModelError * 100f:0.0} cm and {tilt:0}° tilt from the fused pose");
+        }
+
+        void Release(string why)
+        {
+            Debug.Log($"[CupDetector] Released from {HandName(_holdHand)} hand: {why}");
+            _holdHand = null;
+            _openSince = -1f;
+            LastSeenTime = -99f;   // the old camera position is stale; wait for a fresh detection
         }
 
         string HandName(Hand h) => h == leftHand ? "left" : "right";
 
-        /// <summary>Where the holding hand puts the cup centre, if a hand holds it and is tracked.</summary>
-        bool TryGetHeldCentre(out Vector3 centre)
-        {
-            centre = default;
-            if (_holdHand == null || !TryGetPalm(_holdHand, out _, out var wrist)) return false;
-            var basePos = wrist.position + wrist.rotation * _holdOffset.position;
-            var rot = wrist.rotation * _holdOffset.rotation;
-            centre = basePos + rot * (Vector3.up * (mugHeight * 0.5f));
-            return true;
-        }
-
-        bool TryGetPalm(Hand hand, out Vector3 palm, out Pose wrist)
-        {
-            palm = default; wrist = default;
-            if (hand == null || !hand.IsTrackedDataValid) return false;
-            if (!hand.GetJointPose(HandJointId.HandWristRoot, out wrist) ||
-                !hand.GetJointPose(HandJointId.HandIndex1, out var index) ||
-                !hand.GetJointPose(HandJointId.HandMiddle1, out var middle) ||
-                !hand.GetJointPose(HandJointId.HandPinky1, out var pinky)) return false;
-            var knuckles = (index.position + middle.position + pinky.position) / 3f;
-            palm = Vector3.Lerp(wrist.position, knuckles, 0.7f);
-            return true;
-        }
+        // ------------------------------------------------------------ output
 
         void UpdateSource()
         {
             var source = Source.None;
-            if (Time.time - LastSeenTime < visionFresh)
+            if (_holdHand != null && Time.time - _lastHandPoseTime < lostAfter)
+                source = Source.Hand;   // _cupPose set by UpdateHold (held through short dropouts)
+            else if (Time.time - LastSeenTime < visionFresh)
             {
                 source = Source.Vision;
                 _cupPose = VisionPose(VisionCentre);
             }
-            else if (_holdHand != null && TryGetPalm(_holdHand, out _, out var wrist))
-            {
-                source = Source.Hand;
-                _handLostTime = Time.time;
-                _cupPose = new Pose(wrist.position + wrist.rotation * _holdOffset.position, wrist.rotation * _holdOffset.rotation);
-            }
-            else if (_lastSource != Source.None && Time.time - Mathf.Max(LastSeenTime, _handLostTime) < lostAfter)
-            {
-                source = _lastSource;   // short gap: hold the last pose
-            }
+            else if (_lastSource == Source.Vision && Time.time - LastSeenTime < lostAfter)
+                source = Source.Vision;   // short gap: hold the last pose
 
             if (source != _lastSource) Debug.Log($"[CupDetector] Source: {_lastSource} -> {source}");
+            if (source == Source.Hand && _lastSource != Source.Hand) _snapNext = true;
             _lastSource = source;
             TrackingSource = source;
             if (source != Source.None) CupCentre = _cupPose.position + _cupPose.rotation * (Vector3.up * (mugHeight * 0.5f));
@@ -518,7 +632,8 @@ namespace CupSpike
             }
             else
             {
-                float t = 1f - Mathf.Exp(-followSpeed * Time.deltaTime);
+                float speed = TrackingSource == Source.Hand ? heldFollowSpeed : followSpeed;
+                float t = 1f - Mathf.Exp(-speed * Time.deltaTime);
                 target.SetPositionAndRotation(Vector3.Lerp(target.position, _cupPose.position, t),
                                               Quaternion.Slerp(target.rotation, _cupPose.rotation, t));
             }

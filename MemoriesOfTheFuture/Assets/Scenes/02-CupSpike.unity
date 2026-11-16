@@ -675,6 +675,7 @@ GameObject:
   - component: {fileID: 982673525}
   - component: {fileID: 982673524}
   - component: {fileID: 982673523}
+  - component: {fileID: 982673528}
   m_Layer: 0
   m_Name: CupDetection
   m_TagString: Untagged
@@ -712,6 +713,7 @@ MonoBehaviour:
   menu: {fileID: 988729873}
   detector: {fileID: 982673525}
   debugView: {fileID: 982673524}
+  mugScream: {fileID: 982673528}
   proxyRenderers:
   - {fileID: 1305061110}
 --- !u!114 &982673524
@@ -727,6 +729,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CupSpike.CupDebugView
   detector: {fileID: 982673525}
+  mugScream: {fileID: 982673528}
   head: {fileID: 330107616}
   unlitMaterial: {fileID: 2100000, guid: dd2245643e43c48e6944df551b787ee6, type: 2}
   font: {fileID: 11400000, guid: f675742eaf9c20a4f909d78ee7a14fed, type: 2}
@@ -758,16 +761,24 @@ MonoBehaviour:
   cupClass: 41
   layersPerFrame: 40
   minScore: 0.35
-  gateDistance: 0.3
-  strongScore: 0.7
   visionFresh: 0.3
   lostAfter: 1
   distanceMode: 0
-  attachRadius: 0.15
+  editorTestImage: {fileID: 0}
+  grip:
+    holeInMug: {x: -0.057, y: 0.048, z: 0.0107}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    curledBelow: 0.6
+    openAbove: 0.85
+  pickUpWindow: 1
+  pickUpBoxMargin: 0.35
+  pickUpDepthTolerance: 0.3
+  releaseAfterOpen: 0.25
   mugHeight: 0.095
   mugRadius: 0.04
   target: {fileID: 1305061109}
   followSpeed: 12
+  heldFollowSpeed: 30
   snapDistance: 0.25
 --- !u!114 &982673526
 MonoBehaviour:
@@ -794,6 +805,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e7d7fda0ee694ecb882b83ba8bbf3ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PictureChanges.PictureChangesBootstrap
+--- !u!114 &982673528
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7161f9ec975942acbbc26fd51324feb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.MugScream
+  detector: {fileID: 982673525}
+  leftHand: {fileID: 688772557}
+  rightHand: {fileID: 688772556}
+  scream: {fileID: 8300000, guid: 312691852e5894cd080dac1983384bd9, type: 3}
+  volume: 1
+  background: {fileID: 8300000, guid: 6160a88999a37472bb81bf4b33b613a8, type: 3}
+  backgroundVolume: 0.35
+  backgroundFadeIn: 3
+  duckTo: 0.25
+  duckSpeed: 4
+  zonePresets:
+  - 0.1
+  - 0.03
+  rearmMargin: 0.05
+  cooldown: 2
+  unlitMaterial: {fileID: 2100000, guid: dd2245643e43c48e6944df551b787ee6, type: 2}
+  showZone: 1
+  onScream:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &988729871
 GameObject:
   m_ObjectHideFlags: 0
