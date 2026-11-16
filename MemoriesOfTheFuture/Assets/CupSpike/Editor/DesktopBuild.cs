@@ -117,6 +117,9 @@ namespace CupSpike.EditorTools
             if (!File.Exists(ScenePath)) CreateScene();
             // Only the Mono variant of Mac standalone support is installed.
             PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone, ScriptingImplementation.Mono2x);
+            // The Meta SDK references the Microphone class, so macOS requires a usage description (the app never records).
+            if (string.IsNullOrEmpty(PlayerSettings.macOS.microphoneUsageDescription))
+                PlayerSettings.macOS.microphoneUsageDescription = "Not used. Required by an included library.";
             Directory.CreateDirectory(Path.GetDirectoryName(AppPath));
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
