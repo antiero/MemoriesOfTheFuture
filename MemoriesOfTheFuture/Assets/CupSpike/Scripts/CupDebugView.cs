@@ -195,6 +195,7 @@ namespace CupSpike
                 $"depth {d.DepthStatus} {dist(d.DepthDistance)}   size {dist(d.SizeDistance)}   using {d.DistanceSource} ({d.Mode})\n" +
                 $"source {d.TrackingSource}   held by {(d.HoldingHand == "" ? "-" : d.HoldingHand)}   {d.HandsText}" +
                 $"{(d.HoldingHand != "" ? $"\nfinger model off {d.PickUpModelError * 100f:0.0} cm at pick-up   camera corrected {d.HeldCorrection * 100f:0.0} cm   glitches ignored {d.GlitchesIgnored}" : "")}" +
+                $"{(d.HoldingHand != "" ? $"\ntilt {d.TiltMode}: hand {d.HandTilt:0}°  mug {d.MugTilt:0}°" : "")}" +
                 $"{(d.Rejected != "" ? $"\n<color=#FF851B>ignored: {d.Rejected}</color>" : "")}" +
                 $"{(mugScream != null ? $"\n<color=#FF6F61>{mugScream.StatusLine}</color>" : "")}" +
                 $"{(d.Frozen ? "   <color=#7FDBFF>FROZEN</color>" : "")}</size>";

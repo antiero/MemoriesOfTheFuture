@@ -17,19 +17,34 @@ Empty mixed-reality starting point for the Cup Spike explorations. It has the sa
 
 ## The scream (spike plan, Block 1)
 
-`MugScream` (on `CupDetection`): reach for the mug and it screams from where it sits.
+`MugScream` (on `CupDetection`): the mug that screams when touched, built as an escalation rather than a single trigger.
 
-- **Trigger:** either index fingertip comes within the zone of the mug's body. The zone is measured from the mug's surface, modelled as a 40 mm radius, 95 mm tall cylinder.
-- **Zone sizes:** **10 cm** ("almost touching", the default) and **3 cm** ("contact"). The **Zone** button switches between them and is lit at 3 cm.
+1. **Approach** (a fingertip from 30 cm down to the touch zone): a breath from inside the mug, quiet for most of the approach and then rushing in (volume follows the square of how close you are). Its pitch rises from 0.9 to 1.15, and the background drains away by up to 85%.
+2. **Pull away** before touching: the breath cuts out dead.
+3. **Touch** (a fingertip within **3 cm** of the mug's surface): 0.35 s of total silence, with the background cut too. Then the scream, and `onScream` fires, which triggers **RoomDrain**.
+
+Details:
+- **Distance:** measured from either index fingertip to the mug's body, modelled as a 40 mm radius, 95 mm tall cylinder.
+- **Zone button:** switches the touch distance between **3 cm** ("contact", the default) and **10 cm** ("almost touching"), and is lit at 10 cm.
+- **Breath sound:** `Audio/Breath_placeholder.wav` is a synthesised 4 s loop; replace the Breath clip on `MugScream` with a real one.
+
+**RoomDrain** ("Drain and crush" from the concepts PDF): the passthrough's built-in colour adjustment.
+- It takes 0.12 s to reach saturation −1, contrast +0.65 and brightness −0.15.
+- It holds for 0.9 s, then recovers over 1.6 s.
+- Peak and timings are on the component.
 - **Where the zone is:**
   - It follows the tracked mug.
   - If tracking drops, it stays at the last known position, because a mug on a table doesn't move by itself.
   - After a put-down it stays where the hand let go.
 - **Pin fallback:** press **Pin**, then pinch at the side of the mug, about half-way up, to fix the zone there. It then works with no detection at all, as the guaranteed demo. Press Pin again to go back to tracking.
-- **When it fires:** never while the mug is held; that's Block 4. It re-arms once the scream has finished, 2 s have passed, and every fingertip is 5 cm outside the zone.
+- **When it fires:** never while the mug is held; that's Block 4. It re-arms once the scream has finished, 2 s have passed, and every fingertip is 5 cm outside the touch zone.
 - **Scream:** `Assets/Audio/scream.mp3` (12 s), imported as mono and loaded in memory. It's spatialised with Meta XR Audio from the mug's centre, and it follows the mug if the mug moves mid-scream. A new trigger restarts it rather than playing two at once.
-- **Background:** `Assets/Audio/mugAudio.mp3` (8 min, streamed, stereo, not spatialised). It loops at 35%, fades in over 3 s when the scene starts, and drops to 25% of that while the scream plays. The bed is about 5 dB louder than the scream, so without ducking it would mask it. Levels are on `MugScream`.
-- **Event:** `onScream` fires with each scream, ready for the room drain and other effects.
+- **Background:** world-locked, from `Assets/Audio/mugAudio_L.mp3` and `mugAudio_R.mp3`, the two channels of `mugAudio.mp3` split to mono. The original is very wide: the side signal is as loud as the mid.
+  - The two channels play in sync from two fixed points 3 m left and right of where you start (1 m forward, head height). They're spatialised, so the bed stays in the room as you turn instead of following your head.
+  - It loops at 35%, fades in over 3 s, and drains as a hand approaches the mug. It's cut in the silence before the scream and drops to 25% under the scream.
+  - The stereo `mugAudio.mp3` is the head-locked fallback if the pair isn't assigned.
+- **Room acoustics:** `AudioRoom` (`MetaXRAudioRoomAcousticProperties` + `RoomAcoustics`) gives Meta XR Audio early reflections and reverb sized from the scanned MRUK room. It's capped at 15 × 5 × 15 m, with an 8 × 3 × 6 m default. Without it the sounds have no room around them and feel inside the head. Spatial sound is much clearer on headphones than on the headset speakers.
+- **Event:** `onScream` fires with each scream. RoomDrain is connected to it in the scene; add other effects the same way.
 
 **Measuring "almost touching or contact?"**
 1. Do 10 reaches at each zone size.
@@ -37,7 +52,7 @@ Empty mixed-reality starting point for the Cup Spike explorations. It has the sa
 
 Each scream logs `[MugScream] SCREAM #n` with the fingertip distance. Switching zones logs the running totals, and the debug panel shows them live.
 
-Debug: the zone shows as two rings at the mug's base and rim:
+Debug: a faint ring at mid-height marks the 30 cm approach zone and brightens as the breath builds. The touch zone shows as two rings at the mug's base and rim:
 
 | Ring colour | Meaning |
 | --- | --- |
@@ -62,9 +77,20 @@ Fused pose at pick-up: the mug is still upright on the table, so:
   - sideways and height come from the camera ray through the box
   - distance along that ray comes from the finger model (it agreed with the camera to ~3 cm on device)
   - the handle points at the fingers
-That pose is stored relative to the WRIST joint. Curled fingers are the least reliable joints
-while gripping; on device they made the proxy tilt and jump to one side.
-While held: the mug follows the wrist through that offset.
+From that pose, the handle point (where the fingers go through) is stored relative to the WRIST
+joint. Curled fingers are the least reliable joints while gripping; on device they made the proxy
+tilt and jump to one side.
+While held:
+  - The handle point stays locked to the wrist, and the mug pivots about it, so a rotation error
+    barely moves it.
+  - Turning about the vertical follows the hand fully. Tilt is damped: a hooked mug swings on the
+    fingers and stays near upright, and on device a rigid tilt was 20-30 degrees off.
+    Damped ignores tilt up to 15 degrees, blends smoothly to the full tilt by 50 degrees, and
+    follows exactly beyond that (25 -> ~5, 40 -> ~27, 90 -> 90). An earlier linear 60% damping was
+    too weak on device: a ~90 degree tip showed as ~42.
+    The Tilt button cycles Damped / Upright / Rigid.
+Release: the hand must read open continuously for 0.25 s. A single noisy reading no longer
+counts, after it released mugs that were still held.
   - When the camera sees the mug (within 8 cm sideways) while the wrist is nearly still, 35% of
     the sideways error is corrected. Distance isn't touched.
   - A jump over 8 cm in one frame is treated as a glitch and ignored for up to 0.25 s.
@@ -102,7 +128,9 @@ Hand menu (left palm up), top row:
 | Proxy | Show/hide the proxy mug (tracking keeps running) |
 | Freeze | Hold the proxy where it is, to walk round it and check alignment |
 | Dist | Distance source: Auto → depth only → size only (lit when not Auto; the panel shows which) |
-| Zone | Scream zone 10 cm ↔ 3 cm (lit at 3 cm) |
+| Hands | Show the virtual hands and the rig's rays and reticles (hidden by default, so only your real hands show in passthrough; tracking keeps running) |
+| Tilt | Held mug tilt: Damped → Upright → Rigid (lit when not Damped; the panel shows hand vs mug tilt) |
+| Zone | Touch distance 3 cm ↔ 10 cm (lit at 10 cm) |
 | Pin | Pin the scream zone by pinching at the mug / back to tracking (lit while pinned) |
 | Miss / False | Log a reach that didn't fire / a fire without a reach |
 

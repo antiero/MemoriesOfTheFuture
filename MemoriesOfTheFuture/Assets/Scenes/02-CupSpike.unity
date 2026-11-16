@@ -676,6 +676,8 @@ GameObject:
   - component: {fileID: 982673524}
   - component: {fileID: 982673523}
   - component: {fileID: 982673528}
+  - component: {fileID: 982673529}
+  - component: {fileID: 982673530}
   m_Layer: 0
   m_Name: CupDetection
   m_TagString: Untagged
@@ -714,6 +716,7 @@ MonoBehaviour:
   detector: {fileID: 982673525}
   debugView: {fileID: 982673524}
   mugScream: {fileID: 982673528}
+  handVisibility: {fileID: 982673530}
   proxyRenderers:
   - {fileID: 1305061110}
 --- !u!114 &982673524
@@ -774,6 +777,14 @@ MonoBehaviour:
   pickUpBoxMargin: 0.35
   pickUpDepthTolerance: 0.3
   releaseAfterOpen: 0.25
+  correctionGate: 0.08
+  correctionGain: 0.35
+  correctionMaxWristSpeed: 0.15
+  glitchJump: 0.08
+  glitchHold: 0.25
+  tiltMode: 1
+  tiltDeadZone: 15
+  tiltFullAt: 50
   mugHeight: 0.095
   mugRadius: 0.04
   target: {fileID: 1305061109}
@@ -822,21 +833,74 @@ MonoBehaviour:
   rightHand: {fileID: 688772556}
   scream: {fileID: 8300000, guid: 312691852e5894cd080dac1983384bd9, type: 3}
   volume: 1
+  breath: {fileID: 8300000, guid: 03655a4bd51d04e6f86ea475ff940f87, type: 3}
+  breathVolume: 0.9
+  breathPitch: {x: 0.9, y: 1.15}
   background: {fileID: 8300000, guid: 6160a88999a37472bb81bf4b33b613a8, type: 3}
+  backgroundLeft: {fileID: 8300000, guid: 078f00e9abc7d41bc87ec539c4d53686, type: 3}
+  backgroundRight: {fileID: 8300000, guid: 3b87dd5b95dfa433aa64db7fc8eddba9, type: 3}
+  bedSpread: 3
+  bedForward: 1
   backgroundVolume: 0.35
   backgroundFadeIn: 3
   duckTo: 0.25
+  approachDrain: 0.85
   duckSpeed: 4
+  approachStart: 0.3
   zonePresets:
-  - 0.1
   - 0.03
+  - 0.1
+  silenceBeat: 0.35
   rearmMargin: 0.05
   cooldown: 2
   unlitMaterial: {fileID: 2100000, guid: dd2245643e43c48e6944df551b787ee6, type: 2}
   showZone: 1
   onScream:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 982673529}
+        m_TargetAssemblyTypeName: CupSpike.RoomDrain, Assembly-CSharp
+        m_MethodName: Drain
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &982673529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 669ad1201b74a438bbdc9ee14ae293d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.RoomDrain
+  passthrough: {fileID: 963901709}
+  peak: {x: -0.15, y: 0.65, z: -1}
+  attack: 0.12
+  hold: 0.9
+  release: 1.6
+--- !u!114 &982673530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56b7ecb6cd24b46b08e60020f2a526be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.HandVisibility
+  rig: {fileID: 688772555}
+  visible: 0
 --- !u!1 &988729871
 GameObject:
   m_ObjectHideFlags: 0
@@ -907,6 +971,77 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 988729871}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1014769913
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1014769916}
+  - component: {fileID: 1014769915}
+  - component: {fileID: 1014769914}
+  m_Layer: 0
+  m_Name: AudioRoom
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1014769914
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1014769913}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0876bdb0e5634fcf977b499e34142ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.RoomAcoustics
+  fallbackSize: {x: 8, y: 3, z: 6}
+  maxSize: {x: 15, y: 5, z: 15}
+  clutter: 0.6
+--- !u!114 &1014769915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1014769913}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc3115f71c5841078600752259d33fd1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Meta.XR.Audio::MetaXRAudioRoomAcousticProperties
+  lockPositionToListener: 1
+  width: 8
+  height: 3
+  depth: 5
+  leftMaterial: 18
+  rightMaterial: 18
+  ceilingMaterial: 0
+  floorMaterial: 4
+  frontMaterial: 18
+  backMaterial: 18
+  clutterFactor: 0.5
+--- !u!4 &1014769916
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1014769913}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -1386,3 +1521,4 @@ SceneRoots:
   - {fileID: 963901701}
   - {fileID: 1100000002}
   - {fileID: 988729874}
+  - {fileID: 1014769916}

@@ -33,6 +33,7 @@ namespace CupSpike
     {
         public enum DistanceMode { Auto, DepthOnly, SizeOnly }
         public enum Source { None, Vision, Hand }
+        public enum HeldTilt { Rigid, Damped, Upright }
 
         [Header("Inputs")]
         [SerializeField] PassthroughCameraAccess cameraAccess;
@@ -86,6 +87,14 @@ namespace CupSpike
         [SerializeField] float glitchJump = 0.08f;
         [Tooltip("...and is ignored for up to this long before it's accepted as real (s).")]
         [SerializeField] float glitchHold = 0.25f;
+        [Tooltip("How the held mug follows the hand's tilt. Rigid: fully. Damped: past a dead zone, scaled. " +
+                 "Upright: never (turning about the vertical always follows).")]
+        [SerializeField] HeldTilt tiltMode = HeldTilt.Damped;
+        [Tooltip("Damped: hand tilt below this is ignored (degrees). A hooked mug swings on the fingers.")]
+        [SerializeField] float tiltDeadZone = 15f;
+        [Tooltip("Damped: from this hand tilt up, the mug follows fully (degrees). In between it blends smoothly. " +
+                 "A linear 60% scale was too weak on device: a ~90 degree tip showed as ~42.")]
+        [SerializeField] float tiltFullAt = 50f;
 
         [Header("Real mug (m)")]
         [SerializeField] float mugHeight = 0.095f;
@@ -151,6 +160,10 @@ namespace CupSpike
         public float PickUpModelError { get; private set; } = float.NaN;
         public float HeldCorrection { get; private set; }
         public int GlitchesIgnored { get; private set; }
+        /// <summary>Held: the hand's tilt since pick-up, and the tilt applied to the mug (degrees).</summary>
+        public float HandTilt { get; private set; }
+        public float MugTilt { get; private set; }
+        public HeldTilt TiltMode { get => tiltMode; set => tiltMode = value; }
 
         /// <summary>The frame the last result came from (copied only while Keep Debug Frame is on).</summary>
         public RenderTexture DebugFrame => _debugFrame;
@@ -182,7 +195,9 @@ namespace CupSpike
         bool _leftCurled, _rightCurled;
         MugGrip.Result _left, _right;
         Pose _cupPose;              // desired target pose this frame
-        Pose _holdOffset;           // held mug base pose in the holding wrist's space (fused at pick-up)
+        // Held: fused at pick-up. The handle point in wrist space, and both rotations at that moment.
+        Vector3 _handleInWrist;
+        Quaternion _wristRotAtPickUp = Quaternion.identity, _mugRotAtPickUp = Quaternion.identity;
         Vector3 _lastWristPos;
         float _wristSpeed;
         float _glitchSince = -1f;
@@ -470,12 +485,15 @@ namespace CupSpike
             }
             _loggedHandDropout = false;
 
-            if (curled) _openSince = -1f;
+            // Release needs the hand CONTINUOUSLY open (raw straightness, not the latched curl state):
+            // on device one noisy reading above the open threshold latched "open" and released
+            // mugs that were still held (holds of 0.3-4 s, "opened" at 0.76).
+            if (r.straightness <= grip.openAbove) _openSince = -1f;
             else if (_openSince < 0f) _openSince = Time.time;
             else if (Time.time - _openSince > releaseAfterOpen) { Release($"hand opened ({r.straightness:0.00})"); return; }
 
-            // Follow the wrist with the offset fused at pick-up.
-            var candidate = Compose(r.wrist, _holdOffset);
+            // Follow the hand from the pose fused at pick-up, pivoting about the handle.
+            var candidate = HeldPose(r.wrist);
             if (Time.deltaTime > 0f) _wristSpeed = Vector3.Distance(r.wrist.position, _lastWristPos) / Time.deltaTime;
             _lastWristPos = r.wrist.position;
 
@@ -505,6 +523,48 @@ namespace CupSpike
         {
             var inv = Quaternion.Inverse(parent.rotation);
             return new Pose(inv * (world.position - parent.position), inv * world.rotation);
+        }
+
+        /// <summary>
+        /// The held mug's pose from the current wrist:
+        ///  - the handle point (where the fingers go through) is locked to the hand, and the mug
+        ///    rotates about it, so a rotation error barely moves the mug (the wrist is ~10 cm away);
+        ///  - the hand's rotation since pick-up is split into turning about the vertical (followed
+        ///    fully) and tilt (damped: a hooked mug swings on the fingers and stays near upright).
+        /// </summary>
+        Pose HeldPose(Pose wrist)
+        {
+            var handle = wrist.position + wrist.rotation * _handleInWrist;
+            var delta = wrist.rotation * Quaternion.Inverse(_wristRotAtPickUp);
+            var rot = DampTilt(delta, out float handTilt, out float mugTilt) * _mugRotAtPickUp;
+            HandTilt = handTilt;
+            MugTilt = mugTilt;
+            return new Pose(handle - rot * grip.holeInMug, rot);
+        }
+
+        /// <summary>Swing-twist split about world up; the swing (tilt) is damped per <see cref="TiltMode"/>.</summary>
+        Quaternion DampTilt(Quaternion q, out float handTilt, out float mugTilt)
+        {
+            if (q.w < 0f) q = new Quaternion(-q.x, -q.y, -q.z, -q.w);
+            var p = Vector3.Project(new Vector3(q.x, q.y, q.z), Vector3.up);
+            var twist = new Quaternion(p.x, p.y, p.z, q.w);
+            float m = Mathf.Sqrt(twist.x * twist.x + twist.y * twist.y + twist.z * twist.z + twist.w * twist.w);
+            twist = m > 1e-6f ? new Quaternion(twist.x / m, twist.y / m, twist.z / m, twist.w / m) : Quaternion.identity;
+            var swing = q * Quaternion.Inverse(twist);
+            swing.ToAngleAxis(out float angle, out var axis);
+            if (angle > 180f) angle -= 360f;
+            handTilt = Mathf.Abs(angle);
+
+            float applied;
+            switch (TiltMode)
+            {
+                case HeldTilt.Rigid: applied = handTilt; break;
+                case HeldTilt.Upright: applied = 0f; break;
+                default: applied = handTilt * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(tiltDeadZone, tiltFullAt, handTilt)); break;
+            }
+            mugTilt = applied;
+            if (handTilt < 1e-3f || float.IsNaN(axis.x)) return twist;
+            return Quaternion.AngleAxis(Mathf.Sign(angle) * applied, axis) * twist;
         }
 
         /// <summary>
@@ -544,7 +604,7 @@ namespace CupSpike
             if (err.magnitude > correctionGate) { Rejected = $"held: sighting {err.magnitude * 100f:0} cm off (another cup?)"; return; }
 
             var step = err * correctionGain;
-            _holdOffset.position += Quaternion.Inverse(r.wrist.rotation) * step;
+            _handleInWrist += Quaternion.Inverse(r.wrist.rotation) * step;
             HeldCorrection += step.magnitude;
             Rejected = $"held: corrected {step.magnitude * 100f:0.0} cm sideways";
         }
@@ -566,7 +626,10 @@ namespace CupSpike
             if (!inBox || !depthOk) return;
 
             var fused = FusedPickUpPose(r);
-            _holdOffset = Relative(r.wrist, fused);
+            var handleWorld = fused.position + fused.rotation * grip.holeInMug;
+            _handleInWrist = Quaternion.Inverse(r.wrist.rotation) * (handleWorld - r.wrist.position);
+            _wristRotAtPickUp = r.wrist.rotation;
+            _mugRotAtPickUp = fused.rotation;
             _holdHand = hand;
             _openSince = -1f;
             _glitchSince = -1f;
