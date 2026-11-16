@@ -11,8 +11,46 @@ Empty mixed-reality starting point for the Cup Spike explorations. It has the sa
 | `PassthroughCamera` | `PassthroughCameraAccess` at 1280x960, for any camera-feed work (e.g. finding the cup) |
 | `OVRCameraRig` | Head and hands, with Insight passthrough on, an `OVRPassthroughLayer`, and the `OVRComprehensiveInteractionRig` |
 | `CupSpikeRoot` | Parent for spike content, about 1 m up and 0.6 m in front of the origin |
+| `CupSpikeRoot/CupDetection` | Permissions (`PictureChangesBootstrap`), `EnvironmentRaycastManager`, `CupDetector`, `CupDebugView`, `CupSpikeMenu` |
 | `HandMenu` | Left hand menu (`HandMenu` + `SceneMenu`), same as in `01-PictureChanges` but with only the scene buttons |
 | `CupSpikeRoot/ProxyMug` | To-scale stand-in for the client's mug (prefab instance), turned so the logo faces the origin |
+
+## Cup detection
+
+```
+PassthroughCameraAccess (1280x960) + camera pose at capture
+  -> YOLO11n (COCO, on-device, Unity Inference Engine, GPU, 640x640, spread over frames)
+  -> best "cup" box + best box of any class, worked out on the GPU (11 floats read back)
+  -> ray through the box centre -> distance from environment depth, or from the box height
+     vs the real mug height (Auto uses depth when the two agree)
+  -> cup centre -> ProxyMug placed on it, upright, logo towards you
+Hand hand-off: while the cup is seen with a palm within 15 cm, its offset from that wrist is kept.
+When the camera loses it (held mugs often read as "mouse" / "cell phone"), the proxy follows the hand.
+```
+
+Tested on frames from a headset recording, the mug on the desk scores 0.7-0.93. Held in the hand, it mostly isn't recognised as a cup, which is why the proxy follows the hand. A lamp base scored up to 0.35 as a cup, so the minimum score is 0.45.
+
+**Model:** `Models/yolo11n.onnx` + `Models/yolo11n_classes.txt` (COCO, `cup` = 41) from Unity's `unity/inference-engine-yolo` repo on Hugging Face. Ultralytics YOLO is **AGPL-3.0** (the repo lists GPL-3.0). That's fine for this spike, but anything delivered to the client needs an Ultralytics licence or a permissively licensed model (for example YOLOX, Apache-2.0).
+
+### Debugging
+
+The debug panel is **on by default**. It floats below your line of sight and shows:
+- the frame the model last analysed, with a green box on the cup (orange when its score is below the threshold) and a grey box on the best object of any other class
+- the status, analysis rate and time per frame, the cup and best-class scores, the depth and size distances and which one is used, the tracking source (camera or hand) and the nearest palm distance
+- the reason a detection was ignored, if one was
+
+In the world, a yellow dot marks the estimated cup centre and a cyan dot marks where the depth ray hit. The console logs every change of state with the prefix `[CupDetector]`.
+
+Hand menu (left palm up), top row:
+
+| Button | Does |
+| --- | --- |
+| Debug | Panel and markers on/off |
+| Proxy | Show/hide the proxy mug (tracking keeps running) |
+| Freeze | Hold the proxy where it is, to walk round it and check alignment |
+| Dist | Distance source: Auto → depth only → size only (lit when not Auto; the panel shows which) |
+
+In the Editor, MRUK's mock camera shows colour bars. Set **Editor Test Image** on `CupDetector` to a frame from a headset recording to test the whole chain without the headset (depth isn't available in the Editor, so it uses the size estimate).
 
 ## Proxy mug
 

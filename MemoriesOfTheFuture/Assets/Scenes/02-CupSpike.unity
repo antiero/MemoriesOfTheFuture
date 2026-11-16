@@ -661,6 +661,139 @@ MonoBehaviour:
   edgeRenderingEnabled_: 0
   edgeColor_: {r: 1, g: 1, b: 1, a: 1}
   colorMapType: 0
+--- !u!1 &982673521
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 982673522}
+  - component: {fileID: 982673527}
+  - component: {fileID: 982673526}
+  - component: {fileID: 982673525}
+  - component: {fileID: 982673524}
+  - component: {fileID: 982673523}
+  m_Layer: 0
+  m_Name: CupDetection
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &982673522
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1100000002}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &982673523
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8bb8bbe1acf84ed18ae5efbe61b6750, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.CupSpikeMenu
+  menu: {fileID: 988729873}
+  detector: {fileID: 982673525}
+  debugView: {fileID: 982673524}
+  proxyRenderers:
+  - {fileID: 1305061110}
+--- !u!114 &982673524
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 602c3a5fc9639477f89bc76824a6571b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.CupDebugView
+  detector: {fileID: 982673525}
+  head: {fileID: 330107616}
+  unlitMaterial: {fileID: 2100000, guid: dd2245643e43c48e6944df551b787ee6, type: 2}
+  font: {fileID: 11400000, guid: f675742eaf9c20a4f909d78ee7a14fed, type: 2}
+  visible: 1
+  panelOffset: {x: 0, y: -0.2, z: 0.6}
+  panelWidth: 0.28
+  followSpeed: 4
+  lineWidth: 0.0015
+--- !u!114 &982673525
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21162ad8610004a998db7d97a7c576b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.CupDetector
+  cameraAccess: {fileID: 869232205}
+  raycaster: {fileID: 982673526}
+  head: {fileID: 330107616}
+  leftHand: {fileID: 688772557}
+  rightHand: {fileID: 688772556}
+  modelAsset: {fileID: 5022602860645237092, guid: f2ab778db5b714694a0915cd739c60f2, type: 3}
+  classLabels: {fileID: 4900000, guid: d6e2f5651a0de4bbaaaae176e8b0af64, type: 3}
+  backend: 256
+  cupClass: 41
+  layersPerFrame: 40
+  minScore: 0.35
+  gateDistance: 0.3
+  strongScore: 0.7
+  visionFresh: 0.3
+  lostAfter: 1
+  distanceMode: 0
+  attachRadius: 0.15
+  mugHeight: 0.095
+  mugRadius: 0.04
+  target: {fileID: 1305061109}
+  followSpeed: 12
+  snapDistance: 0.25
+--- !u!114 &982673526
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d8affdff7ba47d892cc734baac9ac71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: meta.xr.mrutilitykit::Meta.XR.EnvironmentRaycastManager
+  CustomTrackingSpace: {fileID: 0}
+--- !u!114 &982673527
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e7d7fda0ee694ecb882b83ba8bbf3ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PictureChanges.PictureChangesBootstrap
 --- !u!1 &988729871
 GameObject:
   m_ObjectHideFlags: 0
@@ -769,6 +902,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1305061109}
+  - {fileID: 982673522}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1246796936
@@ -862,6 +996,11 @@ PrefabInstance:
 --- !u!4 &1305061109 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 828822656190713318, guid: ba11d0c32a2d84592b0f966890c232d2, type: 3}
+  m_PrefabInstance: {fileID: 1305061108}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &1305061110 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 2278744139182848809, guid: ba11d0c32a2d84592b0f966890c232d2, type: 3}
   m_PrefabInstance: {fileID: 1305061108}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1382652508
