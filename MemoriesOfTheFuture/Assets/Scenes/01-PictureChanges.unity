@@ -1549,6 +1549,7 @@ GameObject:
   - component: {fileID: 1837796099}
   - component: {fileID: 1837796098}
   - component: {fileID: 1837796097}
+  - component: {fileID: 1837796102}
   m_Layer: 0
   m_Name: Experience
   m_TagString: Untagged
@@ -1662,6 +1663,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1837796102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1837796096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7bdab71fb9ebd4f37b3a6628ca93c759, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.SceneMenu
+  menu: {fileID: 1837796100}
+  scenes:
+  - label: Painting
+    scene: 01-PictureChanges
+  - label: Cup
+    scene: 02-CupSpike
 --- !u!1 &1954634562
 GameObject:
   m_ObjectHideFlags: 0

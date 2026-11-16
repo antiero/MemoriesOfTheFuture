@@ -64,6 +64,7 @@ Turn your **left palm towards your face**: the menu fades in just off the palm (
 | Debug | Detector panel + world overlay (off by default) |
 | Grid | 10 mm alignment grid instead of the painting |
 | Capture | Save the detector's current camera frame |
+| Painting / Cup | Bottom row (`SceneMenu`): switch scene. The open scene is lit. See `Assets/Shared/README.md` |
 
 ## Test mode (no physical painting needed)
 

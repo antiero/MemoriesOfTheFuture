@@ -11,6 +11,7 @@ Empty mixed-reality starting point for the Cup Spike explorations. It has the sa
 | `PassthroughCamera` | `PassthroughCameraAccess` at 1280x960, for any camera-feed work (e.g. finding the cup) |
 | `OVRCameraRig` | Head and hands, with Insight passthrough on, an `OVRPassthroughLayer`, and the `OVRComprehensiveInteractionRig` |
 | `CupSpikeRoot` | Parent for spike content, about 1 m up and 0.6 m in front of the origin |
+| `HandMenu` | Left hand menu (`HandMenu` + `SceneMenu`), same as in `01-PictureChanges` but with only the scene buttons |
 | `CupSpikeRoot/ProxyMug` | To-scale stand-in for the client's mug (prefab instance), turned so the logo faces the origin |
 
 ## Proxy mug
@@ -37,4 +38,4 @@ We have no photo of the back, so the proxy assumes nothing is printed there.
 
 - Put scripts in `Assets/CupSpike/Scripts` under the `CupSpike` namespace, and materials and other assets in sibling folders.
 - Keep spike content under `CupSpikeRoot` so it can be moved or turned off in one place.
-- The scene is in Build Settings at index 1. To run it on device, move it to index 0 or untick `01-PictureChanges`.
+- On the headset, switch to this scene from the left hand menu (**Cup**). See "Switching scenes" in `Assets/Shared/README.md`.

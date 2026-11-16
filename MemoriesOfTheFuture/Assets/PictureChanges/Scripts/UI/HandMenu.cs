@@ -56,7 +56,7 @@ namespace PictureChanges.UI
             public Transform root, plate;
             public Material mat;
             public TextMeshPro text;
-            public bool hovered, pressed;
+            public bool hovered, pressed, newRow;
             public float hoverGlow, lastPress = -99f;
         }
 
@@ -65,7 +65,7 @@ namespace PictureChanges.UI
         Material _panelMat;
         TextMeshPro _title;
         AudioSource _audio;
-        bool _shown, _indexExtended;
+        bool _shown, _indexExtended, _breakBeforeNext;
         float _alpha;
         Vector3 _vel;
 
@@ -74,10 +74,14 @@ namespace PictureChanges.UI
         /// <summary>Adds a button. Call before or after Start; the grid re-lays itself out.</summary>
         public void AddButton(string label, Action onPress, Func<bool> isOn = null)
         {
-            var b = new Button { label = label, onPress = onPress, isOn = isOn };
+            var b = new Button { label = label, onPress = onPress, isOn = isOn, newRow = _breakBeforeNext && _buttons.Count > 0 };
+            _breakBeforeNext = false;
             _buttons.Add(b);
             if (_menu != null) { BuildButton(b); Layout(); }
         }
+
+        /// <summary>The next button added starts a new row (e.g. to keep a group of buttons together).</summary>
+        public void AddRowBreak() => _breakBeforeNext = true;
 
         void Start()
         {
@@ -125,7 +129,19 @@ namespace PictureChanges.UI
 
         void Layout()
         {
-            int cols = _buttons.Count > 4 ? 3 : 2, rows = Mathf.CeilToInt(_buttons.Count / (float)cols);
+            // Split into rows: wrap at the column count, and start a new row at each row break.
+            int largestGroup = 0, run = 0;
+            foreach (var b in _buttons) { run = b.newRow ? 1 : run + 1; largestGroup = Mathf.Max(largestGroup, run); }
+            int cols = largestGroup > 4 ? 3 : 2;
+            var rowOf = new int[_buttons.Count];
+            var rowCount = new List<int>();
+            for (int i = 0; i < _buttons.Count; i++)
+            {
+                if (i == 0 || _buttons[i].newRow || rowCount[rowCount.Count - 1] == cols) rowCount.Add(0);
+                rowOf[i] = rowCount.Count - 1;
+                rowCount[rowCount.Count - 1]++;
+            }
+            int rows = rowCount.Count;
             float step = buttonSize + buttonGap;
             float w = cols * step + buttonGap, h = rows * step + buttonGap + 0.014f;   // room for the title
             var panel = _menu.Find("Panel");
@@ -134,10 +150,11 @@ namespace PictureChanges.UI
             _panelMat.SetVector("_Size", new Vector4(w, h, 0, 0));
             _title.rectTransform.localPosition = new Vector3(0f, h * 0.5f - 0.014f, -0.001f);
 
-            for (int i = 0; i < _buttons.Count; i++)
+            for (int i = 0, c = 0; i < _buttons.Count; i++, c++)
             {
-                int r = i / cols, c = i % cols;
-                float x = (c - (cols - 1) * 0.5f) * step;
+                int r = rowOf[i];
+                if (i > 0 && rowOf[i - 1] != r) c = 0;
+                float x = (c - (rowCount[r] - 1) * 0.5f) * step;   // short rows are centred
                 float y = ((rows - 1) * 0.5f - r) * step - 0.012f;
                 _buttons[i].root.localPosition = new Vector3(x, y, 0f);
             }
