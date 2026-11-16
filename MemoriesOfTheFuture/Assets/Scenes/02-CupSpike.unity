@@ -678,6 +678,9 @@ GameObject:
   - component: {fileID: 982673528}
   - component: {fileID: 982673529}
   - component: {fileID: 982673530}
+  - component: {fileID: 982673532}
+  - component: {fileID: 982673531}
+  - component: {fileID: 982673533}
   m_Layer: 0
   m_Name: CupDetection
   m_TagString: Untagged
@@ -717,8 +720,12 @@ MonoBehaviour:
   debugView: {fileID: 982673524}
   mugScream: {fileID: 982673528}
   handVisibility: {fileID: 982673530}
+  interior: {fileID: 982673532}
+  runeCapture: {fileID: 982673531}
+  dream: {fileID: 982673533}
   proxyRenderers:
   - {fileID: 1305061110}
+  proxyVisible: 0
 --- !u!114 &982673524
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -733,6 +740,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CupSpike.CupDebugView
   detector: {fileID: 982673525}
   mugScream: {fileID: 982673528}
+  interior: {fileID: 982673532}
+  runeCapture: {fileID: 982673531}
+  dream: {fileID: 982673533}
   head: {fileID: 330107616}
   unlitMaterial: {fileID: 2100000, guid: dd2245643e43c48e6944df551b787ee6, type: 2}
   font: {fileID: 11400000, guid: f675742eaf9c20a4f909d78ee7a14fed, type: 2}
@@ -901,6 +911,89 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CupSpike.HandVisibility
   rig: {fileID: 688772555}
   visible: 0
+--- !u!114 &982673531
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ba3b3fe8cfd14dc3a9dc99209e77c46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.RuneCapture
+  cameraAccess: {fileID: 869232205}
+  detector: {fileID: 982673525}
+  interior: {fileID: 982673532}
+  interval: 0.5
+  maxFrames: 60
+--- !u!114 &982673532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70a64845bb41449f58eaee00bb15cae1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.MugInterior
+  detector: {fileID: 982673525}
+  proxy: {fileID: 1305061109}
+  proxyMesh: {fileID: 1305061111}
+  occluderMaterial: {fileID: 2100000, guid: ab250f4cb90b641ac994372643b4dd7e, type: 2}
+  portalMaterial: {fileID: 2100000, guid: 22178bdd1b71045c9a0d1ef6d1cc57fb, type: 2}
+  wellMaterial: {fileID: 2100000, guid: 69a86e5282f25435abba82b095e2e3b5, type: 2}
+  runeMaterial: {fileID: 2100000, guid: 81c23b901ea6a4681a63b92fce00ab55, type: 2}
+  drone: {fileID: 8300000, guid: 03655a4bd51d04e6f86ea475ff940f87, type: 3}
+  dronePitch: 0.55
+  droneVolume: 0.7
+  openingRadius: 0.0365
+  wellDepth: 0.6
+  wellBottomRadius: 0.09
+  throatScale: 1.3
+  shaftFollow: 8
+  maxDistance: 0.9
+  gazeAngle: 25
+  intoAngle: 50
+  dwell: 0.4
+  openTime: 1.5
+  closeTime: 0.6
+  forceOpen: 0
+--- !u!114 &982673533
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efe4a7ce43ccb4ae1acf88eb29b1bf46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.DreamState
+  detector: {fileID: 982673525}
+  interior: {fileID: 982673532}
+  mugScream: {fileID: 982673528}
+  hands: {fileID: 982673530}
+  passthrough: {fileID: 963901709}
+  domeMaterial: {fileID: 2100000, guid: 96fc6e90f53674032a5a42acc2a79ad2, type: 2}
+  emberMaterial: {fileID: 2100000, guid: ee528bc1a64a144beb18b2f09feebfa6, type: 2}
+  runeFloatMaterial: {fileID: 2100000, guid: 7584123a6bc0144c28fb31a31f4e9cca, type: 2}
+  whisper: {fileID: 8300000, guid: 03655a4bd51d04e6f86ea475ff940f87, type: 3}
+  stareBeforeDream: 2
+  deepenTime: 8
+  maxFullTime: 20
+  lookAwayToWake: 1
+  wakeTime: 0.25
+  wakeSilence: 0.6
+  cooldown: 6
+  stayGazeAngle: 35
+  walkLimit: 0.4
+  wakeMode: 0
+  forceDream: 0
 --- !u!1 &988729871
 GameObject:
   m_ObjectHideFlags: 0
@@ -1179,6 +1272,11 @@ Transform:
 --- !u!23 &1305061110 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 2278744139182848809, guid: ba11d0c32a2d84592b0f966890c232d2, type: 3}
+  m_PrefabInstance: {fileID: 1305061108}
+  m_PrefabAsset: {fileID: 0}
+--- !u!33 &1305061111 stripped
+MeshFilter:
+  m_CorrespondingSourceObject: {fileID: 4069933486594576355, guid: ba11d0c32a2d84592b0f966890c232d2, type: 3}
   m_PrefabInstance: {fileID: 1305061108}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1382652508

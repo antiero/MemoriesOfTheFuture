@@ -43,6 +43,10 @@ namespace CupSpike
         [SerializeField] Hand leftHand;
         [SerializeField] Hand rightHand;
 
+        [Header("Simulation (desktop debug build)")]
+        [Tooltip("No camera, model or hands: the mug's pose comes from Simulate(). Used by 03-CupDesktop.")]
+        [SerializeField] bool simulate;
+
         [Header("Model (YOLO11n, COCO)")]
         [SerializeField] ModelAsset modelAsset;
         [SerializeField] TextAsset classLabels;
@@ -195,6 +199,8 @@ namespace CupSpike
         bool _leftCurled, _rightCurled;
         MugGrip.Result _left, _right;
         Pose _cupPose;              // desired target pose this frame
+        Pose _simPose;
+        bool _simHeld, _simSet;
         // Held: fused at pick-up. The handle point in wrist space, and both rotations at that moment.
         Vector3 _handleInWrist;
         Quaternion _wristRotAtPickUp = Quaternion.identity, _mugRotAtPickUp = Quaternion.identity;
@@ -217,6 +223,7 @@ namespace CupSpike
             if (classLabels != null)
                 _labels = classLabels.text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             if (target != null) target.gameObject.SetActive(false);
+            if (simulate) { SetStatus("Simulated (desktop debug)"); return; }
             StartCoroutine(LoadModel());
         }
 
@@ -285,6 +292,7 @@ namespace CupSpike
 
         void Update()
         {
+            if (simulate) { UpdateSimulated(); UpdateTarget(); return; }
             UpdateStatus();
             if (ModelReady && !_busy && cameraAccess != null && cameraAccess.IsPlaying && cameraAccess.IsUpdatedThisFrame)
                 StartCoroutine(Analyse());
@@ -292,6 +300,25 @@ namespace CupSpike
             UpdateHold();
             UpdateSource();
             UpdateTarget();
+        }
+
+        /// <summary>Desktop debug: the mug's pose is supplied from outside, with no camera, model or hands.</summary>
+        public void Simulate(Pose cupBase, bool held)
+        {
+            _simPose = cupBase;
+            _simHeld = held;
+            _simSet = true;
+        }
+
+        void UpdateSimulated()
+        {
+            var source = !_simSet ? Source.None : _simHeld ? Source.Hand : Source.Vision;
+            if (source != _lastSource) Debug.Log($"[CupDetector] Source (simulated): {_lastSource} -> {source}");
+            _lastSource = source;
+            TrackingSource = source;
+            if (source == Source.None) return;
+            _cupPose = _simPose;
+            CupCentre = _cupPose.position + _cupPose.rotation * (Vector3.up * (mugHeight * 0.5f));
         }
 
         void UpdateStatus()

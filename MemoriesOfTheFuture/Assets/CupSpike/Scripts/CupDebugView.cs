@@ -17,6 +17,9 @@ namespace CupSpike
     {
         [SerializeField] CupDetector detector;
         [SerializeField] MugScream mugScream;
+        [SerializeField] MugInterior interior;
+        [SerializeField] RuneCapture runeCapture;
+        [SerializeField] DreamState dream;
         [SerializeField] Transform head;
         [Tooltip("URP Unlit material asset, referenced so the shader is kept in builds.")]
         [SerializeField] Material unlitMaterial;
@@ -198,6 +201,9 @@ namespace CupSpike
                 $"{(d.HoldingHand != "" ? $"\ntilt {d.TiltMode}: hand {d.HandTilt:0}°  mug {d.MugTilt:0}°" : "")}" +
                 $"{(d.Rejected != "" ? $"\n<color=#FF851B>ignored: {d.Rejected}</color>" : "")}" +
                 $"{(mugScream != null ? $"\n<color=#FF6F61>{mugScream.StatusLine}</color>" : "")}" +
+                $"{(interior != null ? $"\n<color=#B10DC9>{interior.StatusLine}</color>" : "")}" +
+                $"{(dream != null ? $"\n<color=#F012BE>{dream.StatusLine}</color>" : "")}" +
+                $"{(runeCapture != null && (runeCapture.Recording || runeCapture.Saved > 0) ? $"   <color=#FF4136>REC {runeCapture.Saved}{(runeCapture.Recording ? "" : " (stopped)")}</color>" : "")}" +
                 $"{(d.Frozen ? "   <color=#7FDBFF>FROZEN</color>" : "")}</size>";
         }
 

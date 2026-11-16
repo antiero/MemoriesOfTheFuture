@@ -23,7 +23,6 @@ namespace CupSpike
 
         public void Drain()
         {
-            if (passthrough == null) { Debug.LogWarning("[RoomDrain] No OVRPassthroughLayer"); return; }
             if (_running != null) StopCoroutine(_running);
             _running = StartCoroutine(Run());
         }
@@ -35,15 +34,15 @@ namespace CupSpike
             Apply(1f);
             yield return new WaitForSeconds(hold);
             for (float t = 0f; t < release; t += Time.deltaTime) { Apply(1f - Mathf.SmoothStep(0f, 1f, t / release)); yield return null; }
-            passthrough.DisableColorMap();
+            RoomLook.Clear(passthrough);
             _running = null;
         }
 
-        void Apply(float k) => passthrough.SetBrightnessContrastSaturation(peak.x * k, peak.y * k, peak.z * k);
+        void Apply(float k) => RoomLook.Set(passthrough, peak.x * k, peak.y * k, peak.z * k);
 
         void OnDisable()
         {
-            if (passthrough != null) passthrough.DisableColorMap();
+            RoomLook.Clear(passthrough);
         }
     }
 }

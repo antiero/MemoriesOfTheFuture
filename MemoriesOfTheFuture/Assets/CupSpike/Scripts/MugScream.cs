@@ -91,6 +91,33 @@ namespace CupSpike
         public int Misses { get; private set; }
         public int FalseFires { get; private set; }
         public bool ShowZone { get => showZone; set => showZone = value; }
+        /// <summary>While true (e.g. dreaming), the approach and touch don't fire.</summary>
+        public bool Suppressed { get; set; }
+        /// <summary>Extra multiplier on the background bed (e.g. muffled during the dream).</summary>
+        public float ExternalDuck { get; set; } = 1f;
+        public bool ScreamPlaying => _audio != null && _audio.isPlaying;
+        public bool InSilence => _inBeat;
+
+        /// <summary>A fingertip position supplied from outside (the desktop debug build's simulated hand).</summary>
+        public Vector3? SimulatedFingertip { get; set; }
+
+        // Tuning (used by the desktop debug build's panel).
+        public float ScreamVolume { get => volume; set { volume = value; if (_audio != null) _audio.volume = value; } }
+        public float BreathVolume { get => breathVolume; set => breathVolume = value; }
+        public float BackgroundVolume { get => backgroundVolume; set => backgroundVolume = value; }
+        public float ApproachStart { get => approachStart; set => approachStart = Mathf.Max(TouchZone + 0.02f, value); }
+        public float SilenceBeat { get => silenceBeat; set => silenceBeat = Mathf.Max(0f, value); }
+
+        public void SetScream(AudioClip clip) { scream = clip; if (_audio != null) { _audio.Stop(); _audio.clip = clip; } }
+        public void SetBreath(AudioClip clip) { breath = clip; StopBreath(); if (_breath != null) _breath.clip = clip; }
+        /// <summary>Replace the background bed with one clip (stereo, not spatialised).</summary>
+        public void SetBackground(AudioClip clip)
+        {
+            foreach (var b in _beds) if (b != null) Destroy(b.gameObject);
+            _beds.Clear();
+            background = clip;
+            if (clip != null) BedSource("BackgroundBed", clip, false).Play();
+        }
 
         public string StatusLine =>
             $"scream: {(HasZone ? (_inBeat ? "SILENCE" : Armed ? (Approach > 0f ? $"breathing {Approach:0.00}" : "armed") : "re-arming") : "no mug yet")}" +
@@ -251,6 +278,12 @@ namespace CupSpike
                 }
             }
 
+            if (HasZone && SimulatedFingertip.HasValue)
+            {
+                float d = SurfaceDistance(SimulatedFingertip.Value);
+                if (float.IsNaN(NearestTip) || d < NearestTip) { NearestTip = d; nearestHand = "simulated"; }
+            }
+
             // Re-arm once the scream has finished, the cooldown has passed and every fingertip is clear.
             if (!Armed && !_inBeat && !_audio.isPlaying && Time.time - _lastScream > cooldown &&
                 (float.IsNaN(NearestTip) || NearestTip > TouchZone + rearmMargin))
@@ -259,7 +292,7 @@ namespace CupSpike
                 Debug.Log("[MugScream] Re-armed");
             }
 
-            bool live = Armed && HasZone && !held && !float.IsNaN(NearestTip);
+            bool live = Armed && HasZone && !held && !Suppressed && !float.IsNaN(NearestTip);
             if (live && NearestTip < TouchZone)
                 StartCoroutine(TouchSequence($"{nearestHand} index {NearestTip * 100f:0.0} cm from the mug"));
             else
@@ -313,7 +346,7 @@ namespace CupSpike
             _bedLevel = backgroundFadeIn > 0f ? Mathf.MoveTowards(_bedLevel, 1f, Time.deltaTime / backgroundFadeIn) : 1f;
             float target = _inBeat ? 0f : _audio.isPlaying ? duckTo : 1f - approachDrain * Approach;
             _duck = _inBeat ? 0f : Mathf.MoveTowards(_duck, target, Time.deltaTime * duckSpeed);
-            foreach (var bed in _beds) bed.volume = backgroundVolume * _bedLevel * _duck;
+            foreach (var bed in _beds) bed.volume = backgroundVolume * _bedLevel * _duck * Mathf.Clamp01(ExternalDuck);
         }
 
         void UpdateZonePose()

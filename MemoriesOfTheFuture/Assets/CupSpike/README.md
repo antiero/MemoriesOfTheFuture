@@ -61,6 +61,25 @@ Debug: a faint ring at mid-height marks the 30 cm approach zone and brightens as
 | Orange | Re-arming |
 | Grey | Held |
 
+## Looking inside the mug (rune prototype, step 1)
+
+`MugInterior` (on `CupDetection`): look down into the real mug and its inside opens into a bottomless tunnel, with the client's rune (`Textures/Rune.png`, traced from their photo) glowing red at the bottom and a low drone rising from the mug. Look away and it closes.
+
+- **Trigger:** all of these must hold for 0.4 s, after which it opens over 1.5 s and closes in 0.6 s:
+  - the head is within 0.9 m
+  - the gaze is within 25° of the opening
+  - the head is above the opening, within 50° of the mug's own down axis, so it works for a held, tilted mug too
+- **How it's drawn:** children of the proxy mug, so it follows the tracked mug and hides when tracking is lost.
+  - `Occluder`: the proxy mesh, depth only (`CupSpike/MugOccluder`). Virtual things behind the real walls are hidden and passthrough shows through. The visible proxy is now **hidden by default**; the **Proxy** button shows it.
+  - `Portal`: a disc across the opening at the rim (`CupSpike/MugPortalMask`) that marks the stencil buffer.
+  - `Well` + `Rune`: a tunnel 0.6 m deep, drawn only through the portal and ignoring depth, so it goes "through" the real floor (`CupSpike/MugWell`, `CupSpike/MugRuneGlow`). The shaft turns to run away from the viewer, so you always look straight down it at the rune; a straight well would only show its bottom from directly above.
+- **Drone:** for now, the breath placeholder pitched down to 0.55.
+- **Buttons:**
+  - **Inside** keeps it open, to check the effect.
+  - **Rec** saves camera frames (JPG plus `frames.csv` with camera pose, mug pose and cup box) while looking in, up to 60 per session, for tuning a rune detector in step 2. Pull them with:
+    `adb pull /sdcard/Android/data/com.fiveoftwelve.memoriesofthefuture/files/RuneCaptures`
+- **Step 2 (not built):** detect the rune's blobs inside the cup box and get its exact pose with `PlanarPose` from 01-PictureChanges. That locks the effect to the real rune, gives the mug's rotation about its axis, and tells mugs with different runes apart.
+
 ## Cup detection
 
 ```
@@ -133,6 +152,8 @@ Hand menu (left palm up), top row:
 | Zone | Touch distance 3 cm ↔ 10 cm (lit at 10 cm) |
 | Pin | Pin the scream zone by pinching at the mug / back to tracking (lit while pinned) |
 | Miss / False | Log a reach that didn't fire / a fire without a reach |
+| Inside | Keep the mug's interior open (without looking in) |
+| Rec | Save camera frames while looking into the mug, for the rune detector |
 
 In the Editor, MRUK's mock camera shows colour bars. Set **Editor Test Image** on `CupDetector` to a frame from a headset recording to test the whole chain without the headset (depth isn't available in the Editor, so it uses the size estimate).
 
