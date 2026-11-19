@@ -18,6 +18,8 @@ namespace CupSpike
     ///    it fills the view: a dark void, faint twinkling specks and a slow spiral centred on the mug.
     ///    The mug's occluder cuts the real mug out of it, so the mug stays real throughout.
     ///  - Embers rise from the cup; copies of the rune drift around you; two whispers circle you.
+    ///  - A scanned meeting room (a Gaussian splat, <see cref="DreamSplatRoom"/>) materialises around
+    ///    the mug's table, following <see cref="Depth"/>.
     ///  - The background bed muffles; ghostly hand outlines appear, so you aren't disembodied.
     /// Waking: look away from the mug for <see cref="lookAwayToWake"/> s, reach
     /// <see cref="maxFullTime"/> s at full depth, or move more than <see cref="walkLimit"/> m.

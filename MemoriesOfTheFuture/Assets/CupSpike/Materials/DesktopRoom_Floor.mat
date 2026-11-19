@@ -26,6 +26,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _Grid: 0.1
+    - _ZWrite: 1
     m_Colors:
     - _Color: {r: 0.42, g: 0.36, b: 0.3, a: 1}
   m_BuildTextureStacks: []

@@ -96,6 +96,8 @@ namespace CupSpike.EditorTools
             var ds = go.AddComponent<DreamState>();
             Set(ds, ("detector", det), ("interior", mi), ("mugScream", ms), ("domeMaterial", Mat("Assets/CupSpike/Materials/DreamDome.mat")),
                 ("emberMaterial", Mat("Assets/CupSpike/Materials/DreamEmber.mat")), ("runeFloatMaterial", Mat("Assets/CupSpike/Materials/RuneFloat.mat")));
+            var splatRoom = go.AddComponent<DreamSplatRoom>();
+            Set(splatRoom, ("dream", ds), ("interior", mi), ("splat", AssetDatabase.LoadAssetAtPath<ScriptableObject>(DreamSplatRoom.DefaultSplatPath)));
 
             var handMat = Mat("Assets/CupSpike/Materials/DesktopHand.mat");
             if (handMat == null)
@@ -107,7 +109,7 @@ namespace CupSpike.EditorTools
             var (canvas, board) = AddPainting(scene, camGo.transform);
 
             var sim = go.AddComponent<DesktopSim>();
-            Set(sim, ("detector", det), ("mugScream", ms), ("interior", mi), ("dream", ds), ("cam", cam), ("handMaterial", handMat),
+            Set(sim, ("detector", det), ("mugScream", ms), ("interior", mi), ("dream", ds), ("cam", cam), ("handMaterial", handMat), ("room", room),
                 ("painting", canvas), ("paintingBoard", board));
             var simSo = new SerializedObject(sim);
             simSo.FindProperty("paintingCentre").vector3Value = PaintingCentre;
