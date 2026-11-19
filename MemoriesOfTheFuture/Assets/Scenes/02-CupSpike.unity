@@ -119,6 +119,53 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &52750085
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 52750087}
+  - component: {fileID: 52750086}
+  m_Layer: 0
+  m_Name: Sound Mix
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &52750086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52750085}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cbb7db7ac88f4c4095f1563fd2ce28c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.MixDirector
+  mixer: {fileID: 24100000, guid: 69e9049d2eadd4976bc9b9afa31dc9ad, type: 2}
+  blending: 1
+  smoothing: 0.1
+--- !u!4 &52750087
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52750085}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &203844586
 GameObject:
   m_ObjectHideFlags: 0
@@ -768,6 +815,7 @@ MonoBehaviour:
   head: {fileID: 330107616}
   leftHand: {fileID: 688772557}
   rightHand: {fileID: 688772556}
+  simulate: 0
   modelAsset: {fileID: 5022602860645237092, guid: f2ab778db5b714694a0915cd739c60f2, type: 3}
   classLabels: {fileID: 4900000, guid: d6e2f5651a0de4bbaaaae176e8b0af64, type: 3}
   backend: 256
@@ -841,17 +889,14 @@ MonoBehaviour:
   detector: {fileID: 982673525}
   leftHand: {fileID: 688772557}
   rightHand: {fileID: 688772556}
-  scream: {fileID: 8300000, guid: 312691852e5894cd080dac1983384bd9, type: 3}
-  volume: 1
-  breath: {fileID: 8300000, guid: 03655a4bd51d04e6f86ea475ff940f87, type: 3}
-  breathVolume: 0.9
+  screamSlot: {fileID: 11400000, guid: 55c534022b6054641885b30215580121, type: 2}
+  breathSlot: {fileID: 11400000, guid: f8d52a3f06e1f4150b46eb37f4cc8f01, type: 2}
   breathPitch: {x: 0.9, y: 1.15}
-  background: {fileID: 8300000, guid: 6160a88999a37472bb81bf4b33b613a8, type: 3}
-  backgroundLeft: {fileID: 8300000, guid: 078f00e9abc7d41bc87ec539c4d53686, type: 3}
-  backgroundRight: {fileID: 8300000, guid: 3b87dd5b95dfa433aa64db7fc8eddba9, type: 3}
+  backgroundSlot: {fileID: 11400000, guid: d8b0c0ee8d325477099875504710d475, type: 2}
+  backgroundLeftSlot: {fileID: 11400000, guid: 7fe5cff54dcc240d7b22dbce7c09516e, type: 2}
+  backgroundRightSlot: {fileID: 11400000, guid: 4c153a5a7020543779bffbce934ddfc7, type: 2}
   bedSpread: 3
   bedForward: 1
-  backgroundVolume: 0.35
   backgroundFadeIn: 3
   duckTo: 0.25
   approachDrain: 0.85
@@ -947,9 +992,7 @@ MonoBehaviour:
   portalMaterial: {fileID: 2100000, guid: 22178bdd1b71045c9a0d1ef6d1cc57fb, type: 2}
   wellMaterial: {fileID: 2100000, guid: 69a86e5282f25435abba82b095e2e3b5, type: 2}
   runeMaterial: {fileID: 2100000, guid: 81c23b901ea6a4681a63b92fce00ab55, type: 2}
-  drone: {fileID: 8300000, guid: 03655a4bd51d04e6f86ea475ff940f87, type: 3}
-  dronePitch: 0.55
-  droneVolume: 0.7
+  droneSlot: {fileID: 11400000, guid: 80adeb8cf55694ee6a2fb8043bd32ad5, type: 2}
   openingRadius: 0.0365
   wellDepth: 0.6
   wellBottomRadius: 0.09
@@ -982,7 +1025,8 @@ MonoBehaviour:
   domeMaterial: {fileID: 2100000, guid: 96fc6e90f53674032a5a42acc2a79ad2, type: 2}
   emberMaterial: {fileID: 2100000, guid: ee528bc1a64a144beb18b2f09feebfa6, type: 2}
   runeFloatMaterial: {fileID: 2100000, guid: 7584123a6bc0144c28fb31a31f4e9cca, type: 2}
-  whisper: {fileID: 8300000, guid: 03655a4bd51d04e6f86ea475ff940f87, type: 3}
+  whisperSlot: {fileID: 11400000, guid: cc1f09377d20541b9bad41956f6f33cc, type: 2}
+  secondWhisperPitch: 1.24
   stareBeforeDream: 2
   deepenTime: 8
   maxFullTime: 20
@@ -1620,3 +1664,4 @@ SceneRoots:
   - {fileID: 1100000002}
   - {fileID: 988729874}
   - {fileID: 1014769916}
+  - {fileID: 52750087}

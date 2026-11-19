@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c28fc1d2392d648d89560579d7dcd18d, type: 3}
+  m_Name: Background Left
+  m_EditorClassIdentifier: Assembly-CSharp::Memories.Audio.SoundSlot
+  notes: Left channel of the bed, played from a fixed point 3 m left and 1 m in front of where you start, so the bed stays put when you turn. Starts in sync with Background Right.
+  clips:
+  - {fileID: 8300000, guid: 078f00e9abc7d41bc87ec539c4d53686, type: 3}
+  variation: 0
+  dropName: background_left
+  volumeDb: -9.1
+  pitch: 1
+  output: {fileID: -8797887577951236248, guid: 69e9049d2eadd4976bc9b9afa31dc9ad, type: 2}
+  spatial: 1
+  minDistance: 2
+  maxDistance: 30
+  rolloff: 0
+  roomAcoustics: 1
+  reverbSendDb: 0
