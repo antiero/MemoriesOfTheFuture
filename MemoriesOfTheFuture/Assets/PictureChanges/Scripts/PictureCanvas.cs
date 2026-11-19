@@ -6,8 +6,11 @@ namespace PictureChanges
 {
     /// <summary>
     /// The virtual painting. Waits for BoardPoseEstimator to lock, places and sizes the
-    /// quad over the painted area, pins it with a spatial anchor, then plays the
-    /// transformation video once when the wearer walks up and faces it.
+    /// quad over the painted area, pins it with a spatial anchor, then changes it according to
+    /// the trigger mode:
+    ///   UnseenSwap (default) : PaintingStages swaps to the next still each time you look away.
+    ///   Proximity            : the transformation video plays once when you walk up and face it.
+    ///   GazeDwell            : the video plays once after facing it for a while, from any distance.
     ///
     /// Controls (demo fallbacks):
     ///   Hold left grip + left thumbstick : nudge the painting 1 mm per click in the board plane.
@@ -30,9 +33,14 @@ namespace PictureChanges
         [Tooltip("Show a 10 mm grid with a red border instead of the still, to measure registration error.")]
         [SerializeField] bool showAlignmentGrid;
 
+        public enum TriggerMode { UnseenSwap, Proximity, GazeDwell }
+
         [Header("Trigger")]
-        [Tooltip("Approach / face / dwell states. The movie plays on its Triggered event.")]
+        [SerializeField] TriggerMode triggerMode = TriggerMode.UnseenSwap;
+        [Tooltip("Approach / face / dwell states. The movie plays on its Triggered (Proximity) or GazeTriggered (GazeDwell) event.")]
         [SerializeField] ViewerPresence presence;
+        [Tooltip("Stage stills for the UnseenSwap mode.")]
+        [SerializeField] PaintingStages stages;
 
         [Header("Soundtrack")]
         [Tooltip("Looping audio that fades in when the transformation starts. Lives on the painting (spatial).")]
@@ -51,7 +59,41 @@ namespace PictureChanges
         static readonly int RevealId = Shader.PropertyToID("_Reveal");
         Coroutine _reveal, _soundFade;
 
-        public bool HasPlayed => _played;
+        /// <summary>The painting has started to change (the movie played, or a stage swapped).</summary>
+        public bool HasPlayed => triggerMode == TriggerMode.UnseenSwap ? stages != null && stages.Stage > 0 : _played;
+        /// <summary>Placed and the reveal has finished.</summary>
+        public bool Revealed => estimator.IsLocked && _reveal == null && canvasRoot.gameObject.activeInHierarchy;
+        public Transform PaintingTransform => canvasQuad.transform;
+        public Mesh PaintingMesh => canvasQuad.GetComponent<MeshFilter>().sharedMesh;
+        public PaintingStages Stages => stages;
+
+        public TriggerMode Mode
+        {
+            get => triggerMode;
+            set
+            {
+                if (value == triggerMode) return;
+                triggerMode = value;
+                Debug.Log($"[PictureCanvas] Trigger mode: {ModeName(value)}");
+                Replay();
+            }
+        }
+
+        public void CycleMode() => Mode = (TriggerMode)(((int)triggerMode + 1) % 3);
+
+        public static string ModeName(TriggerMode m) => m switch
+        {
+            TriggerMode.UnseenSwap => "unseen swap",
+            TriggerMode.Proximity => "proximity",
+            _ => "gaze dwell",
+        };
+
+        /// <summary>Show a stage still (UnseenSwap). Hard cut: it only happens out of view.</summary>
+        public void ShowStage(Texture texture)
+        {
+            _stageTexture = texture;
+            if (!IsPlaying) _material.mainTexture = StillTexture();
+        }
         public bool IsPlaying => video != null && video.isPlaying;
         public float TriggerDistance => presence != null ? presence.NearEnter : 1.5f;
 
@@ -70,6 +112,7 @@ namespace PictureChanges
         Material _material;
         Vector2 _nudge;
         bool _played;
+        Texture _stageTexture;
 
         void Awake()
         {
@@ -134,6 +177,8 @@ namespace PictureChanges
         {
             if (video != null) { video.Stop(); video.Prepare(); }
             _played = false;
+            _stageTexture = null;
+            stages?.ResetStages();
             _material.mainTexture = StillTexture();
             FadeSoundtrack(false);
             presence?.Rearm();
@@ -223,6 +268,8 @@ namespace PictureChanges
             _material.SetFloat(RevealId, 0f);
             canvasRoot.gameObject.SetActive(false);
             _played = false;
+            _stageTexture = null;
+            stages?.ResetStages();
             if (video != null) { video.Stop(); video.Prepare(); }
             _material.mainTexture = StillTexture();
             FadeSoundtrack(false);
@@ -232,7 +279,10 @@ namespace PictureChanges
 
         void CheckTrigger()
         {
-            if (video == null || presence == null || !presence.HasTriggered || !video.isPrepared) return;
+            if (triggerMode == TriggerMode.UnseenSwap) return;   // PaintingStages drives the changes
+            bool fired = triggerMode == TriggerMode.Proximity ? presence != null && presence.HasTriggered
+                                                               : presence != null && presence.HasGazeTriggered;
+            if (video == null || !fired || !video.isPrepared) return;
 
             _played = true;
             Debug.Log("[PictureCanvas] Transformation started");
@@ -285,7 +335,9 @@ namespace PictureChanges
             _soundFade = null;
         }
 
-        Texture StillTexture() => showAlignmentGrid || stillImage == null ? MakeAlignmentGrid() : stillImage;
+        Texture StillTexture() => showAlignmentGrid ? MakeAlignmentGrid()
+                                : _stageTexture != null ? _stageTexture
+                                : stillImage != null ? stillImage : MakeAlignmentGrid();
 
         /// <summary>White grid with a red border, 10 mm cells on an A4 canvas: shows registration error at a glance.</summary>
         static Texture2D MakeAlignmentGrid()

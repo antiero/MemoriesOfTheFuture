@@ -151,6 +151,7 @@ namespace CupSpike
         public Vector3 CupCentre { get; private set; }
         /// <summary>Current cup base pose (base centre, +Y up, handle on -X), valid while Tracking.</summary>
         public Pose CupPose => _cupPose;
+        public bool IsHeld => _holdHand != null;
         public float MugHeight => mugHeight;
         public float MugRadius => mugRadius;
         /// <summary>"L" or "R" while a hand holds the cup, else empty.</summary>
@@ -199,6 +200,7 @@ namespace CupSpike
         bool _leftCurled, _rightCurled;
         MugGrip.Result _left, _right;
         Pose _cupPose;              // desired target pose this frame
+        float _rimFixTime = -99f;   // last RimTracker correction
         Pose _simPose;
         bool _simHeld, _simSet;
         // Held: fused at pick-up. The handle point in wrist space, and both rotations at that moment.
@@ -619,8 +621,25 @@ namespace CupSpike
         /// While held, a camera sighting of this mug nudges the wrist offset sideways (perpendicular to
         /// the camera ray). Distance along the ray is left to the hand: the camera is weakest there.
         /// </summary>
+        /// <summary>
+        /// Shift the held mug by a world-space step (RimTracker: the opening seen by the camera).
+        /// The step goes into the handle-to-wrist offset, so it persists for the rest of the hold.
+        /// </summary>
+        public bool ApplyHeldCorrection(Vector3 worldStep)
+        {
+            if (_holdHand == null) return false;
+            var r = _holdHand == leftHand ? _left : _right;
+            if (!r.tracked) return false;
+            _handleInWrist += Quaternion.Inverse(r.wrist.rotation) * worldStep;
+            HeldCorrection += worldStep.magnitude;
+            _rimFixTime = Time.time;
+            return true;
+        }
+
         void CorrectHeldFromCamera(Pose framePose)
         {
+            // The rim lock is far more precise than the YOLO box (which can land on another cup).
+            if (Time.time - _rimFixTime < 2f) { Rejected = "held: rim lock in charge"; return; }
             var r = _holdHand == leftHand ? _left : _right;
             if (!r.tracked || _wristSpeed > correctionMaxWristSpeed) { Rejected = $"held: wrist moving {_wristSpeed:0.00} m/s"; return; }
             var ray = cameraAccess.ViewportPointToRay(CupViewportRect.center, framePose);

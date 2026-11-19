@@ -42,7 +42,7 @@ Wrong spacing/size scales the distance estimate, so the painting lands in front 
 | MRUK | Scene/room data (wall snapping later) |
 | PassthroughCamera | `PassthroughCameraAccess`, left camera |
 | PaintingRoot / PaintingQuad | Anchored root; unit quad scaled to the painted area, URP Unlit |
-| PictureChanges | Permissions, `BoardPoseEstimator`, `VideoPlayer` (painting.mp4), `PictureCanvas`, `PictureChangesInput` |
+| PictureChanges | Permissions, `BoardPoseEstimator`, `VideoPlayer` (painting.mp4), `PictureCanvas`, `PaintingStages`, `PictureChangesInput` |
 | BoardDebugView | In-headset detector panel, status/hint text, world overlay of the detected board |
 
 ## Visitor experience
@@ -50,7 +50,37 @@ Wrong spacing/size scales the distance estimate, so the painting lands in front 
 1. **Find the painting**: a quiet prompt floats low in view until the board is seen.
 2. **Locking on**: soft corner brackets appear around the real painting and close in as the estimate settles; a chime when it locks.
 3. **Reveal**: the virtual painting appears with a watercolour-bleed wash (`PictureChanges/Painting` shader: feathered edges, exposure/saturation matched to passthrough, fine grain).
-4. **Step closer**: an invitation below the painting until the visitor approaches and faces it; then the movie plays once and holds its last frame.
+4. **Step closer**: an invitation below the painting until it first changes. What happens next depends on the trigger mode below.
+
+## Trigger modes
+
+Concept board 01 asks for a picture that "is never caught in the act". It offers three triggers to try side by side. The **Trigger** button in the hand menu cycles through them; each switch also does a Replay. The button is lit when the mode isn't the default.
+
+| Mode | What happens |
+| --- | --- |
+| **Unseen swap** (default) | `PaintingStages`: look at the painting, look away, look back, and it has moved on a stage. It never changes while you can see it. |
+| Proximity | Walk within 1.5 m and face it for 0.5 s: the movie plays once in front of you and holds its last frame (the original behaviour). |
+| Gaze dwell | Face it for 2 s from anywhere within 5 m: the movie plays once. |
+
+How **Unseen swap** works (`PaintingStages`, logs prefixed `[Stages]`):
+
+1. **Seen:** you face the painting (within 25°) for 0.75 s. It is then armed.
+2. **Unseen:** all of the painting (9 points: corners, edge midpoints and centre) is outside the view cone for 1.2 s.
+   - The cone is ±60° horizontally and ±55° vertically from the head direction. The Quest 3S shows about ±48° × ±45°, so the margin keeps peripheral vision from catching the swap. A 50° side glance doesn't count as looking away.
+   - The 3S has no eye tracking, so this is all based on head direction.
+3. **Swap:** a hard cut to the next stage, with no blend.
+
+**The scream:** on the swap to the last stage, `SwapScream` plays `Audio/mono-scream.mp3` from the painting. You've just looked away, so it comes from behind or beside you, and when you turn back the picture has reached its final stage.
+- It's spatialised with Meta XR Audio. Its distances are 1.5 m before it starts to fall off and 15 m maximum.
+- Replay and Rescan cut it off.
+- **Swap Sound Only On Last** on `PaintingStages` is on by default. Turn it off to play the sound on every swap.
+- The file is the client's scream downmixed to mono with ffmpeg. The delivered "mono" file was a stereo copy of `scream.mp3`.
+
+**Distance** follows the board ("3 m ordinary, 1.5 m it notices you"): unless you've come within 1.5 m since the last swap, it goes no further than stage 1 (**Far Max Stage**). The last stage holds until Replay.
+
+**Stages:** stage 0 is `PictureCanvas > Still Image`. Stages 1–4 are in `Artwork/Stages/`. They are **placeholders**, frames from `painting.mp4` at 4, 12, 15 and 29.5 s. Swap in the painted stages by replacing the files or editing the **Stages** list on `PaintingStages`; any number of stages works.
+
+The test-mode readout shows the mode, the stage, in view / out of view, and the seen or unseen progress.
 
 ## Hand menu (left palm up)
 
@@ -58,12 +88,13 @@ Turn your **left palm towards your face**: the menu fades in just off the palm (
 
 | Button | Does |
 | --- | --- |
-| Replay | Back to the still; the transformation can trigger again |
+| Replay | Back to the still (stage 0); the transformation can trigger again |
 | Rescan | Forget the placement and find the board again (in Test mode: re-place the virtual painting) |
 | Test | Test mode on/off (below) |
 | Debug | Detector panel + world overlay (off by default) |
 | Grid | 10 mm alignment grid instead of the painting |
 | Capture | Save the detector's current camera frame |
+| Trigger | Trigger mode: Unseen swap → Proximity → Gaze dwell (lit when not Unseen swap). Also does a Replay |
 | Painting / Cup | Bottom row (`SceneMenu`): switch scene. The open scene is lit. See `Assets/Shared/README.md` |
 
 ## Test mode (no physical painting needed)
@@ -80,7 +111,8 @@ A readout (lower right) shows live distance and angle, Near/Far, Facing/Away, dw
 | --- | --- |
 | Approach / Leave | Head within 1.5 m of the painting centre / beyond 1.7 m |
 | FaceToward / FaceAway | Head direction within 25° of the painting / beyond 35° |
-| Triggered | Near and Facing for 0.5 s (once, until Replay) |
+| Triggered | Near and Facing for 0.5 s (once, until Replay). Starts the movie in Proximity mode |
+| GazeTriggered | Facing for 2 s within 5 m (once, until Replay). Starts the movie in Gaze dwell mode |
 
 ## Controls (controllers or hands)
 
@@ -91,7 +123,7 @@ A readout (lower right) shows live distance and angle, Near/Far, Facing/Away, dw
 | Toggle debug view | Y | hand menu |
 | Nudge painting 1 mm | left grip + left stick | - |
 
-Frames are also auto-captured every 2 s while searching (max 40 per session) to
+Auto-capture is **off at launch**: it saves frames silently and causes small hitches. To diagnose detection, set **Auto Capture Interval** on `BoardPoseEstimator` to 2. Frames are then saved every 2 s while searching (max 40 per session) to
 `/sdcard/Android/data/com.fiveoftwelve.memoriesofthefuture/files/captures/<session>/`, with `camera.json` intrinsics.
 
 ## Debugging and tuning

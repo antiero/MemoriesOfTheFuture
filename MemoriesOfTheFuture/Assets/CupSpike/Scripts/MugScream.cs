@@ -73,7 +73,7 @@ namespace CupSpike
 
         [Header("Debug")]
         [SerializeField] Material unlitMaterial;
-        [SerializeField] bool showZone = true;
+        [SerializeField] bool showZone = false;
 
         public UnityEvent onScream = new UnityEvent();
 
