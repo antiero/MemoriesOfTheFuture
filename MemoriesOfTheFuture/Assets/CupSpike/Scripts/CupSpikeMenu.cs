@@ -23,7 +23,12 @@ namespace CupSpike
         void Awake()
         {
             ApplyProxy();
-            menu.AddButton("Debug", () => debugView.Toggle(), () => debugView.Visible);
+            // Debug: the panel, the world markers and the touch-zone rings, together. Off at launch.
+            menu.AddButton("Debug", () =>
+            {
+                debugView.Toggle();
+                if (mugScream != null) mugScream.ShowZone = debugView.Visible;
+            }, () => debugView.Visible);
             menu.AddButton("Proxy", ToggleProxy, () => proxyVisible);
             if (handVisibility != null) menu.AddButton("Hands", handVisibility.Toggle, () => handVisibility.Visible);
             menu.AddButton("Freeze", () => detector.Frozen = !detector.Frozen, () => detector.Frozen);

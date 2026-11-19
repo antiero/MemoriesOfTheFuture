@@ -52,7 +52,7 @@ Details:
 
 Each scream logs `[MugScream] SCREAM #n` with the fingertip distance. Switching zones logs the running totals, and the debug panel shows them live.
 
-Debug: a faint ring at mid-height marks the 30 cm approach zone and brightens as the breath builds. The touch zone shows as two rings at the mug's base and rim:
+Debug (off at launch; the **Debug** button shows them with the panel): a faint ring at mid-height marks the 30 cm approach zone and brightens as the breath builds. The touch zone shows as two rings at the mug's base and rim:
 
 | Ring colour | Meaning |
 | --- | --- |
@@ -157,7 +157,7 @@ Tested on frames from a headset recording, the mug on the desk scores 0.7-0.93. 
 
 ### Debugging
 
-The debug panel is **on by default**. It floats below your line of sight and shows:
+The debug panel is **off at launch**, so artists and visitors see only the experience. The **Debug** button in the hand menu turns it on, along with the world markers and the touch-zone rings. It floats below your line of sight and shows:
 - the frame the model last analysed, with a green box on the cup (orange when its score is below the threshold) and a grey box on the best object of any other class
 - the status, analysis rate and time per frame, the cup and best-class scores, the depth and size distances and which one is used, the tracking source (camera or hand) and the nearest palm distance
 - the reason a detection was ignored, if one was
@@ -168,7 +168,7 @@ Hand menu (left palm up), top row:
 
 | Button | Does |
 | --- | --- |
-| Debug | Panel and markers on/off |
+| Debug | Panel, markers and touch-zone rings on/off (off at launch) |
 | Proxy | Show/hide the proxy mug (tracking keeps running) |
 | Freeze | Hold the proxy where it is, to walk round it and check alignment |
 | Dist | Distance source: Auto → depth only → size only (lit when not Auto; the panel shows which) |

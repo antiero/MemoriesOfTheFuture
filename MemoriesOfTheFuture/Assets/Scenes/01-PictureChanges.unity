@@ -812,7 +812,7 @@ MonoBehaviour:
   logEachDetection: 0
   statusInterval: 2
   enableFrameCapture: 1
-  autoCaptureInterval: 2
+  autoCaptureInterval: 0
   autoCaptureMax: 40
 --- !u!114 &926963304
 MonoBehaviour:

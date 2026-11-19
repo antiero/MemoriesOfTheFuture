@@ -55,7 +55,7 @@ namespace PictureChanges
         [Tooltip("Allow manual captures (A, or right-hand index pinch held). Saved to persistentDataPath/captures.")]
         [SerializeField] bool enableFrameCapture = true;
         [Tooltip("While searching, save a frame this often when glyph candidates are visible (seconds). 0 = off.")]
-        [SerializeField] float autoCaptureInterval = 2f;
+        [SerializeField] float autoCaptureInterval = 0f;
         [SerializeField] int autoCaptureMax = 40;
 
         public event Action<BoardPose> Locked;

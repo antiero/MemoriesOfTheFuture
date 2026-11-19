@@ -25,7 +25,7 @@ namespace CupSpike
         [Tooltip("URP Unlit material asset, referenced so the shader is kept in builds.")]
         [SerializeField] Material unlitMaterial;
         [SerializeField] TMP_FontAsset font;
-        [SerializeField] bool visible = true;
+        [SerializeField] bool visible = false;
 
         [Header("Panel")]
         [SerializeField] Vector3 panelOffset = new Vector3(0f, -0.2f, 0.6f);

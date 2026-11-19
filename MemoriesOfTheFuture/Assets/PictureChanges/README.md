@@ -123,7 +123,7 @@ A readout (lower right) shows live distance and angle, Near/Far, Facing/Away, dw
 | Toggle debug view | Y | hand menu |
 | Nudge painting 1 mm | left grip + left stick | - |
 
-Frames are also auto-captured every 2 s while searching (max 40 per session) to
+Auto-capture is **off at launch**: it saves frames silently and causes small hitches. To diagnose detection, set **Auto Capture Interval** on `BoardPoseEstimator` to 2. Frames are then saved every 2 s while searching (max 40 per session) to
 `/sdcard/Android/data/com.fiveoftwelve.memoriesofthefuture/files/captures/<session>/`, with `camera.json` intrinsics.
 
 ## Debugging and tuning

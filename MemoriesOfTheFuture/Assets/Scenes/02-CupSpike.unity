@@ -749,7 +749,7 @@ MonoBehaviour:
   head: {fileID: 330107616}
   unlitMaterial: {fileID: 2100000, guid: dd2245643e43c48e6944df551b787ee6, type: 2}
   font: {fileID: 11400000, guid: f675742eaf9c20a4f909d78ee7a14fed, type: 2}
-  visible: 1
+  visible: 0
   panelOffset: {x: 0, y: -0.2, z: 0.6}
   panelWidth: 0.28
   followSpeed: 4
@@ -868,7 +868,7 @@ MonoBehaviour:
   rearmMargin: 0.05
   cooldown: 2
   unlitMaterial: {fileID: 2100000, guid: dd2245643e43c48e6944df551b787ee6, type: 2}
-  showZone: 1
+  showZone: 0
   onScream:
     m_PersistentCalls:
       m_Calls:
