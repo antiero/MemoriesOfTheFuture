@@ -69,9 +69,6 @@ namespace CupSpike
         // Tuning (used by the desktop debug build's panel).
         public float StareBeforeDream { get => stareBeforeDream; set => stareBeforeDream = value; }
         public float DeepenTime { get => deepenTime; set => deepenTime = Mathf.Max(0.5f, value); }
-        public float WhisperVolume { get => whisperSlot != null ? whisperSlot.Linear : 0f; set { if (whisperSlot != null) whisperSlot.Linear = value; } }
-        /// <summary>Play this clip instead of the slot's files (desktop drop folder; not saved).</summary>
-        public void SetWhisper(AudioClip clip) { foreach (var w in _whispers) w.OverrideClip = clip; }
         public string StatusLine =>
             $"dream: {(_waking ? "WAKING" : Depth > 0f ? (Depth >= 1f ? "DEEP" : "dreaming") : _stare > 0f ? "staring" : "-")}" +
             $"  depth {Depth:0.00}  stare {_stare:0.0}s{(_awaySince >= 0f ? $"  away {Time.time - _awaySince:0.0}s" : "")}" +

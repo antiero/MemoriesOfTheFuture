@@ -1,3 +1,4 @@
+using Memories.Audio;
 using UnityEngine;
 
 namespace PictureChanges
@@ -51,8 +52,9 @@ namespace PictureChanges
         [SerializeField] int farMaxStage = 1;
 
         [Header("Sound")]
-        [Tooltip("Optional. Played from the painting when it swaps, so it comes from behind or beside the visitor.")]
-        [SerializeField] AudioSource swapSound;
+        [Tooltip("Played from the painting when it swaps, so it comes from behind or beside the visitor. " +
+                 "Its file, level and space live in the Sound Slot (Memories > Sound Design).")]
+        [SerializeField] SoundSlot swapSlot;
         [Tooltip("Play the swap sound only on the swap to the last stage (the scream). Off: on every swap.")]
         [SerializeField] bool swapSoundOnlyOnLast = true;
 
@@ -67,19 +69,32 @@ namespace PictureChanges
 
         float _seen, _unseen;
         readonly Vector3[] _points = new Vector3[9];
+        SlotVoice _swap;
+
+        /// <summary>The swap sound's voice (desktop app: replay it from the panel).</summary>
+        public SlotVoice SwapVoice => _swap;
+        public float SeenDwell { get => seenDwell; set => seenDwell = Mathf.Max(0f, value); }
+        public float UnseenTime { get => unseenTime; set => unseenTime = Mathf.Max(0f, value); }
+
+        void Start()
+        {
+            _swap = SlotVoice.Create(swapSlot, transform, "SwapSound", false);
+            _swap.Level = 1f;
+        }
 
         /// <summary>Back to stage 0 (Replay, Rescan, mode change).</summary>
         public void ResetStages()
         {
             Stage = 0;
             Armed = CameClose = false;
-            if (swapSound != null) swapSound.Stop();
+            _swap?.Stop();
             _seen = _unseen = 0f;
             Swaps = 0;
         }
 
         void Update()
         {
+            _swap?.Tick();
             if (canvas == null || presence == null || head == null) return;
             if (canvas.Mode != PictureCanvas.TriggerMode.UnseenSwap || !canvas.Revealed || !presence.Active)
             {
@@ -123,13 +138,14 @@ namespace PictureChanges
             Stage++;
             Swaps++;
             canvas.ShowStage(stages[Stage - 1]);
-            if (swapSound != null && swapSound.clip != null && (!swapSoundOnlyOnLast || Stage == last))
+            bool sound = false;
+            if (_swap != null && (!swapSoundOnlyOnLast || Stage == last))
             {
-                swapSound.transform.position = canvas.PaintingTransform.position;
-                swapSound.Play();
+                _swap.Source.transform.position = canvas.PaintingTransform.position;
+                sound = _swap.Play();
             }
             Debug.Log($"[Stages] SWAP to stage {Stage}/{last} while unseen ({presence.Distance:F2} m, " +
-                      $"{presence.Angle:F0} deg, came close: {CameClose}){(swapSound != null && swapSound.isPlaying ? ", sound: " + swapSound.clip.name : "")}");
+                      $"{presence.Angle:F0} deg, came close: {CameClose}){(sound ? ", sound: " + _swap.Source.clip.name : "")}");
             CameClose = presence.Distance < noticeDistance;
         }
 

@@ -99,33 +99,9 @@ namespace CupSpike
         /// <summary>A fingertip position supplied from outside (the desktop debug build's simulated hand).</summary>
         public Vector3? SimulatedFingertip { get; set; }
 
-        // Tuning (used by the desktop debug build's panel). These move the slots' volume faders.
-        public float ScreamVolume { get => Fader(screamSlot); set => SetFader(screamSlot, value); }
-        public float BreathVolume { get => Fader(breathSlot); set => SetFader(breathSlot, value); }
-        public float BackgroundVolume
-        {
-            get => _beds.Count > 0 ? Fader(_beds[0].Slot) : Fader(backgroundSlot);
-            set { SetFader(backgroundSlot, value); SetFader(backgroundLeftSlot, value); SetFader(backgroundRightSlot, value); }
-        }
+        // Tuning (used by the desktop debug build's panel). Levels live in the Sound Slots.
         public float ApproachStart { get => approachStart; set => approachStart = Mathf.Max(TouchZone + 0.02f, value); }
         public float SilenceBeat { get => silenceBeat; set => silenceBeat = Mathf.Max(0f, value); }
-
-        static float Fader(SoundSlot s) => s != null ? s.Linear : 0f;
-        static void SetFader(SoundSlot s, float v) { if (s != null) s.Linear = v; }
-
-        /// <summary>Play this clip instead of the slot's files (desktop drop folder; not saved).</summary>
-        public void SetScream(AudioClip clip) { if (_scream != null) _scream.OverrideClip = clip; }
-        public void SetBreath(AudioClip clip) { StopBreath(); if (_breath != null) _breath.OverrideClip = clip; }
-        /// <summary>Replace the background bed with one clip (played through the stereo background slot).</summary>
-        public void SetBackground(AudioClip clip)
-        {
-            foreach (var b in _beds) if (b.Source != null) Destroy(b.Source.gameObject);
-            _beds.Clear();
-            if (clip == null) return;
-            var bed = Bed("BackgroundBed", backgroundSlot);
-            bed.OverrideClip = clip;
-            bed.Play();
-        }
 
         public string StatusLine =>
             $"scream: {(HasZone ? (_inBeat ? "SILENCE" : Armed ? (Approach > 0f ? $"breathing {Approach:0.00}" : "armed") : "re-arming") : "no mug yet")}" +
@@ -138,6 +114,8 @@ namespace CupSpike
         SlotVoice _scream, _breath;
         readonly System.Collections.Generic.List<SlotVoice> _beds = new System.Collections.Generic.List<SlotVoice>();
         float _bedLevel;          // 0..1 fade-in progress
+        bool _bedPlaced;
+        Vector3 _bedLeftAt, _bedRightAt;
         float _duck = 1f;
         bool _inBeat;
         bool _breathing;
@@ -151,24 +129,40 @@ namespace CupSpike
             _scream.Level = 1f;
             _breath = SlotVoice.Create(breathSlot, transform, "BreathSource", true);
 
-            if (SlotVoice.SlotHasSound(backgroundLeftSlot) && SlotVoice.SlotHasSound(backgroundRightSlot))
-            {
-                // World-locked pair, started together so the channels stay in sync.
-                var left = Bed("BackgroundBedLeft", backgroundLeftSlot).Source;
-                var right = Bed("BackgroundBedRight", backgroundRightSlot).Source;
-                double start = AudioSettings.dspTime + 0.1;
-                left.PlayScheduled(start);
-                right.PlayScheduled(start);
-                StartCoroutine(PlaceBedOnceTracked(left.transform, right.transform));
-            }
-            else if (SlotVoice.SlotHasSound(backgroundSlot))
-                Bed("BackgroundBed", backgroundSlot).Play();
+            RebuildBed();
 
             _ringTop = Ring("TouchTop");
             _ringBottom = Ring("TouchBottom");
             _approachRing = Ring("ApproachRing");
             Debug.Log($"[MugScream] Ready: approach {approachStart * 100f:0} cm, touch {TouchZone * 100f:0} cm, " +
                       $"scream '{ClipName(_scream)}', breath '{ClipName(_breath)}', bed: {_beds.Count} source(s)");
+        }
+
+        /// <summary>
+        /// (Re)start the background bed: the world-locked left/right pair if both have sound, else the
+        /// stereo Background slot. A stereo file loaded from the desktop sounds folder (Background's
+        /// RuntimeOverride) wins over a built-in pair, so one dropped file replaces the whole bed.
+        /// </summary>
+        public void RebuildBed()
+        {
+            foreach (var b in _beds) if (b.Source != null) Destroy(b.Source.gameObject);
+            _beds.Clear();
+            bool stereoDropped = backgroundSlot != null && backgroundSlot.RuntimeOverride != null &&
+                                 (backgroundLeftSlot == null || backgroundLeftSlot.RuntimeOverride == null) &&
+                                 (backgroundRightSlot == null || backgroundRightSlot.RuntimeOverride == null);
+            if (!stereoDropped && SlotVoice.SlotHasSound(backgroundLeftSlot) && SlotVoice.SlotHasSound(backgroundRightSlot))
+            {
+                // World-locked pair, started together so the channels stay in sync.
+                var left = Bed("BackgroundBedLeft", backgroundLeftSlot);
+                var right = Bed("BackgroundBedRight", backgroundRightSlot);
+                left.Tick(); right.Tick();
+                double start = AudioSettings.dspTime + 0.1;
+                left.Source.PlayScheduled(start);
+                right.Source.PlayScheduled(start);
+                StartCoroutine(PlaceBedOnceTracked(left.Source.transform, right.Source.transform));
+            }
+            else if (SlotVoice.SlotHasSound(backgroundSlot))
+                Bed("BackgroundBed", backgroundSlot).Play();
         }
 
         static string ClipName(SlotVoice v) => v.Source.clip != null ? v.Source.clip.name : "NONE";
@@ -184,12 +178,23 @@ namespace CupSpike
         /// <summary>Place the bed pair left and right of the viewer, once head tracking has a pose.</summary>
         IEnumerator PlaceBedOnceTracked(Transform left, Transform right)
         {
+            if (_bedPlaced)
+            {
+                // Rebuilt (the desktop app loaded a new file): keep the pair where it was.
+                left.position = _bedLeftAt;
+                right.position = _bedRightAt;
+                yield break;
+            }
             var cam = Camera.main;
             for (float t = 0f; t < 2f && cam != null && cam.transform.localPosition == Vector3.zero; t += Time.deltaTime) yield return null;
+            if (left == null || right == null) yield break;   // rebuilt meanwhile
             var head = cam != null ? cam.transform : transform;
             var yaw = Quaternion.Euler(0f, head.eulerAngles.y, 0f);
             left.position = head.position + yaw * new Vector3(-bedSpread, 0f, bedForward);
             right.position = head.position + yaw * new Vector3(bedSpread, 0f, bedForward);
+            _bedLeftAt = left.position;
+            _bedRightAt = right.position;
+            _bedPlaced = true;
             Debug.Log($"[MugScream] Background bed placed in the room: L {left.position:F1}  R {right.position:F1}");
         }
 

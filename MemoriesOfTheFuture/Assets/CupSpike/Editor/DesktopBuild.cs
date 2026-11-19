@@ -1,15 +1,20 @@
 using System.IO;
+using PictureChanges;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEditor.Events;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.Video;
 
 namespace CupSpike.EditorTools
 {
     /// <summary>
-    /// Builds the desktop debug version of the mug experience (no headset).
-    ///  - CupSpike > Create Desktop Scene: (re)creates Assets/Scenes/03-CupDesktop.unity.
+    /// Builds the desktop debug version of the experiences (no headset): one stand-in room with the
+    /// mug on the table and the painting from 01-PictureChanges on the east wall.
+    ///  - CupSpike > Create Desktop Scene: (re)creates Assets/Scenes/03-CupDesktop.unity, then points
+    ///    its sounds at the Sound Slots (Memories > Audio > Set Up Sound Slots and Mixer first).
     ///  - CupSpike > Build macOS Debug App: builds only that scene to Builds/macOS/MugThatScreams-Debug.app.
     ///    This switches the editor to the macOS platform; switch back with
     ///    CupSpike > Switch Back To Meta Quest (or File > Build Profiles).
@@ -19,6 +24,10 @@ namespace CupSpike.EditorTools
         public const string ScenePath = "Assets/Scenes/03-CupDesktop.unity";
         public const string AppPath = "Builds/macOS/MugThatScreams-Debug.app";
         const string QuestProfile = "Assets/Settings/Build Profiles/Meta Quest.asset";
+        const string PaintingScene = "Assets/Scenes/01-PictureChanges.unity";
+        /// <summary>The painting's board centre on the east wall (wall face at x = 3.0), and "into the wall".</summary>
+        static readonly Vector3 PaintingCentre = new Vector3(2.99f, 1.45f, 1.2f);
+        static readonly Vector3 PaintingInto = Vector3.right;
 
         [MenuItem("CupSpike/Create Desktop Scene")]
         public static void CreateScene()
@@ -70,9 +79,7 @@ namespace CupSpike.EditorTools
             Set(det, ("simulate", true), ("target", proxy.transform), ("head", camGo.transform));
 
             var ms = go.AddComponent<MugScream>();
-            Set(ms, ("detector", det), ("scream", Clip("Assets/Audio/scream.mp3")), ("breath", Clip("Assets/CupSpike/Audio/Breath_placeholder.wav")),
-                ("background", Clip("Assets/Audio/mugAudio.mp3")), ("backgroundLeft", Clip("Assets/Audio/mugAudio_L.mp3")), ("backgroundRight", Clip("Assets/Audio/mugAudio_R.mp3")),
-                ("unlitMaterial", Mat("Assets/PictureChanges/Materials/DebugUnlit.mat")), ("showZone", false));
+            Set(ms, ("detector", det), ("unlitMaterial", Mat("Assets/PictureChanges/Materials/DebugUnlit.mat")), ("showZone", false));
             var zones = new SerializedObject(ms);
             var zp = zones.FindProperty("zonePresets"); zp.arraySize = 2; zp.GetArrayElementAtIndex(0).floatValue = 0.03f; zp.GetArrayElementAtIndex(1).floatValue = 0.10f;
             zones.ApplyModifiedPropertiesWithoutUndo();
@@ -84,13 +91,11 @@ namespace CupSpike.EditorTools
             Set(mi, ("detector", det), ("proxy", proxy.transform), ("proxyMesh", proxy.GetComponentInChildren<MeshFilter>(true)),
                 ("occluderMaterial", Mat("Assets/CupSpike/Materials/MugOccluder.mat")),
                 // On desktop the mug model is visible, so the tunnel must draw after it (queue > 2000).
-                ("portalMaterial", After("MugPortalMask", 2010)), ("wellMaterial", After("MugWell", 2020)), ("runeMaterial", After("MugRuneGlow", 2030)),
-                ("drone", Clip("Assets/CupSpike/Audio/Breath_placeholder.wav")));
+                ("portalMaterial", After("MugPortalMask", 2010)), ("wellMaterial", After("MugWell", 2020)), ("runeMaterial", After("MugRuneGlow", 2030)));
 
             var ds = go.AddComponent<DreamState>();
             Set(ds, ("detector", det), ("interior", mi), ("mugScream", ms), ("domeMaterial", Mat("Assets/CupSpike/Materials/DreamDome.mat")),
-                ("emberMaterial", Mat("Assets/CupSpike/Materials/DreamEmber.mat")), ("runeFloatMaterial", Mat("Assets/CupSpike/Materials/RuneFloat.mat")),
-                ("whisper", Clip("Assets/CupSpike/Audio/Breath_placeholder.wav")));
+                ("emberMaterial", Mat("Assets/CupSpike/Materials/DreamEmber.mat")), ("runeFloatMaterial", Mat("Assets/CupSpike/Materials/RuneFloat.mat")));
 
             var handMat = Mat("Assets/CupSpike/Materials/DesktopHand.mat");
             if (handMat == null)
@@ -99,8 +104,15 @@ namespace CupSpike.EditorTools
                 handMat.SetColor("_BaseColor", new Color(0.86f, 0.66f, 0.55f));
                 AssetDatabase.CreateAsset(handMat, "Assets/CupSpike/Materials/DesktopHand.mat");
             }
+            var (canvas, board) = AddPainting(scene, camGo.transform);
+
             var sim = go.AddComponent<DesktopSim>();
-            Set(sim, ("detector", det), ("mugScream", ms), ("interior", mi), ("dream", ds), ("cam", cam), ("handMaterial", handMat));
+            Set(sim, ("detector", det), ("mugScream", ms), ("interior", mi), ("dream", ds), ("cam", cam), ("handMaterial", handMat),
+                ("painting", canvas), ("paintingBoard", board));
+            var simSo = new SerializedObject(sim);
+            simSo.FindProperty("paintingCentre").vector3Value = PaintingCentre;
+            simSo.FindProperty("paintingInto").vector3Value = PaintingInto;
+            simSo.ApplyModifiedPropertiesWithoutUndo();
 
             var audioRoom = new GameObject("AudioRoom");
             audioRoom.AddComponent<MetaXRAudioRoomAcousticProperties>();
@@ -109,6 +121,112 @@ namespace CupSpike.EditorTools
             EditorSceneManager.SaveScene(scene, ScenePath);
             AssetDatabase.SaveAssets();
             Debug.Log("[DesktopBuild] Created " + ScenePath);
+
+            // Sound: point the mug's and the painting's sound fields at the Sound Slots, add the mix director.
+            Memories.Audio.EditorTools.AudioSetup.WireScene(ScenePath);
+        }
+
+        /// <summary>
+        /// The painting from 01-PictureChanges, with its tuned values (board layout, trigger, stages,
+        /// presence), on the east wall. DesktopSim force-locks it there at Start (no camera on a Mac).
+        /// </summary>
+        static (PictureCanvas, BoardPoseEstimator) AddPainting(Scene scene, Transform head)
+        {
+            var src = EditorSceneManager.OpenScene(PaintingScene, OpenSceneMode.Additive);
+            SceneManager.SetActiveScene(scene);   // new objects go into the desktop scene
+            try
+            {
+                T Find<T>() where T : Component
+                {
+                    foreach (var r in src.GetRootGameObjects())
+                    {
+                        var c = r.GetComponentInChildren<T>(true);
+                        if (c != null) return c;
+                    }
+                    throw new System.Exception($"{PaintingScene} has no {typeof(T).Name}");
+                }
+                var srcBoard = Find<BoardPoseEstimator>();
+                var srcCanvas = Find<PictureCanvas>();
+                var srcStages = Find<PaintingStages>();
+                var srcPresence = Find<ViewerPresence>();
+                var srcVideo = srcCanvas.GetComponent<VideoPlayer>();
+                Renderer srcQuad = null;
+                foreach (var r in src.GetRootGameObjects())
+                    foreach (var rend in r.GetComponentsInChildren<Renderer>(true))
+                        if (rend.name == "PaintingQuad") srcQuad = rend;
+
+                // The painting: a root the canvas moves to the board pose, and the quad it reshapes.
+                var root = new GameObject("PaintingRoot").transform;
+                root.position = PaintingCentre;
+                root.rotation = Quaternion.LookRotation(PaintingInto, Vector3.up);
+                var quad = new GameObject("PaintingQuad");
+                quad.transform.SetParent(root, false);
+                quad.AddComponent<MeshFilter>().sharedMesh = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
+                var quadRenderer = quad.AddComponent<MeshRenderer>();
+                quadRenderer.sharedMaterial = srcQuad != null ? srcQuad.sharedMaterial : Mat("Assets/PictureChanges/Materials/PaintingCanvas.mat");
+                quadRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+                var go = new GameObject("PictureChanges");
+                var board = go.AddComponent<BoardPoseEstimator>();
+                var video = go.AddComponent<VideoPlayer>();
+                var presence = go.AddComponent<ViewerPresence>();
+                var canvas = go.AddComponent<PictureCanvas>();
+                var stages = go.AddComponent<PaintingStages>();
+
+                Copy(srcBoard, board, src);
+                Copy(srcPresence, presence, src);
+                Copy(srcCanvas, canvas, src);
+                Copy(srcStages, stages, src);
+
+                video.playOnAwake = false;
+                video.renderMode = VideoRenderMode.APIOnly;
+                video.audioOutputMode = VideoAudioOutputMode.None;
+                video.isLooping = false;
+                video.source = VideoSource.VideoClip;
+                video.clip = srcVideo != null && srcVideo.clip != null ? srcVideo.clip : AssetDatabase.LoadAssetAtPath<VideoClip>("Assets/Artwork/Video/painting.mp4");
+
+                // Every scene reference now points at the desktop objects (assets came across as they were).
+                // No camera on a Mac: no detection, and no "no camera" status line every 2 s.
+                Set(board, ("cameraAccess", null), ("statusInterval", 0f));
+                Set(presence, ("estimator", board), ("painting", root), ("head", head));
+                Set(canvas, ("estimator", board), ("canvasRoot", root), ("canvasQuad", quadRenderer), ("head", head), ("video", video),
+                    ("presence", presence), ("stages", stages),
+                    ("stillImage", AssetDatabase.LoadAssetAtPath<Texture>("Assets/Artwork/Video/painting_frame0.png")));
+                Set(stages, ("canvas", canvas), ("presence", presence), ("head", head));
+                var so = new SerializedObject(stages);
+                var list = so.FindProperty("stages");
+                list.arraySize = 4;
+                for (int i = 0; i < 4; i++)
+                    list.GetArrayElementAtIndex(i).objectReferenceValue = AssetDatabase.LoadAssetAtPath<Texture>($"Assets/Artwork/Stages/stage{i + 1}.jpg");
+                so.ApplyModifiedPropertiesWithoutUndo();
+
+                Debug.Log($"[DesktopBuild] Painting copied from {PaintingScene} onto the east wall at {PaintingCentre}");
+                return (canvas, board);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(src, true);
+            }
+        }
+
+        /// <summary>Copy a component's values from another scene, then clear any reference into that scene (set again by the caller).</summary>
+        static void Copy(Component from, Component to, Scene fromScene)
+        {
+            EditorJsonUtility.FromJsonOverwrite(EditorJsonUtility.ToJson(from), to);
+            var so = new SerializedObject(to);
+            var p = so.GetIterator();
+            while (p.Next(true))
+            {
+                if (p.propertyType != SerializedPropertyType.ObjectReference || p.objectReferenceValue == null) continue;
+                var o = p.objectReferenceValue;
+                bool inOtherScene = (o is GameObject g && g.scene == fromScene) || (o is Component c && c.gameObject.scene == fromScene);
+                if (inOtherScene) p.objectReferenceValue = null;
+            }
+            // Event listeners pointed at objects in the other scene: drop them.
+            var e = so.GetIterator();
+            while (e.Next(true))
+                if (e.name == "m_Calls" && e.isArray) e.arraySize = 0;
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         [MenuItem("CupSpike/Build macOS Debug App")]
@@ -182,7 +300,6 @@ namespace CupSpike.EditorTools
         }
 
         static Material Mat(string path) => AssetDatabase.LoadAssetAtPath<Material>(path);
-        static AudioClip Clip(string path) => AssetDatabase.LoadAssetAtPath<AudioClip>(path);
 
         static void Set(Object target, params (string name, object value)[] fields)
         {
@@ -191,7 +308,8 @@ namespace CupSpike.EditorTools
             {
                 var p = so.FindProperty(name);
                 if (p == null) { Debug.LogError($"[DesktopBuild] {target.GetType().Name} has no field '{name}'"); continue; }
-                if (value is bool b) p.boolValue = b;
+                if (value == null) p.objectReferenceValue = null;
+                else if (value is bool b) p.boolValue = b;
                 else if (value is float f) p.floatValue = f;
                 else p.objectReferenceValue = (Object)value;
             }

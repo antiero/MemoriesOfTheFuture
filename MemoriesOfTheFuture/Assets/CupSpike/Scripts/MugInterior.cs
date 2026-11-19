@@ -67,9 +67,6 @@ namespace CupSpike
         /// <summary>Angle between the gaze and the opening, and distance to it (degrees, m).</summary>
         public float GazeAngle => _gaze;
         public float Distance => _dist;
-        public float DroneVolume { get => droneSlot != null ? droneSlot.Linear : 0f; set { if (droneSlot != null) droneSlot.Linear = value; } }
-        /// <summary>Play this clip instead of the slot's files (desktop drop folder; not saved).</summary>
-        public void SetDrone(AudioClip clip) { if (_drone != null) _drone.OverrideClip = clip; }
         public Vector3 RimCentre => proxy != null ? proxy.position + proxy.up * RimHeight : Vector3.zero;
         public string StatusLine =>
             $"inside: {(LookingIn ? "LOOKING IN" : "-")}  open {Reveal:0.00}  gaze {_gaze:0}°  above {_above:0}°  dist {_dist:0.00} m{(forceOpen ? "  FORCED" : "")}";
