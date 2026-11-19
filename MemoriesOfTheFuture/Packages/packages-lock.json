@@ -523,6 +523,15 @@
       },
       "url": "https://packages.unity.com"
     },
+    "wu.yize.gsplat": {
+      "version": "https://github.com/wuyize25/gsplat-unity.git#v1.4.0",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.mathematics": "1.3.2"
+      },
+      "hash": "36fd2cdfaf988c7e688f7f5e78bde50db402dd46"
+    },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
       "depth": 0,

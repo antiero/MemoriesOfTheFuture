@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "wu.yize.gsplat": "https://github.com/wuyize25/gsplat-unity.git#v1.4.0",
     "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main",
     "com.meta.xr.sdk.all": "209.0.0",
     "com.meta.xr.sdk.interaction.ovr": "209.0.0",

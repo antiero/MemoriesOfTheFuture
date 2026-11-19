@@ -1,18 +1,20 @@
 // Desktop debug build only: the stand-in "real room". Simple shaded colour with a faint world-space
 // grid, drawn before the dream (so the dream covers it like it covers passthrough), and tinted by
 // the global _CupRoomLook (brightness, contrast, saturation), which RoomLook sets where the headset
-// would change passthrough.
+// would change passthrough. DesktopSim turns its depth writes off (_ZWrite) during the dream, so the
+// dream's splat room isn't cut by stand-in walls and table, as nothing cuts it over passthrough.
 Shader "CupSpike/DesktopRoom"
 {
     Properties
     {
         _Color ("Colour", Color) = (0.7, 0.68, 0.62, 1)
         _Grid ("Grid strength", Range(0, 1)) = 0.08
+        [Enum(Off, 0, On, 1)] _ZWrite ("Depth write", Float) = 1
     }
     SubShader
     {
         Tags { "RenderType"="Opaque" "Queue"="Geometry-100" "RenderPipeline"="UniversalPipeline" }
-        ZWrite On
+        ZWrite [_ZWrite]
         Cull Back
 
         Pass

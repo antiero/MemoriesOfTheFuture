@@ -729,6 +729,7 @@ GameObject:
   - component: {fileID: 982673531}
   - component: {fileID: 982673533}
   - component: {fileID: 982673534}
+  - component: {fileID: 982673535}
   m_Layer: 0
   m_Name: CupDetection
   m_TagString: Untagged
@@ -1064,6 +1065,30 @@ MonoBehaviour:
   gate: 0.15
   agree: 0.03
   maxStep: 0.05
+--- !u!114 &982673535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c27cd25ca5c64380b6b94300a857c70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.DreamSplatRoom
+  dream: {fileID: 982673533}
+  interior: {fileID: 982673532}
+  splat: {fileID: 4599839170941234424, guid: 3a5bc230e26f249dcbe0035ddbfc1424, type: 3}
+  tableAhead: 0.8
+  rimAboveTable: 0.1
+  scale: 1.13
+  scanTableTop: {x: 0.03, y: 0.52, z: -0.82}
+  scanYaw: 113.4
+  growIn: {x: 0.3, y: 0.9}
+  brightenIn: {x: 0.35, y: 1}
+  maxBrightness: 1
+  shDegree: 0
 --- !u!1 &988729871
 GameObject:
   m_ObjectHideFlags: 0

@@ -29,6 +29,8 @@ namespace CupSpike
         [SerializeField] DreamState dream;
         [SerializeField] Camera cam;
         [SerializeField] Material handMaterial;
+        [Tooltip("The stand-in room. Its depth writes go off during the dream, like passthrough, which has no depth.")]
+        [SerializeField] Transform room;
 
         [Header("Painting")]
         [SerializeField] PictureCanvas painting;
@@ -64,6 +66,9 @@ namespace CupSpike
 
         float _yaw, _pitch;
         Vector3 _body;          // standing head position
+        readonly System.Collections.Generic.List<Material> _roomMats = new System.Collections.Generic.List<Material>();
+        bool _roomDepth = true;
+        static readonly int ZWriteId = Shader.PropertyToID("_ZWrite");
         float _lean;            // 0 = standing at _body, 1 = over the mug
         bool _leanTarget;
         Coroutine _aim;
@@ -83,6 +88,8 @@ namespace CupSpike
             cam.transform.position = headRest;
             Face(Rim);
             BuildHand();
+            if (room != null)
+                foreach (var r in room.GetComponentsInChildren<Renderer>()) _roomMats.AddRange(r.materials);   // instances, so the assets stay as they are
             if (mugScream != null) mugScream.ShowZone = false;
 
             if (paintingBoard != null)
@@ -153,6 +160,13 @@ namespace CupSpike
 
         void Update()
         {
+            bool roomDepth = dream == null || dream.Depth <= 0f;
+            if (roomDepth != _roomDepth)
+            {
+                _roomDepth = roomDepth;
+                foreach (var m in _roomMats) m.SetFloat(ZWriteId, roomDepth ? 1f : 0f);
+            }
+
             var kb = Keyboard.current;
             var mouse = Mouse.current;
             if (kb == null || mouse == null) return;
