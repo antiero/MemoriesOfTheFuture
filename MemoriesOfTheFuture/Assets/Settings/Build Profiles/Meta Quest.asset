@@ -44,8 +44,14 @@ MonoBehaviour:
   m_OverrideGlobalSceneList: 1
   m_Scenes:
   - m_enabled: 1
+    m_path: Assets/Scenes/00-Boot.unity
+    m_guid: e6e5b1ce0dfdf48eda297b6c85230993
+  - m_enabled: 1
     m_path: Assets/Scenes/01-PictureChanges.unity
     m_guid: 3c490b6f077304f97a16ce5962f08d75
+  - m_enabled: 1
+    m_path: Assets/Scenes/02-CupSpike.unity
+    m_guid: 668f5ad8780644da92abfa28359e8b4c
   m_HasScriptingDefines: 0
   m_ScriptingDefines: []
   m_PlayerSettingsYaml:
@@ -692,7 +698,7 @@ MonoBehaviour:
     - line: '|   enableCrashReportAPI: 0'
     - line: '|   cameraUsageDescription: '
     - line: '|   locationUsageDescription: '
-    - line: '|   microphoneUsageDescription: '
+    - line: '|   microphoneUsageDescription: Not used. Required by an included library.'
     - line: '|   bluetoothUsageDescription: '
     - line: '|   macOSTargetOSVersion: 12.0'
     - line: '|   switchNMETAOverride: '
@@ -960,7 +966,7 @@ MonoBehaviour:
     - line: '|   scriptingBackend:'
     - line: '|     Android: 1'
     - line: '|     Server: 1'
-    - line: '|     Standalone: 1'
+    - line: '|     Standalone: 0'
     - line: '|   il2cppCompilerConfiguration: {}'
     - line: '|   il2cppCodeGeneration: {}'
     - line: '|   il2cppLTOMode: {}'
