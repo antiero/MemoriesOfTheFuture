@@ -147,6 +147,10 @@ namespace CupSpike
             if (interior != null) interior.HoldOpen = true;
             if (mugScream != null) mugScream.Suppressed = true;
             if (hands != null) _handsWereVisible = hands.Visible;
+            // The whispers and embers live under the dream root, which Apply only switches on after this:
+            // switch it on first, or Play() is refused ("Can not play a disabled audio source") and the
+            // whispers stay silent for the whole dream.
+            _root.gameObject.SetActive(true);
             _embers.Play();
             for (int i = 0; i < _whispers.Count; i++)
             {

@@ -125,9 +125,9 @@ and files, but on the Mac you're hearing it through laptop audio, not the Quest'
    - **Where**: here in the scene, on the mug, or on the listener (with an offset).
 3. Save the scene (Cmd+S).
 
-Do this in **02-CupSpike** (the headset scene) and **03-CupDesktop** (the desktop test) if you
-want it in both. (Rebuilding the desktop room with *CupSpike > Create Desktop Scene* starts it
-afresh, so emitters added to 03 by hand have to be added again.) **Open headset scene** in the Sound Design window opens 02-CupSpike.
+Do this in **02-CupSpike** (the headset scene) and **03-DesktopTesting** (the desktop test) if you
+want it in both. (Rebuilding the desktop room with *CupSpike > Create Desktop Testing Scene* starts
+it afresh, so emitters added to 03 by hand have to be added again.) **Open headset scene** in the Sound Design window opens 02-CupSpike.
 
 ## Testing
 
@@ -138,9 +138,20 @@ afresh, so emitters added to 03 by hand have to be added again.) **Open headset 
 
 ## The desktop room
 
-Scene **03-CupDesktop** (and the Mac app built from it) is one stand-in room with both
+Scene **03-DesktopTesting** (and the Mac app built from it) is one stand-in room with both
 experiences running: the mug on the table, and the painting on the wall to your right (east).
-Walk between them.
+Walk between them. Open it and press **Play** (or **▶ Test on desktop** in the Sound Design
+window): nothing happens until Play.
+
+A **welcome card** explains it first: what to try with the mug, the painting and the sound, and
+the main keys. Press **Enter** or **Start**. After that the screen shows:
+
+- top left, a card each for **the mug** and **the painting**: what's happening now and what to do
+  next (with a progress bar, and the painting's stages as dots);
+- bottom left, **every key** (H hides it);
+- short messages at the top when something changes ("Painting trigger: proximity", "Saved...").
+
+Tab > **Help** has the whole welcome card again. Headphones help a lot.
 
 | Key | What it does |
 |---|---|
@@ -156,20 +167,23 @@ Walk between them.
 | P | Replay the painting (back to its first stage) |
 | T | Painting trigger: unseen swap / proximity / gaze dwell |
 | L | Reload sound files from the Sounds folder |
-| Tab | The panel: **Sound** and **Timings** |
+| Tab | The panel: **Sound**, **Timings** and **Help** |
+| Enter | Close the welcome card |
 | H | Hide the guide |
 
 ### The Sound panel (Tab)
 
 The same slots as the Sound Design window, live, in the game view, so it works in the Mac app too:
 
-- A **dot** lights green while the slot is playing.
+- Each sound is a card. Its **dot** and left edge light green while it's playing.
 - **S / M**: solo or mute.
 - **Level** and **Pitch** sliders.
-- **File**: the file that plays. **◀ ▶** step through the slot's files. A file from the Sounds
-  folder shows as *(Sounds folder)*; **Built-in** goes back to the slot's own files.
-- **...**: spatial on or off, distances, room acoustics and reverb send.
-- At the top: the mixer snapshots right now, and **Blending** (untick to hold the mix still).
+- **File**: the file that plays. **‹ ›** step through the slot's files. A file from the Sounds
+  folder shows in amber as *(your file)*; **Built-in** goes back to the slot's own files.
+- **More**: spatial on or off, distances, room acoustics and reverb send.
+- At the top: **Save mix**, **Reload files**, **Open sounds folder**, and *Mix right now*: how
+  much of each snapshot is in the mix. **Following** / **Paused** holds the mix still while you
+  tune a snapshot.
 
 **In Unity**, panel edits change the slot assets, so they're kept when you stop, just like the
 Sound Design window.
@@ -182,7 +196,7 @@ window. The Console lists what changed; Cmd+Z undoes it.
 
 ### Trying a file in the desktop room
 
-1. **Open folder** in the Sound panel opens `~/MemoriesOfTheFuture/Sounds`.
+1. **Open sounds folder** in the Sound panel opens `~/MemoriesOfTheFuture/Sounds`.
 2. Copy in a file whose name starts with the slot's Drop Name: `scream_take3.wav`,
    `painting_soundtrack_v2.wav`. The newest one wins if several match. A `background` file
    (stereo) replaces the whole bed, left and right. The folder's `README.txt` lists every name.

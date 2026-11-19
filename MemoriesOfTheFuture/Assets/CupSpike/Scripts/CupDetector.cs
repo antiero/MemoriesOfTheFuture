@@ -44,7 +44,7 @@ namespace CupSpike
         [SerializeField] Hand rightHand;
 
         [Header("Simulation (desktop debug build)")]
-        [Tooltip("No camera, model or hands: the mug's pose comes from Simulate(). Used by 03-CupDesktop.")]
+        [Tooltip("No camera, model or hands: the mug's pose comes from Simulate(). Used by 03-DesktopTesting.")]
         [SerializeField] bool simulate;
 
         [Header("Model (YOLO11n, COCO)")]

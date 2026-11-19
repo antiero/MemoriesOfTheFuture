@@ -5,7 +5,10 @@ using UnityEditor.Build.Reporting;
 using UnityEditor.Events;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.UIElements;
 using UnityEngine.Video;
 
 namespace CupSpike.EditorTools
@@ -13,23 +16,29 @@ namespace CupSpike.EditorTools
     /// <summary>
     /// Builds the desktop debug version of the experiences (no headset): one stand-in room with the
     /// mug on the table and the painting from 01-PictureChanges on the east wall.
-    ///  - CupSpike > Create Desktop Scene: (re)creates Assets/Scenes/03-CupDesktop.unity, then points
-    ///    its sounds at the Sound Slots (Memories > Audio > Set Up Sound Slots and Mixer first).
-    ///  - CupSpike > Build macOS Debug App: builds only that scene to Builds/macOS/MugThatScreams-Debug.app.
+    ///  - CupSpike > Create Desktop Testing Scene: (re)creates Assets/Scenes/03-DesktopTesting.unity, with
+    ///    the artists' on-screen guide (DesktopUI), then points its sounds at the Sound Slots
+    ///    (Memories > Audio > Set Up Sound Slots and Mixer first).
+    ///  - CupSpike > Build macOS Desktop Testing App: builds only that scene to
+    ///    Builds/macOS/MemoriesOfTheFuture-DesktopTesting.app.
     ///    This switches the editor to the macOS platform; switch back with
     ///    CupSpike > Switch Back To Meta Quest (or File > Build Profiles).
     /// </summary>
     public static class DesktopBuild
     {
-        public const string ScenePath = "Assets/Scenes/03-CupDesktop.unity";
-        public const string AppPath = "Builds/macOS/MugThatScreams-Debug.app";
+        public const string ScenePath = "Assets/Scenes/03-DesktopTesting.unity";
+        public const string AppPath = "Builds/macOS/MemoriesOfTheFuture-DesktopTesting.app";
+        const string UiFolder = "Assets/CupSpike/UI";
+        const string UiStyle = UiFolder + "/DesktopTesting.uss";
+        const string UiTheme = UiFolder + "/DesktopTestingTheme.tss";
+        const string UiPanel = UiFolder + "/DesktopTestingPanel.asset";
         const string QuestProfile = "Assets/Settings/Build Profiles/Meta Quest.asset";
         const string PaintingScene = "Assets/Scenes/01-PictureChanges.unity";
         /// <summary>The painting's board centre on the east wall (wall face at x = 3.0), and "into the wall".</summary>
         static readonly Vector3 PaintingCentre = new Vector3(2.99f, 1.45f, 1.2f);
         static readonly Vector3 PaintingInto = Vector3.right;
 
-        [MenuItem("CupSpike/Create Desktop Scene")]
+        [MenuItem("CupSpike/Create Desktop Testing Scene")]
         public static void CreateScene()
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -116,6 +125,14 @@ namespace CupSpike.EditorTools
             simSo.FindProperty("paintingInto").vector3Value = PaintingInto;
             simSo.ApplyModifiedPropertiesWithoutUndo();
 
+            // The artists' guide: welcome card, status, keys and the Tab panel (UI Toolkit).
+            var uiGo = new GameObject("Desktop UI");
+            uiGo.AddComponent<UIDocument>().panelSettings = PanelSettingsAsset();
+            Set(uiGo.AddComponent<DesktopUI>(), ("sim", sim), ("style", AssetDatabase.LoadAssetAtPath<StyleSheet>(UiStyle)));
+            var events = new GameObject("EventSystem");
+            events.AddComponent<EventSystem>();
+            events.AddComponent<InputSystemUIInputModule>();
+
             var audioRoom = new GameObject("AudioRoom");
             audioRoom.AddComponent<MetaXRAudioRoomAcousticProperties>();
             audioRoom.AddComponent<RoomAcoustics>();
@@ -126,6 +143,26 @@ namespace CupSpike.EditorTools
 
             // Sound: point the mug's and the painting's sound fields at the Sound Slots, add the mix director.
             Memories.Audio.EditorTools.AudioSetup.WireScene(ScenePath);
+        }
+
+        /// <summary>The UI's panel settings: scales with the window (designed at 1600 x 900), default runtime theme.</summary>
+        static PanelSettings PanelSettingsAsset()
+        {
+            var ps = AssetDatabase.LoadAssetAtPath<PanelSettings>(UiPanel);
+            if (ps == null)
+            {
+                ps = ScriptableObject.CreateInstance<PanelSettings>();
+                AssetDatabase.CreateAsset(ps, UiPanel);
+            }
+            AssetDatabase.ImportAsset(UiTheme);
+            ps.themeStyleSheet = AssetDatabase.LoadAssetAtPath<ThemeStyleSheet>(UiTheme);
+            ps.scaleMode = PanelScaleMode.ScaleWithScreenSize;
+            ps.referenceResolution = new Vector2Int(1600, 900);
+            ps.screenMatchMode = PanelScreenMatchMode.MatchWidthOrHeight;
+            ps.match = 1f;   // scale with the window's height
+            ps.sortingOrder = 10;
+            EditorUtility.SetDirty(ps);
+            return ps;
         }
 
         /// <summary>
@@ -231,7 +268,7 @@ namespace CupSpike.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        [MenuItem("CupSpike/Build macOS Debug App")]
+        [MenuItem("CupSpike/Build macOS Desktop Testing App")]
         public static void BuildMac()
         {
             if (!File.Exists(ScenePath)) CreateScene();
