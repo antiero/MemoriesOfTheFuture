@@ -681,6 +681,7 @@ GameObject:
   - component: {fileID: 982673532}
   - component: {fileID: 982673531}
   - component: {fileID: 982673533}
+  - component: {fileID: 982673534}
   m_Layer: 0
   m_Name: CupDetection
   m_TagString: Untagged
@@ -723,6 +724,7 @@ MonoBehaviour:
   interior: {fileID: 982673532}
   runeCapture: {fileID: 982673531}
   dream: {fileID: 982673533}
+  rimTracker: {fileID: 982673534}
   proxyRenderers:
   - {fileID: 1305061110}
   proxyVisible: 0
@@ -741,6 +743,7 @@ MonoBehaviour:
   detector: {fileID: 982673525}
   mugScream: {fileID: 982673528}
   interior: {fileID: 982673532}
+  rimTracker: {fileID: 982673534}
   runeCapture: {fileID: 982673531}
   dream: {fileID: 982673533}
   head: {fileID: 330107616}
@@ -768,6 +771,7 @@ MonoBehaviour:
   head: {fileID: 330107616}
   leftHand: {fileID: 688772557}
   rightHand: {fileID: 688772556}
+  simulate: 0
   modelAsset: {fileID: 5022602860645237092, guid: f2ab778db5b714694a0915cd739c60f2, type: 3}
   classLabels: {fileID: 4900000, guid: d6e2f5651a0de4bbaaaae176e8b0af64, type: 3}
   backend: 256
@@ -983,6 +987,7 @@ MonoBehaviour:
   emberMaterial: {fileID: 2100000, guid: ee528bc1a64a144beb18b2f09feebfa6, type: 2}
   runeFloatMaterial: {fileID: 2100000, guid: 7584123a6bc0144c28fb31a31f4e9cca, type: 2}
   whisper: {fileID: 8300000, guid: 03655a4bd51d04e6f86ea475ff940f87, type: 3}
+  whisperVolume: 0.6
   stareBeforeDream: 2
   deepenTime: 8
   maxFullTime: 20
@@ -994,6 +999,29 @@ MonoBehaviour:
   walkLimit: 0.4
   wakeMode: 0
   forceDream: 0
+--- !u!114 &982673534
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8413aa23400fc4e45984952b0092a66d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.RimTracker
+  cameraAccess: {fileID: 869232205}
+  detector: {fileID: 982673525}
+  locking: 1
+  rimRadius: 0.04
+  rimHeight: 0.095
+  maxViewAngle: 75
+  maxDistance: 0.9
+  gain: 0.5
+  gate: 0.15
+  agree: 0.03
+  maxStep: 0.05
 --- !u!1 &988729871
 GameObject:
   m_ObjectHideFlags: 0

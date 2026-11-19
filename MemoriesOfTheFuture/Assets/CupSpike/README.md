@@ -80,6 +80,31 @@ Debug: a faint ring at mid-height marks the 30 cm approach zone and brightens as
     `adb pull /sdcard/Android/data/com.fiveoftwelve.memoriesofthefuture/files/RuneCaptures`
 - **Step 2 (not built):** detect the rune's blobs inside the cup box and get its exact pose with `PlanarPose` from 01-PictureChanges. That locks the effect to the real rune, gives the mug's rotation about its axis, and tells mugs with different runes apart.
 
+## Rim lock (held mug lines up with the real opening)
+
+`RimTracker` (on `CupDetection`): while the mug is held with its opening towards you, it finds the real opening in the camera image and corrects the held pose. The well and rune then sit on the real rim.
+
+**Why it's needed:** the held pose comes from the hand. On device, the rim it predicted was **6–10 cm off** the real one, mostly too close to the camera. The error came from the pick-up and lasted the whole hold. Measured on 20 frames of a headset capture (`DebugOutput/rune/RuneCaptures/20261119_120355`).
+
+**How it works:**
+1. **Find the opening.** In each camera frame, at half resolution, on a worker thread, and only in a window around the predicted rim, it looks for a bright region whose outline is an ellipse (the white inside and lip, edged by the black band), with dark holes in its middle (the rune).
+2. **Locate the rim in 3D.** The ellipse centre gives the direction, and its size against the 40 mm outer radius gives the distance.
+3. **Correct the hold.** Half the difference goes into the hand-to-mug offset (`CupDetector.ApplyHeldCorrection`), at most 5 cm at a time. It only acts once two detections in a row agree within 3 cm, and ignores anything more than 15 cm from the prediction.
+4. **Keep the correction.** It lasts for the rest of the hold, so the mug stays aligned after you look away.
+
+While it's locking, the older YOLO sideways correction is switched off, because the YOLO box sometimes lands on a different cup.
+
+**Results on device** (`20261119_122042`): after the first lock, the rim was **0.2–1.1 cm** from the real one, with one frame at 3 cm. That capture had 26 corrections in about 8 s.
+
+**Limit:** the opening is hard to find against a **white or light table**, because the white mug merges with it. In that capture the first lock took about 13 s. On a darker surface it locked straight away. For the installation, a dark tablecloth or tray under the mugs would help this, and it would also help the YOLO cup detection.
+
+**Controls and debug:**
+- The **Rim** button in the hand menu switches it on and off for comparison. It's lit when on, which is the default.
+- The debug panel's blue line shows the state (`LOCKED, corrected … cm`), how many times it has seen the opening, how many corrections it has made, and the last error.
+- Logs are prefixed `[RimTracker]`.
+
+**Offline checks:** `Rec` captures can be checked against the prediction by projecting the proxy's rim into each frame. The camera model is in `PassthroughCameraAccess.WorldToViewportPoint`; frame row 0 is the bottom of the image.
+
 ## Cup detection
 
 ```
@@ -154,6 +179,7 @@ Hand menu (left palm up), top row:
 | Miss / False | Log a reach that didn't fire / a fire without a reach |
 | Inside | Keep the mug's interior open (without looking in) |
 | Rec | Save camera frames while looking into the mug, for the rune detector |
+| Rim | Rim lock on/off (lit = on, the default) |
 
 In the Editor, MRUK's mock camera shows colour bars. Set **Editor Test Image** on `CupDetector` to a frame from a headset recording to test the whole chain without the headset (depth isn't available in the Editor, so it uses the size estimate).
 

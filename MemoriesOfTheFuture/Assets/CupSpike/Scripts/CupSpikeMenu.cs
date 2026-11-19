@@ -14,6 +14,7 @@ namespace CupSpike
         [SerializeField] MugInterior interior;
         [SerializeField] RuneCapture runeCapture;
         [SerializeField] DreamState dream;
+        [SerializeField] RimTracker rimTracker;
         [Tooltip("Renderers of the proxy mug, shown by the Proxy button. Hidden by default: the real mug is the " +
                  "star, and an invisible occluder (MugInterior) still hides virtual things behind it.")]
         [SerializeField] Renderer[] proxyRenderers;
@@ -46,6 +47,8 @@ namespace CupSpike
                 // Inside: keep the well open without looking in (to check it). Rec: save camera frames while looking in.
                 menu.AddButton("Inside", () => interior.ForceOpen = !interior.ForceOpen, () => interior.ForceOpen);
                 if (runeCapture != null) menu.AddButton("Rec", runeCapture.Toggle, () => runeCapture.Recording);
+                // Rim: lock the held mug to the opening seen by the camera (lit = on, the default).
+                if (rimTracker != null) menu.AddButton("Rim", () => rimTracker.Locking = !rimTracker.Locking, () => rimTracker.Locking);
             }
             if (dream != null)
             {
