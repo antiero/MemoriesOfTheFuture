@@ -12,14 +12,16 @@ namespace PictureChanges
     ///   Near / Far      : head within nearEnter of the painting centre (exit at nearExit).
     ///   Facing / Away   : head direction within faceEnter degrees of the painting (exit at faceExit).
     ///   Triggered       : Near and Facing held for `dwell` seconds. Fires once until Rearm().
+    ///   GazeTriggered   : Facing held for `gazeDwell` seconds at any distance up to gazeMaxDistance
+    ///                     (the "gaze dwell" trigger mode). Fires once until Rearm().
     ///
-    /// Events: Approach, Leave, FaceToward, FaceAway, Triggered. Every event is logged
+    /// Events: Approach, Leave, FaceToward, FaceAway, Triggered, GazeTriggered. Every event is logged
     /// ("[Presence] ...") and kept in a short history for the test-mode readout.
     /// Only active while a painting is placed (real lock or test-mode placement).
     /// </summary>
     public class ViewerPresence : MonoBehaviour
     {
-        public enum Event { Approach, Leave, FaceToward, FaceAway, Triggered }
+        public enum Event { Approach, Leave, FaceToward, FaceAway, Triggered, GazeTriggered }
 
         [SerializeField] BoardPoseEstimator estimator;
         [SerializeField] Transform painting;
@@ -36,13 +38,20 @@ namespace PictureChanges
         [Header("Trigger")]
         [SerializeField] float dwell = 0.5f;
 
-        public UnityEvent onApproach, onLeave, onFaceToward, onFaceAway, onTriggered;
+        [Header("Gaze dwell trigger")]
+        [Tooltip("Seconds of facing the painting (at any distance up to gazeMaxDistance) before GazeTriggered.")]
+        [SerializeField] float gazeDwell = 2f;
+        [SerializeField] float gazeMaxDistance = 5f;
+
+        public UnityEvent onApproach, onLeave, onFaceToward, onFaceAway, onTriggered, onGazeTriggered;
         public event Action<Event> Changed;
 
         public bool Active { get; private set; }
         public bool IsNear { get; private set; }
         public bool IsFacing { get; private set; }
         public bool HasTriggered { get; private set; }
+        public bool HasGazeTriggered { get; private set; }
+        public float GazeProgress => Mathf.Clamp01(_gazeTime / Mathf.Max(0.01f, gazeDwell));
         public float Distance { get; private set; }
         public float Angle { get; private set; }
         public float DwellProgress => Mathf.Clamp01(_dwellTime / Mathf.Max(0.01f, dwell));
@@ -52,20 +61,20 @@ namespace PictureChanges
         readonly List<Entry> _history = new List<Entry>();
         public IReadOnlyList<Entry> History => _history;
 
-        float _dwellTime;
+        float _dwellTime, _gazeTime;
 
         /// <summary>Allow the trigger to fire again (e.g. after Replay).</summary>
         public void Rearm()
         {
-            HasTriggered = false;
-            _dwellTime = 0f;
+            HasTriggered = HasGazeTriggered = false;
+            _dwellTime = _gazeTime = 0f;
         }
 
         /// <summary>Forget all state (painting removed / rescanning).</summary>
         public void ResetState()
         {
-            Active = IsNear = IsFacing = HasTriggered = false;
-            _dwellTime = 0f;
+            Active = IsNear = IsFacing = HasTriggered = HasGazeTriggered = false;
+            _dwellTime = _gazeTime = 0f;
         }
 
         void Update()
@@ -94,6 +103,13 @@ namespace PictureChanges
                 HasTriggered = true;
                 Raise(Event.Triggered);
             }
+
+            _gazeTime = IsFacing && Distance < gazeMaxDistance ? _gazeTime + Time.deltaTime : 0f;
+            if (!HasGazeTriggered && _gazeTime >= gazeDwell)
+            {
+                HasGazeTriggered = true;
+                Raise(Event.GazeTriggered);
+            }
         }
 
         void Raise(Event e)
@@ -108,6 +124,7 @@ namespace PictureChanges
                 case Event.FaceToward: onFaceToward?.Invoke(); break;
                 case Event.FaceAway: onFaceAway?.Invoke(); break;
                 case Event.Triggered: onTriggered?.Invoke(); break;
+                case Event.GazeTriggered: onGazeTriggered?.Invoke(); break;
             }
             Changed?.Invoke(e);
         }

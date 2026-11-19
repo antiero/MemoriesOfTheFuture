@@ -18,6 +18,12 @@ namespace PictureChanges.UI
             menu.AddButton("Debug", () => debugView.Toggle(), () => debugView.Visible);
             menu.AddButton("Grid", () => canvas.ShowAlignmentGrid = !canvas.ShowAlignmentGrid, () => canvas.ShowAlignmentGrid);
             menu.AddButton("Capture", () => FindAnyObjectByType<BoardPoseEstimator>()?.RequestCapture());
+            // Trigger: unseen swap (default) -> proximity -> gaze dwell. Lit when not the default.
+            menu.AddButton("Trigger", () =>
+            {
+                canvas.CycleMode();
+                PictureChangesInput.Instance?.Say("Trigger: " + PictureCanvas.ModeName(canvas.Mode));
+            }, () => canvas.Mode != PictureCanvas.TriggerMode.UnseenSwap);
         }
     }
 }

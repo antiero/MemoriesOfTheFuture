@@ -728,6 +728,7 @@ GameObject:
   - component: {fileID: 982673532}
   - component: {fileID: 982673531}
   - component: {fileID: 982673533}
+  - component: {fileID: 982673534}
   m_Layer: 0
   m_Name: CupDetection
   m_TagString: Untagged
@@ -770,6 +771,7 @@ MonoBehaviour:
   interior: {fileID: 982673532}
   runeCapture: {fileID: 982673531}
   dream: {fileID: 982673533}
+  rimTracker: {fileID: 982673534}
   proxyRenderers:
   - {fileID: 1305061110}
   proxyVisible: 0
@@ -788,12 +790,13 @@ MonoBehaviour:
   detector: {fileID: 982673525}
   mugScream: {fileID: 982673528}
   interior: {fileID: 982673532}
+  rimTracker: {fileID: 982673534}
   runeCapture: {fileID: 982673531}
   dream: {fileID: 982673533}
   head: {fileID: 330107616}
   unlitMaterial: {fileID: 2100000, guid: dd2245643e43c48e6944df551b787ee6, type: 2}
   font: {fileID: 11400000, guid: f675742eaf9c20a4f909d78ee7a14fed, type: 2}
-  visible: 1
+  visible: 0
   panelOffset: {x: 0, y: -0.2, z: 0.6}
   panelWidth: 0.28
   followSpeed: 4
@@ -909,7 +912,7 @@ MonoBehaviour:
   rearmMargin: 0.05
   cooldown: 2
   unlitMaterial: {fileID: 2100000, guid: dd2245643e43c48e6944df551b787ee6, type: 2}
-  showZone: 1
+  showZone: 0
   onScream:
     m_PersistentCalls:
       m_Calls:
@@ -1038,6 +1041,29 @@ MonoBehaviour:
   walkLimit: 0.4
   wakeMode: 0
   forceDream: 0
+--- !u!114 &982673534
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8413aa23400fc4e45984952b0092a66d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.RimTracker
+  cameraAccess: {fileID: 869232205}
+  detector: {fileID: 982673525}
+  locking: 1
+  rimRadius: 0.04
+  rimHeight: 0.095
+  maxViewAngle: 75
+  maxDistance: 0.9
+  gain: 0.5
+  gate: 0.15
+  agree: 0.03
+  maxStep: 0.05
 --- !u!1 &988729871
 GameObject:
   m_ObjectHideFlags: 0

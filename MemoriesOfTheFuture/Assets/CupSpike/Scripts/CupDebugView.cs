@@ -18,13 +18,14 @@ namespace CupSpike
         [SerializeField] CupDetector detector;
         [SerializeField] MugScream mugScream;
         [SerializeField] MugInterior interior;
+        [SerializeField] RimTracker rimTracker;
         [SerializeField] RuneCapture runeCapture;
         [SerializeField] DreamState dream;
         [SerializeField] Transform head;
         [Tooltip("URP Unlit material asset, referenced so the shader is kept in builds.")]
         [SerializeField] Material unlitMaterial;
         [SerializeField] TMP_FontAsset font;
-        [SerializeField] bool visible = true;
+        [SerializeField] bool visible = false;
 
         [Header("Panel")]
         [SerializeField] Vector3 panelOffset = new Vector3(0f, -0.2f, 0.6f);
@@ -202,6 +203,7 @@ namespace CupSpike
                 $"{(d.Rejected != "" ? $"\n<color=#FF851B>ignored: {d.Rejected}</color>" : "")}" +
                 $"{(mugScream != null ? $"\n<color=#FF6F61>{mugScream.StatusLine}</color>" : "")}" +
                 $"{(interior != null ? $"\n<color=#B10DC9>{interior.StatusLine}</color>" : "")}" +
+                $"{(rimTracker != null ? $"\n<color=#7FDBFF>{rimTracker.StatusLine}</color>" : "")}" +
                 $"{(dream != null ? $"\n<color=#F012BE>{dream.StatusLine}</color>" : "")}" +
                 $"{(runeCapture != null && (runeCapture.Recording || runeCapture.Saved > 0) ? $"   <color=#FF4136>REC {runeCapture.Saved}{(runeCapture.Recording ? "" : " (stopped)")}</color>" : "")}" +
                 $"{(d.Frozen ? "   <color=#7FDBFF>FROZEN</color>" : "")}</size>";
