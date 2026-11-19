@@ -277,13 +277,28 @@ namespace PictureChanges.UI
             string near = presence.IsNear ? "<color=#7CFC9A>NEAR</color>" : "<color=#9AA0A6>far</color>";
             string face = presence.IsFacing ? "<color=#7CFC9A>FACING</color>" : "<color=#9AA0A6>away</color>";
             sb.Append($"{presence.Distance:F2} m  ·  {presence.Angle:F0}°   {near}  {face}\n");
-            int bars = Mathf.RoundToInt(presence.DwellProgress * 12);
-            string trig = presence.HasTriggered ? "<color=#F2C873>TRIGGERED</color>" : $"dwell [{new string('|', bars).PadRight(12, '.')}]";
-            sb.Append($"{trig}   movie: {(canvas.IsPlaying ? "playing" : canvas.HasPlayed ? "done" : "ready")}\n");
+            sb.Append($"trigger: <b>{PictureCanvas.ModeName(canvas.Mode)}</b>\n");
+            var st = canvas.Stages;
+            if (canvas.Mode == PictureCanvas.TriggerMode.UnseenSwap && st != null)
+            {
+                string view = st.InView ? "<color=#7CFC9A>in view</color>" : "<color=#9AA0A6>out of view</color>";
+                string phase = st.Armed ? $"<color=#F2C873>ARMED</color> unseen [{Bar(st.UnseenProgress)}]"
+                                        : $"seen [{Bar(st.SeenProgress)}]";
+                sb.Append($"stage {st.Stage}/{st.StageCount - 1}  {view}  {phase}  {(st.CameClose ? "close" : "")}\n");
+            }
+            else
+            {
+                float p = canvas.Mode == PictureCanvas.TriggerMode.Proximity ? presence.DwellProgress : presence.GazeProgress;
+                bool fired = canvas.Mode == PictureCanvas.TriggerMode.Proximity ? presence.HasTriggered : presence.HasGazeTriggered;
+                string trig = fired ? "<color=#F2C873>TRIGGERED</color>" : $"dwell [{Bar(p)}]";
+                sb.Append($"{trig}   movie: {(canvas.IsPlaying ? "playing" : canvas.HasPlayed ? "done" : "ready")}\n");
+            }
             var h = presence.History;
             for (int i = h.Count - 1; i >= 0 && i >= h.Count - 5; i--)
                 sb.Append($"<size=85%>{Time.time - h[i].time,5:F1}s ago  {h[i].evt}  ({h[i].distance:F2} m, {h[i].angle:F0}°)</size>\n");
             _hudText.text = sb.ToString();
         }
+
+        static string Bar(float progress) => new string('|', Mathf.RoundToInt(progress * 12)).PadRight(12, '.');
     }
 }
