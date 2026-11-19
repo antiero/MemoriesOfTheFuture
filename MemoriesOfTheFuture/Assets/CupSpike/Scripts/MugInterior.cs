@@ -1,3 +1,4 @@
+using Memories.Audio;
 using UnityEngine;
 
 namespace CupSpike
@@ -34,10 +35,8 @@ namespace CupSpike
         [SerializeField] Material portalMaterial;
         [SerializeField] Material wellMaterial;
         [SerializeField] Material runeMaterial;
-        [Tooltip("Low drone from inside the mug while it's open (spatialised). Placeholder: the breath, pitched down.")]
-        [SerializeField] AudioClip drone;
-        [SerializeField] float dronePitch = 0.55f;
-        [SerializeField, Range(0f, 1f)] float droneVolume = 0.7f;
+        [Tooltip("Low drone from inside the mug while it's open. Its file, level and pitch live in the Sound Slot (Memories > Sound Design).")]
+        [SerializeField] SoundSlot droneSlot;
 
         [Header("Shape (m, mug space: base centre, +Y up)")]
         [Tooltip("Inner radius of the real mug's opening (measured from the model: 37.3 mm).")]
@@ -68,19 +67,16 @@ namespace CupSpike
         /// <summary>Angle between the gaze and the opening, and distance to it (degrees, m).</summary>
         public float GazeAngle => _gaze;
         public float Distance => _dist;
-        public float DroneVolume { get => droneVolume; set => droneVolume = value; }
-        public void SetDrone(AudioClip clip)
-        {
-            drone = clip;
-            if (_drone != null) { bool playing = _drone.isPlaying; _drone.clip = clip; if (playing) _drone.Play(); }
-        }
+        public float DroneVolume { get => droneSlot != null ? droneSlot.Linear : 0f; set { if (droneSlot != null) droneSlot.Linear = value; } }
+        /// <summary>Play this clip instead of the slot's files (desktop drop folder; not saved).</summary>
+        public void SetDrone(AudioClip clip) { if (_drone != null) _drone.OverrideClip = clip; }
         public Vector3 RimCentre => proxy != null ? proxy.position + proxy.up * RimHeight : Vector3.zero;
         public string StatusLine =>
             $"inside: {(LookingIn ? "LOOKING IN" : "-")}  open {Reveal:0.00}  gaze {_gaze:0}°  above {_above:0}°  dist {_dist:0.00} m{(forceOpen ? "  FORCED" : "")}";
 
         Material _well, _rune;
         Transform _shaft;
-        AudioSource _drone;
+        SlotVoice _drone;
         float _lookSince = -1f;
         float _gaze, _above, _dist;
         bool _wasOpen;
@@ -118,21 +114,7 @@ namespace CupSpike
             var rune = Part("Rune", _shaft, Disc(wellBottomRadius * 0.95f, 48), _rune);
             rune.localPosition = new Vector3(0f, -wellDepth, 0f);
 
-            if (drone != null)
-            {
-                var go = new GameObject("Drone");
-                go.transform.SetParent(interior, false);
-                _drone = go.AddComponent<AudioSource>();
-                _drone.clip = drone;
-                _drone.loop = true;
-                _drone.pitch = dronePitch;
-                _drone.volume = 0f;
-                _drone.spatialize = true;
-                _drone.spatialBlend = 1f;
-                _drone.minDistance = 0.3f;
-                _drone.playOnAwake = false;
-                go.AddComponent<MetaXRAudioSource>();
-            }
+            _drone = SlotVoice.Create(droneSlot, interior, "Drone", true);
             SetReveal(0f);
             Debug.Log($"[MugInterior] Ready: opening r {openingRadius * 1000f:0} mm, well {wellDepth:0.0} m deep flaring to r {wellBottomRadius:0.00} m");
         }
@@ -196,9 +178,10 @@ namespace CupSpike
             if (_rune != null) _rune.SetFloat("_Reveal", Mathf.Clamp01(eased * 1.6f - 0.6f));   // the rune lights up last
             if (_drone != null)
             {
-                _drone.volume = droneVolume * eased;
-                if (eased > 0f && !_drone.isPlaying) _drone.Play();
-                else if (eased <= 0f && _drone.isPlaying) _drone.Stop();
+                _drone.Level = eased;
+                _drone.Tick();
+                if (eased > 0f && !_drone.Source.isPlaying) _drone.Play();
+                else if (eased <= 0f && _drone.Source.isPlaying) _drone.Stop();
             }
         }
 

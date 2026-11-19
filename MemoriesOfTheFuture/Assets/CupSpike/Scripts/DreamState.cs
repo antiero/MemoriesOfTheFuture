@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Memories.Audio;
 using UnityEngine;
 
 namespace CupSpike
@@ -37,9 +38,10 @@ namespace CupSpike
         [SerializeField] Material emberMaterial;
         [Tooltip("CupSpike/MugRuneGlow with Stencil Comp = Always and ZTest = LEqual.")]
         [SerializeField] Material runeFloatMaterial;
-        [Tooltip("Whispers circling the viewer. Placeholder: the breath, pitched down.")]
-        [SerializeField] AudioClip whisper;
-        [SerializeField, Range(0f, 1f)] float whisperVolume = 0.6f;
+        [Tooltip("Two whispers circling the viewer. Their file, level and pitch live in the Sound Slot (Memories > Sound Design).")]
+        [SerializeField] SoundSlot whisperSlot;
+        [Tooltip("The second whisper plays at this pitch relative to the first, so they don't phase.")]
+        [SerializeField] float secondWhisperPitch = 1.24f;
 
         [Header("Timing (s)")]
         [SerializeField] float stareBeforeDream = 2f;
@@ -67,12 +69,9 @@ namespace CupSpike
         // Tuning (used by the desktop debug build's panel).
         public float StareBeforeDream { get => stareBeforeDream; set => stareBeforeDream = value; }
         public float DeepenTime { get => deepenTime; set => deepenTime = Mathf.Max(0.5f, value); }
-        public float WhisperVolume { get => whisperVolume; set => whisperVolume = value; }
-        public void SetWhisper(AudioClip clip)
-        {
-            whisper = clip;
-            foreach (var w in _whispers) { bool playing = w.isPlaying; w.clip = clip; if (playing) w.Play(); }
-        }
+        public float WhisperVolume { get => whisperSlot != null ? whisperSlot.Linear : 0f; set { if (whisperSlot != null) whisperSlot.Linear = value; } }
+        /// <summary>Play this clip instead of the slot's files (desktop drop folder; not saved).</summary>
+        public void SetWhisper(AudioClip clip) { foreach (var w in _whispers) w.OverrideClip = clip; }
         public string StatusLine =>
             $"dream: {(_waking ? "WAKING" : Depth > 0f ? (Depth >= 1f ? "DEEP" : "dreaming") : _stare > 0f ? "staring" : "-")}" +
             $"  depth {Depth:0.00}  stare {_stare:0.0}s{(_awaySince >= 0f ? $"  away {Time.time - _awaySince:0.0}s" : "")}" +
@@ -92,7 +91,7 @@ namespace CupSpike
         Material _domeMat, _runeMat;
         ParticleSystem _embers;
         readonly List<Transform> _runes = new List<Transform>();
-        readonly List<AudioSource> _whispers = new List<AudioSource>();
+        readonly List<SlotVoice> _whispers = new List<SlotVoice>();
 
         static readonly int DepthId = Shader.PropertyToID("_Depth"), SpreadId = Shader.PropertyToID("_Spread"),
             VignetteId = Shader.PropertyToID("_Vignette"), MugDirId = Shader.PropertyToID("_MugDir"),
@@ -150,7 +149,12 @@ namespace CupSpike
             if (mugScream != null) mugScream.Suppressed = true;
             if (hands != null) _handsWereVisible = hands.Visible;
             _embers.Play();
-            foreach (var w in _whispers) w.Play();
+            for (int i = 0; i < _whispers.Count; i++)
+            {
+                var w = _whispers[i];
+                if (!w.Play()) continue;
+                if (i > 0 && w.Source.clip.samples > 0) w.Source.timeSamples = (i * 37000) % w.Source.clip.samples;   // out of step with each other
+            }
             Debug.Log($"[DreamState] Dream begins after {_stare:0.0} s of staring");
         }
 
@@ -239,8 +243,9 @@ namespace CupSpike
             for (int i = 0; i < _whispers.Count; i++)
             {
                 float a = Time.time * (i == 0 ? 0.35f : -0.25f) + i * Mathf.PI;
-                _whispers[i].transform.position = head.position + new Vector3(Mathf.Cos(a) * 1.3f, 0.1f, Mathf.Sin(a) * 1.3f);
-                _whispers[i].volume = whisperVolume * Smooth(0.35f, 0.9f, d);
+                _whispers[i].Source.transform.position = head.position + new Vector3(Mathf.Cos(a) * 1.3f, 0.1f, Mathf.Sin(a) * 1.3f);
+                _whispers[i].Level = Smooth(0.35f, 0.9f, d);
+                _whispers[i].Tick();
             }
 
             // Ghostly hands once the room is mostly gone.
@@ -317,24 +322,12 @@ namespace CupSpike
                 _runes.Add(q.transform);
             }
 
-            if (whisper != null)
-                for (int i = 0; i < 2; i++)
-                {
-                    var wg = new GameObject("Whisper" + i);
-                    wg.transform.SetParent(_root, false);
-                    var a = wg.AddComponent<AudioSource>();
-                    a.clip = whisper;
-                    a.loop = true;
-                    a.pitch = i == 0 ? 0.5f : 0.62f;
-                    a.volume = 0f;
-                    a.spatialize = true;
-                    a.spatialBlend = 1f;
-                    a.minDistance = 0.5f;
-                    a.playOnAwake = false;
-                    a.timeSamples = i * 37000;   // out of step with each other
-                    wg.AddComponent<MetaXRAudioSource>();
-                    _whispers.Add(a);
-                }
+            for (int i = 0; i < 2; i++)
+            {
+                var w = SlotVoice.Create(whisperSlot, _root, "Whisper" + i, true);
+                w.PitchScale = i == 0 ? 1f : secondWhisperPitch;
+                _whispers.Add(w);
+            }
             _root.gameObject.SetActive(false);
         }
 

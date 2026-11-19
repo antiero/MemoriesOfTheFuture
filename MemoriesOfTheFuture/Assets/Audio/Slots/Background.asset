@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c28fc1d2392d648d89560579d7dcd18d, type: 3}
+  m_Name: Background
+  m_EditorClassIdentifier: Assembly-CSharp::Memories.Audio.SoundSlot
+  notes: Stereo bed in your ears. Only used if Background Left / Right have no files. Drains as a hand approaches, cuts in the silence, ducks under the scream, muffles in the dream (all in code; shape it further with the Ambience group).
+  clips:
+  - {fileID: 8300000, guid: 6160a88999a37472bb81bf4b33b613a8, type: 3}
+  variation: 0
+  dropName: background
+  volumeDb: -9.1
+  pitch: 1
+  output: {fileID: -8797887577951236248, guid: 69e9049d2eadd4976bc9b9afa31dc9ad, type: 2}
+  spatial: 0
+  minDistance: 1
+  maxDistance: 30
+  rolloff: 0
+  roomAcoustics: 1
+  reverbSendDb: 0

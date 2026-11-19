@@ -2,6 +2,7 @@ using System.Collections;
 using Oculus.Interaction.Input;
 using UnityEngine;
 using UnityEngine.Events;
+using Memories.Audio;
 
 namespace CupSpike
 {
@@ -33,26 +34,23 @@ namespace CupSpike
         [SerializeField] Hand leftHand;
         [SerializeField] Hand rightHand;
 
-        [Header("Sound")]
-        [Tooltip("Played from inside the mug (spatialised, mono). Restarts rather than overlapping.")]
-        [SerializeField] AudioClip scream;
-        [SerializeField, Range(0f, 1f)] float volume = 1f;
-        [Tooltip("Looping breath from inside the mug while a hand approaches (spatialised, mono).")]
-        [SerializeField] AudioClip breath;
-        [SerializeField, Range(0f, 1f)] float breathVolume = 0.9f;
+        [Header("Sound (files, levels and space live in the Sound Slot assets: Memories > Sound Design)")]
+        [Tooltip("Played from inside the mug. Restarts rather than overlapping.")]
+        [SerializeField] SoundSlot screamSlot;
+        [Tooltip("Looping breath from inside the mug while a hand approaches.")]
+        [SerializeField] SoundSlot breathSlot;
+        [Tooltip("The breath's pitch, scaled from far (x) to touching (y), on top of the slot's pitch.")]
         [SerializeField] Vector2 breathPitch = new Vector2(0.9f, 1.15f);
-        [Tooltip("Looping background bed, stereo, head-locked. Used only if the left/right pair below isn't set.")]
-        [SerializeField] AudioClip background;
+        [Tooltip("Looping background bed, stereo, head-locked. Used only if the left/right pair below has no sound.")]
+        [SerializeField] SoundSlot backgroundSlot;
         [Tooltip("The bed's left and right channels as mono clips. Played from two fixed points in the room " +
                  "(world-locked, spatialised), so the bed stays put when you turn your head.")]
-        [SerializeField] AudioClip backgroundLeft;
-        [SerializeField] AudioClip backgroundRight;
+        [SerializeField] SoundSlot backgroundLeftSlot;
+        [SerializeField] SoundSlot backgroundRightSlot;
         [Tooltip("The two bed emitters sit this far left and right of where you start, at head height (m).")]
         [SerializeField] float bedSpread = 3f;
         [Tooltip("...and this far in front (m).")]
         [SerializeField] float bedForward = 1f;
-        [Tooltip("The bed is louder than the scream (mean -13.7 dB vs -18.9 dB), so it sits low.")]
-        [SerializeField, Range(0f, 1f)] float backgroundVolume = 0.35f;
         [SerializeField] float backgroundFadeIn = 3f;
         [Tooltip("Background level while the scream plays, as a fraction of its normal level.")]
         [SerializeField, Range(0f, 1f)] float duckTo = 0.25f;
@@ -95,28 +93,38 @@ namespace CupSpike
         public bool Suppressed { get; set; }
         /// <summary>Extra multiplier on the background bed (e.g. muffled during the dream).</summary>
         public float ExternalDuck { get; set; } = 1f;
-        public bool ScreamPlaying => _audio != null && _audio.isPlaying;
+        public bool ScreamPlaying => _scream != null && _scream.Source.isPlaying;
         public bool InSilence => _inBeat;
 
         /// <summary>A fingertip position supplied from outside (the desktop debug build's simulated hand).</summary>
         public Vector3? SimulatedFingertip { get; set; }
 
-        // Tuning (used by the desktop debug build's panel).
-        public float ScreamVolume { get => volume; set { volume = value; if (_audio != null) _audio.volume = value; } }
-        public float BreathVolume { get => breathVolume; set => breathVolume = value; }
-        public float BackgroundVolume { get => backgroundVolume; set => backgroundVolume = value; }
+        // Tuning (used by the desktop debug build's panel). These move the slots' volume faders.
+        public float ScreamVolume { get => Fader(screamSlot); set => SetFader(screamSlot, value); }
+        public float BreathVolume { get => Fader(breathSlot); set => SetFader(breathSlot, value); }
+        public float BackgroundVolume
+        {
+            get => _beds.Count > 0 ? Fader(_beds[0].Slot) : Fader(backgroundSlot);
+            set { SetFader(backgroundSlot, value); SetFader(backgroundLeftSlot, value); SetFader(backgroundRightSlot, value); }
+        }
         public float ApproachStart { get => approachStart; set => approachStart = Mathf.Max(TouchZone + 0.02f, value); }
         public float SilenceBeat { get => silenceBeat; set => silenceBeat = Mathf.Max(0f, value); }
 
-        public void SetScream(AudioClip clip) { scream = clip; if (_audio != null) { _audio.Stop(); _audio.clip = clip; } }
-        public void SetBreath(AudioClip clip) { breath = clip; StopBreath(); if (_breath != null) _breath.clip = clip; }
-        /// <summary>Replace the background bed with one clip (stereo, not spatialised).</summary>
+        static float Fader(SoundSlot s) => s != null ? s.Linear : 0f;
+        static void SetFader(SoundSlot s, float v) { if (s != null) s.Linear = v; }
+
+        /// <summary>Play this clip instead of the slot's files (desktop drop folder; not saved).</summary>
+        public void SetScream(AudioClip clip) { if (_scream != null) _scream.OverrideClip = clip; }
+        public void SetBreath(AudioClip clip) { StopBreath(); if (_breath != null) _breath.OverrideClip = clip; }
+        /// <summary>Replace the background bed with one clip (played through the stereo background slot).</summary>
         public void SetBackground(AudioClip clip)
         {
-            foreach (var b in _beds) if (b != null) Destroy(b.gameObject);
+            foreach (var b in _beds) if (b.Source != null) Destroy(b.Source.gameObject);
             _beds.Clear();
-            background = clip;
-            if (clip != null) BedSource("BackgroundBed", clip, false).Play();
+            if (clip == null) return;
+            var bed = Bed("BackgroundBed", backgroundSlot);
+            bed.OverrideClip = clip;
+            bed.Play();
         }
 
         public string StatusLine =>
@@ -127,8 +135,8 @@ namespace CupSpike
         int _preset;
         Pose _zone;              // mug base pose the zones are around
         float _lastScream = -99f;
-        AudioSource _audio, _breath;
-        readonly System.Collections.Generic.List<AudioSource> _beds = new System.Collections.Generic.List<AudioSource>();
+        SlotVoice _scream, _breath;
+        readonly System.Collections.Generic.List<SlotVoice> _beds = new System.Collections.Generic.List<SlotVoice>();
         float _bedLevel;          // 0..1 fade-in progress
         float _duck = 1f;
         bool _inBeat;
@@ -139,52 +147,38 @@ namespace CupSpike
 
         void Start()
         {
-            _audio = MugSource("ScreamSource", scream, false);
-            _audio.volume = volume;
-            _breath = MugSource("BreathSource", breath, true);
-            _breath.volume = 0f;
+            _scream = SlotVoice.Create(screamSlot, transform, "ScreamSource", false);
+            _scream.Level = 1f;
+            _breath = SlotVoice.Create(breathSlot, transform, "BreathSource", true);
 
-            if (backgroundLeft != null && backgroundRight != null)
+            if (SlotVoice.SlotHasSound(backgroundLeftSlot) && SlotVoice.SlotHasSound(backgroundRightSlot))
             {
                 // World-locked pair, started together so the channels stay in sync.
-                var left = BedSource("BackgroundBedLeft", backgroundLeft, true);
-                var right = BedSource("BackgroundBedRight", backgroundRight, true);
+                var left = Bed("BackgroundBedLeft", backgroundLeftSlot).Source;
+                var right = Bed("BackgroundBedRight", backgroundRightSlot).Source;
                 double start = AudioSettings.dspTime + 0.1;
                 left.PlayScheduled(start);
                 right.PlayScheduled(start);
                 StartCoroutine(PlaceBedOnceTracked(left.transform, right.transform));
             }
-            else if (background != null)
-                BedSource("BackgroundBed", background, false).Play();
+            else if (SlotVoice.SlotHasSound(backgroundSlot))
+                Bed("BackgroundBed", backgroundSlot).Play();
 
             _ringTop = Ring("TouchTop");
             _ringBottom = Ring("TouchBottom");
             _approachRing = Ring("ApproachRing");
             Debug.Log($"[MugScream] Ready: approach {approachStart * 100f:0} cm, touch {TouchZone * 100f:0} cm, " +
-                      $"scream '{(scream ? scream.name : "NONE")}', breath '{(breath ? breath.name : "NONE")}'");
+                      $"scream '{ClipName(_scream)}', breath '{ClipName(_breath)}', bed: {_beds.Count} source(s)");
         }
 
-        AudioSource BedSource(string name, AudioClip clip, bool spatial)
+        static string ClipName(SlotVoice v) => v.Source.clip != null ? v.Source.clip.name : "NONE";
+
+        /// <summary>A looping background voice. Silent until played; <see cref="UpdateBed"/> sets its level.</summary>
+        SlotVoice Bed(string name, SoundSlot slot)
         {
-            var go = new GameObject(name);
-            go.transform.SetParent(transform, false);
-            var a = go.AddComponent<AudioSource>();
-            a.clip = clip;
-            a.loop = true;
-            a.playOnAwake = false;
-            a.volume = 0f;
-            if (spatial)
-            {
-                a.spatialize = true;
-                a.spatialBlend = 1f;
-                a.rolloffMode = AudioRolloffMode.Logarithmic;
-                a.minDistance = 2f;    // fairly even level around the room
-                a.maxDistance = 30f;
-                go.AddComponent<MetaXRAudioSource>();
-            }
-            else a.spatialBlend = 0f;
-            _beds.Add(a);
-            return a;
+            var v = SlotVoice.Create(slot, transform, name, true);
+            _beds.Add(v);
+            return v;
         }
 
         /// <summary>Place the bed pair left and right of the viewer, once head tracking has a pose.</summary>
@@ -197,23 +191,6 @@ namespace CupSpike
             left.position = head.position + yaw * new Vector3(-bedSpread, 0f, bedForward);
             right.position = head.position + yaw * new Vector3(bedSpread, 0f, bedForward);
             Debug.Log($"[MugScream] Background bed placed in the room: L {left.position:F1}  R {right.position:F1}");
-        }
-
-        AudioSource MugSource(string name, AudioClip clip, bool loop)
-        {
-            var go = new GameObject(name);
-            go.transform.SetParent(transform, false);
-            var a = go.AddComponent<AudioSource>();
-            a.playOnAwake = false;
-            a.clip = clip;
-            a.loop = loop;
-            a.spatialize = true;
-            a.spatialBlend = 1f;
-            a.rolloffMode = AudioRolloffMode.Logarithmic;
-            a.minDistance = 0.3f;
-            a.maxDistance = 15f;
-            go.AddComponent<MetaXRAudioSource>();
-            return a;
         }
 
         // ------------------------------------------------------------ menu actions
@@ -242,8 +219,9 @@ namespace CupSpike
             Armed = false;
             Screams++;
             StopBreath();
-            _audio.transform.position = MugCentre(_zone);
-            if (scream != null) { _audio.Stop(); _audio.Play(); }   // restart, never stack a 12 s scream
+            _scream.Source.transform.position = MugCentre(_zone);
+            _scream.Stop();
+            _scream.Play();   // restart, never stack a 12 s scream
             Debug.Log($"[MugScream] SCREAM #{Screams}: {why}, touch {TouchZone * 100f:0} cm, {ZoneMode}, source {detector?.TrackingSource}");
             onScream.Invoke();
         }
@@ -285,7 +263,7 @@ namespace CupSpike
             }
 
             // Re-arm once the scream has finished, the cooldown has passed and every fingertip is clear.
-            if (!Armed && !_inBeat && !_audio.isPlaying && Time.time - _lastScream > cooldown &&
+            if (!Armed && !_inBeat && !_scream.Source.isPlaying && Time.time - _lastScream > cooldown &&
                 (float.IsNaN(NearestTip) || NearestTip > TouchZone + rearmMargin))
             {
                 Armed = true;
@@ -298,9 +276,12 @@ namespace CupSpike
             else
                 UpdateBreath(live);
 
-            if (_audio.isPlaying) _audio.transform.position = MugCentre(_zone);   // a scream in progress follows the mug
-            _breath.transform.position = MugCentre(_zone);
+            if (_scream.Source.isPlaying) _scream.Source.transform.position = MugCentre(_zone);   // a scream in progress follows the mug
+            _breath.Source.transform.position = MugCentre(_zone);
             UpdateBed();
+            _scream.Tick();
+            _breath.Tick();
+            foreach (var bed in _beds) bed.Tick();
             DrawZone(held);
         }
 
@@ -319,24 +300,24 @@ namespace CupSpike
                 }
                 return;
             }
-            if (!_breathing && breath != null)
+            if (!_breathing && _breath.HasSound)
             {
                 _breathing = true;
                 _breathPeak = 0f;
-                _breath.volume = 0f;
+                _breath.Level = 0f;
                 _breath.Play();
                 Debug.Log($"[MugScream] Approach: breath starts ({NearestTip * 100f:0} cm)");
             }
             _breathPeak = Mathf.Max(_breathPeak, a);
-            _breath.volume = Mathf.MoveTowards(_breath.volume, a * breathVolume, Time.deltaTime * 3f);
-            _breath.pitch = Mathf.Lerp(breathPitch.x, breathPitch.y, a);
+            _breath.Level = Mathf.MoveTowards(_breath.Level, a, Time.deltaTime * 3f);
+            _breath.PitchScale = Mathf.Lerp(breathPitch.x, breathPitch.y, a);
         }
 
         void StopBreath()
         {
             _breathing = false;
             Approach = 0f;
-            if (_breath != null) { _breath.Stop(); _breath.volume = 0f; }
+            if (_breath != null) { _breath.Stop(); _breath.Level = 0f; _breath.Tick(); }
         }
 
         /// <summary>Fade the background in; drain it as a hand approaches, cut it in the silence, duck it under the scream.</summary>
@@ -344,9 +325,9 @@ namespace CupSpike
         {
             if (_beds.Count == 0) return;
             _bedLevel = backgroundFadeIn > 0f ? Mathf.MoveTowards(_bedLevel, 1f, Time.deltaTime / backgroundFadeIn) : 1f;
-            float target = _inBeat ? 0f : _audio.isPlaying ? duckTo : 1f - approachDrain * Approach;
+            float target = _inBeat ? 0f : _scream.Source.isPlaying ? duckTo : 1f - approachDrain * Approach;
             _duck = _inBeat ? 0f : Mathf.MoveTowards(_duck, target, Time.deltaTime * duckSpeed);
-            foreach (var bed in _beds) bed.volume = backgroundVolume * _bedLevel * _duck * Mathf.Clamp01(ExternalDuck);
+            foreach (var bed in _beds) bed.Level = _bedLevel * _duck * Mathf.Clamp01(ExternalDuck);
         }
 
         void UpdateZonePose()

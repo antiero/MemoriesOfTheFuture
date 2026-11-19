@@ -1,0 +1,2 @@
+Put new sound files here, named after the slot they are for (scream_take2.wav, breath_close.wav ...).
+See "README - Sound Design" one folder up.
