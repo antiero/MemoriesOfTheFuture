@@ -17,24 +17,9 @@ namespace Memories.Audio
         /// <summary>Multiplied by the slot's pitch.</summary>
         public float PitchScale = 1f;
 
-        /// <summary>A clip that replaces the slot's files for this voice only (desktop drop folder). Not saved.</summary>
-        public AudioClip OverrideClip
-        {
-            get => _override;
-            set
-            {
-                _override = value;
-                bool playing = Source.isPlaying;
-                Source.Stop();
-                Source.clip = value != null ? value : Slot.PickClip();
-                if (playing && Source.loop && Source.clip != null) Source.Play();
-            }
-        }
-
-        public bool HasSound => _override != null || Slot.HasClips;
+        public bool HasSound => Slot.HasClips;
         public static bool SlotHasSound(SoundSlot s) => s != null && s.HasClips;
 
-        AudioClip _override;
         int _version = int.MinValue;
 
         SlotVoice(SoundSlot slot, AudioSource source) { Slot = slot; Source = source; }
@@ -64,7 +49,8 @@ namespace Memories.Audio
         /// <summary>Start playing (a one-shot picks its next file each time). Returns false if there is nothing to play.</summary>
         public bool Play()
         {
-            if (_override == null && (!Source.loop || Source.clip == null || !Slot.Contains(Source.clip)))
+            if (!Source.loop || Source.clip == null || !Slot.Contains(Source.clip) ||
+                (Slot.RuntimeOverride != null && Source.clip != Slot.RuntimeOverride))
                 Source.clip = Slot.PickClip();
             if (Source.clip == null) return false;
             Tick();
@@ -88,11 +74,12 @@ namespace Memories.Audio
             Source.pitch = Slot.pitch * PitchScale;
         }
 
-        /// <summary>A loop keeps playing its file; if the designers drop a new one in (or remove it), switch over live.</summary>
+        /// <summary>A loop keeps playing its file; if the designers drop a new one in (or remove it, or load one from
+        /// the desktop sounds folder), switch over live.</summary>
         void SwapLoopIfFilesChanged()
         {
-            if (!Source.loop || _override != null) return;
-            var want = Slot.variation == SoundSlot.Variation.NewestFirst ? Slot.FirstClip :
+            if (!Source.loop) return;
+            var want = Slot.RuntimeOverride != null || Slot.variation == SoundSlot.Variation.NewestFirst ? Slot.FirstClip :
                        Slot.Contains(Source.clip) ? Source.clip : Slot.PickClip();
             if (want == Source.clip) return;
             bool playing = Source.isPlaying;

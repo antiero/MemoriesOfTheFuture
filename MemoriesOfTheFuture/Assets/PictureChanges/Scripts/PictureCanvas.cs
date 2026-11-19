@@ -1,4 +1,5 @@
 using System.Collections;
+using Memories.Audio;
 using UnityEngine;
 using UnityEngine.Video;
 
@@ -43,9 +44,9 @@ namespace PictureChanges
         [SerializeField] PaintingStages stages;
 
         [Header("Soundtrack")]
-        [Tooltip("Looping audio that fades in when the transformation starts. Lives on the painting (spatial).")]
-        [SerializeField] AudioSource soundtrack;
-        [SerializeField, Range(0f, 1f)] float soundtrackVolume = 0.8f;
+        [Tooltip("Loops from the painting, fading in when the transformation starts. Its file, level and space " +
+                 "live in the Sound Slot (Memories > Sound Design).")]
+        [SerializeField] SoundSlot soundtrackSlot;
         [SerializeField] float soundtrackFadeIn = 2f;
         [SerializeField] float soundtrackFadeOut = 1.5f;
 
@@ -113,6 +114,10 @@ namespace PictureChanges
         Vector2 _nudge;
         bool _played;
         Texture _stageTexture;
+        SlotVoice _soundtrack;
+
+        public SlotVoice Soundtrack => _soundtrack;
+        public float RevealDuration { get => revealDuration; set => revealDuration = Mathf.Max(0.1f, value); }
 
         void Awake()
         {
@@ -121,14 +126,10 @@ namespace PictureChanges
             _material.SetFloat(RevealId, 0f);
             canvasRoot.gameObject.SetActive(false);
             if (video != null) video.loopPointReached += _ => Debug.Log("[PictureCanvas] Transformation finished (holding last frame)");
-            if (soundtrack != null)
-            {
-                soundtrack.playOnAwake = false;
-                soundtrack.loop = true;
-                soundtrack.volume = 0f;
-                soundtrack.Stop();
-                if (soundtrack.clip != null) soundtrack.clip.LoadAudioData();   // ready before the trigger
-            }
+            // Its own object, not under canvasRoot, so hiding the painting doesn't cut it off mid-fade.
+            _soundtrack = SlotVoice.Create(soundtrackSlot, transform, "Soundtrack", true);
+            _soundtrack.Level = 0f;
+            if (_soundtrack.Source.clip != null) _soundtrack.Source.clip.LoadAudioData();   // ready before the trigger
         }
 
         void OnEnable() => estimator.Locked += OnLocked;
@@ -146,8 +147,7 @@ namespace PictureChanges
             // so its four corners land exactly on the measured painted area (not a rectangle).
             // +Z points into the wall, so the mesh's visible side faces the viewer.
             canvasRoot.SetPositionAndRotation(pose.centre, pose.rotation);
-            // The soundtrack sits on its own object (so hiding the painting doesn't cut it off mid-fade).
-            if (soundtrack != null) soundtrack.transform.position = pose.centre;
+            _soundtrack.Source.transform.position = pose.centre;
             canvasQuad.GetComponent<MeshFilter>().sharedMesh = BuildPaintingMesh(estimator.layout.PaintingCorners);
             canvasQuad.transform.localScale = Vector3.one;
             canvasQuad.transform.localRotation = Quaternion.identity;
@@ -231,6 +231,7 @@ namespace PictureChanges
 
         void Update()
         {
+            _soundtrack?.Tick();
             HandleInput();
             if (estimator.IsLocked && !_played && _reveal == null) CheckTrigger();
         }
@@ -305,33 +306,34 @@ namespace PictureChanges
         /// <summary>Fade the looping soundtrack in (starting it) or out (stopping it when silent).</summary>
         void FadeSoundtrack(bool fadeIn)
         {
-            if (soundtrack == null || soundtrack.clip == null) return;
-            if (!fadeIn && !soundtrack.isPlaying) return;
+            if (_soundtrack == null || !_soundtrack.HasSound) return;
+            if (!fadeIn && !_soundtrack.Source.isPlaying) return;
             if (_soundFade != null) StopCoroutine(_soundFade);
             _soundFade = StartCoroutine(FadeRoutine(fadeIn));
         }
 
         IEnumerator FadeRoutine(bool fadeIn)
         {
-            if (fadeIn && !soundtrack.isPlaying)
+            var v = _soundtrack;
+            if (fadeIn && !v.Source.isPlaying)
             {
-                soundtrack.volume = 0f;
-                soundtrack.time = 0f;
-                soundtrack.Play();
-                Debug.Log("[PictureCanvas] Soundtrack fading in");
+                v.Level = 0f;
+                if (v.Play()) v.Source.time = 0f;
+                Debug.Log($"[PictureCanvas] Soundtrack fading in ({(v.Source.clip != null ? v.Source.clip.name : "no file")})");
             }
-            float from = soundtrack.volume, to = fadeIn ? soundtrackVolume : 0f;
+            // Level is the fade (0..1); the slot sets the loudness.
+            float from = v.Level, to = fadeIn ? 1f : 0f;
             float duration = Mathf.Max(0.01f, fadeIn ? soundtrackFadeIn : soundtrackFadeOut);
             // Scale the time by how far there is to go, so a fade-out mid-fade-in doesn't take the full duration.
-            duration *= Mathf.Abs(to - from) / Mathf.Max(0.01f, soundtrackVolume);
+            duration *= Mathf.Abs(to - from);
             for (float t = 0f; t < duration; t += Time.deltaTime)
             {
                 float x = t / duration;
-                soundtrack.volume = Mathf.Lerp(from, to, x * x * (3f - 2f * x));
+                v.Level = Mathf.Lerp(from, to, x * x * (3f - 2f * x));
                 yield return null;
             }
-            soundtrack.volume = to;
-            if (!fadeIn) { soundtrack.Stop(); Debug.Log("[PictureCanvas] Soundtrack faded out"); }
+            v.Level = to;
+            if (!fadeIn) { v.Stop(); Debug.Log("[PictureCanvas] Soundtrack faded out"); }
             _soundFade = null;
         }
 

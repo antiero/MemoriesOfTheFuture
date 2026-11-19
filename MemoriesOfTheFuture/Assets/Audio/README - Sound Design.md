@@ -5,8 +5,9 @@ Unity Editor, mostly in one window: **Memories > Sound Design** (menu bar at the
 
 ## The idea in one minute
 
-- Every sound in the experience is a **Sound Slot**: the Scream, the Breath, the Drone, the
-  Whisper and the Background bed. Slots live in `Assets/Audio/Slots`. A slot says which file plays,
+- Every sound in the experience is a **Sound Slot**: for the mug, the Scream, the Breath, the
+  Drone, the Whisper and the Background bed; for the painting, the Painting Scream and the
+  Painting Soundtrack. Slots live in `Assets/Audio/Slots`. A slot says which file plays,
   how loud, at what pitch, through which mixer group, and how it sits in the room.
 - The code decides **when** a sound plays and how it moves (for example, the breath gets louder
   as a hand nears the mug). The slot decides **what it sounds like**. You own the slots.
@@ -25,6 +26,13 @@ Unity Editor, mostly in one window: **Memories > Sound Design** (menu bar at the
 | Looking in | Looks down into the mug | Drone fades in as the mug opens | LookingIn |
 | Dream | Keeps staring for 2 s | Two Whispers circle the head; the bed muffles | Dream |
 | Waking | Looks away | Dream snaps off, 0.6 s of silence, then the Scream | Dream to Room |
+
+The painting (scene 01-PictureChanges, and the east wall of the desktop room):
+
+| Moment | What the visitor does | Sounds |
+|---|---|---|
+| Unseen swap (default) | Looks at the painting, then away: it changes behind their back | On the swap to the last stage, the **Painting Scream** from the painting |
+| Proximity / Gaze dwell | Walks up and faces it / looks at it for 2 s: the transformation video plays | **Painting Soundtrack** loops from the painting, fading in over 2 s (out over 1.5 s on replay) |
 
 ## Trying a new sound file
 
@@ -66,6 +74,7 @@ Click **Mixer** in the Sound Design window. You'll see one strip per group:
 - **Ambience**: the background bed
 - **Mug**: scream, breath, drone
 - **Dream**: whispers
+- **Painting**: the painting's scream and soundtrack
 - **UI**: menu sounds
 
 You can add effects to a group (lowpass, EQ, compressor, echo) with **Add Effect** at the bottom of
@@ -117,14 +126,72 @@ and files, but on the Mac you're hearing it through laptop audio, not the Quest'
 3. Save the scene (Cmd+S).
 
 Do this in **02-CupSpike** (the headset scene) and **03-CupDesktop** (the desktop test) if you
-want it in both. **Open headset scene** in the Sound Design window opens 02-CupSpike.
+want it in both. (Rebuilding the desktop room with *CupSpike > Create Desktop Scene* starts it
+afresh, so emitters added to 03 by hand have to be added again.) **Open headset scene** in the Sound Design window opens 02-CupSpike.
 
 ## Testing
 
-- **Desktop** (no headset): **▶ Test on desktop**. Mouse to look, **E** to lean over the mug,
-  **Up / Down** or the scroll wheel to move a fingertip towards the mug, **Tab** for a panel of
-  volumes and timings. **■ Stop** to stop.
-- **Headset**: ask the developer for a build, or build from **02-CupSpike**.
+- **Desktop** (no headset): **▶ Test on desktop** in Unity, or the Mac app. See *The desktop
+  room* below. **■ Stop** to stop.
+- **Headset**: ask the developer for a build, or build from **02-CupSpike** (the mug) or
+  **01-PictureChanges** (the painting).
+
+## The desktop room
+
+Scene **03-CupDesktop** (and the Mac app built from it) is one stand-in room with both
+experiences running: the mug on the table, and the painting on the wall to your right (east).
+Walk between them.
+
+| Key | What it does |
+|---|---|
+| Mouse | Look around (click the view first; Esc frees the cursor) |
+| W A S D | Walk |
+| 1 / 2 | Go to the mug / go to the painting (2.5 m in front of it, facing it) |
+| Up / Down, scroll | Move a fingertip towards the mug / away |
+| E | Go back to the mug and lean over it; E again leans back. Walking also stands you up |
+| F | Start the dream now / wake up |
+| M | Wake-up: scream or silent |
+| Space | The mug screams now |
+| Z | Show the mug's touch zones |
+| P | Replay the painting (back to its first stage) |
+| T | Painting trigger: unseen swap / proximity / gaze dwell |
+| L | Reload sound files from the Sounds folder |
+| Tab | The panel: **Sound** and **Timings** |
+| H | Hide the guide |
+
+### The Sound panel (Tab)
+
+The same slots as the Sound Design window, live, in the game view, so it works in the Mac app too:
+
+- A **dot** lights green while the slot is playing.
+- **S / M**: solo or mute.
+- **Level** and **Pitch** sliders.
+- **File**: the file that plays. **◀ ▶** step through the slot's files. A file from the Sounds
+  folder shows as *(Sounds folder)*; **Built-in** goes back to the slot's own files.
+- **...**: spatial on or off, distances, room acoustics and reverb send.
+- At the top: the mixer snapshots right now, and **Blending** (untick to hold the mix still).
+
+**In Unity**, panel edits change the slot assets, so they're kept when you stop, just like the
+Sound Design window.
+
+**In the Mac app**, press **Save mix**. It writes `~/MemoriesOfTheFuture/SoundMix.json` (your
+home folder, then *MemoriesOfTheFuture*), and the app loads it every time it starts, so your mix is
+still there tomorrow. To bring it into the project, the developer (or you, in Unity) runs
+**Memories > Audio > Import Mix From Desktop App**, or clicks **Import mix** in the Sound Design
+window. The Console lists what changed; Cmd+Z undoes it.
+
+### Trying a file in the desktop room
+
+1. **Open folder** in the Sound panel opens `~/MemoriesOfTheFuture/Sounds`.
+2. Copy in a file whose name starts with the slot's Drop Name: `scream_take3.wav`,
+   `painting_soundtrack_v2.wav`. The newest one wins if several match. A `background` file
+   (stereo) replaces the whole bed, left and right. The folder's `README.txt` lists every name.
+3. Press **L** (or **Reload files**). Loops switch over straight away; one-shots play the new file
+   next time.
+
+Files in this folder are only for trying things out. To keep one, put it in the project's Drop
+Folder (see *Trying a new sound file*). Remove it from the Sounds folder and press L to hear the
+slot's own files again.
 
 ## Saving your work (Git)
 

@@ -78,18 +78,22 @@ namespace Memories.Audio
             get { _voices.RemoveAll(v => v == null || v.Source == null); return _voices; }
         }
 
-        public bool HasClips { get { foreach (var c in clips) if (c != null) return true; return false; } }
-        public AudioClip FirstClip { get { foreach (var c in clips) if (c != null) return c; return null; } }
+        /// <summary>
+        /// A file loaded from disk at runtime (the desktop app's sounds folder) that replaces this slot's
+        /// files until it's cleared. Never saved into the asset.
+        /// </summary>
+        public AudioClip RuntimeOverride
+        {
+            get => _override;
+            set { _override = value; Touch(); }
+        }
+        [NonSerialized] AudioClip _override;
+
+        public bool HasClips { get { if (_override != null) return true; foreach (var c in clips) if (c != null) return true; return false; } }
+        public AudioClip FirstClip { get { if (_override != null) return _override; foreach (var c in clips) if (c != null) return c; return null; } }
 
         /// <summary>The level an AudioSource should play at, 0..1 (silent while muted or another slot is soloed).</summary>
         public float Volume => Audible ? DbToLinear(Mathf.Min(volumeDb, 0f)) : 0f;
-
-        /// <summary>Volume as a 0..1 fader (for the desktop tuning panel).</summary>
-        public float Linear
-        {
-            get => DbToLinear(volumeDb);
-            set { volumeDb = Mathf.Clamp(LinearToDb(value), -60f, 20f); Touch(); }
-        }
 
         /// <summary>Tell playing voices that something changed (called after edits made from code).</summary>
         public void Touch() => _version++;
@@ -99,6 +103,7 @@ namespace Memories.Audio
 
         public AudioClip PickClip()
         {
+            if (_override != null) return _override;
             var valid = clips.FindAll(c => c != null);
             if (valid.Count == 0) return null;
             switch (variation)
@@ -109,7 +114,16 @@ namespace Memories.Audio
             }
         }
 
-        public bool Contains(AudioClip clip) => clip != null && clips.Contains(clip);
+        public bool Contains(AudioClip clip) => clip != null && (clip == _override || clips.Contains(clip));
+
+        /// <summary>Move a file to the top of the list, so it's the one that plays (Newest First).</summary>
+        public void MakeFirst(AudioClip clip)
+        {
+            if (clip == null) return;
+            clips.Remove(clip);
+            clips.Insert(0, clip);
+            Touch();
+        }
 
         /// <summary>Apply this slot's routing and space settings to a source (not volume or pitch: voices set those every frame).</summary>
         public void Configure(AudioSource a)

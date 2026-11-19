@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using CupSpike;
 using Memories.Audio;
+using PictureChanges;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -20,7 +21,8 @@ namespace Memories.Audio.EditorTools
         public const string Readme = Root + "/README - Sound Design.md";
         public const string HeadsetScene = "Assets/Scenes/02-CupSpike.unity";
         public const string DesktopScene = "Assets/Scenes/03-CupDesktop.unity";
-        public static readonly string[] Groups = { "Ambience", "Mug", "Dream", "UI" };
+        public const string PaintingScene = "Assets/Scenes/01-PictureChanges.unity";
+        public static readonly string[] Groups = { "Ambience", "Mug", "Dream", "Painting", "UI" };
 
         public static List<SoundSlot> AllSlots()
         {
@@ -81,6 +83,12 @@ namespace Memories.Audio.EditorTools
             new SlotDef { name = "Background Right", drop = "background_right", group = "Ambience", clips = new[] { "Assets/Audio/mugAudio_R.mp3" },
                 db = -9.1f, pitch = 1f, spatial = true, min = 2f, max = 30f,
                 notes = "Right channel of the bed (see Background Left)." },
+            new SlotDef { name = "Painting Scream", drop = "painting_scream", group = "Painting", clips = new[] { "Assets/Audio/mono-scream.mp3" },
+                db = 0f, pitch = 1f, spatial = true, min = 1.5f, max = 15f,
+                notes = "Plays from the painting when it swaps to its last stage while you're looking away, so it comes from behind or beside you. (PaintingStages: untick 'Swap Sound Only On Last' to hear it on every swap.)" },
+            new SlotDef { name = "Painting Soundtrack", drop = "painting_soundtrack", group = "Painting", clips = new[] { "Assets/Audio/JennyAudio.mp3" },
+                db = -1.9f, pitch = 1f, spatial = true, min = 1.5f, max = 12f,
+                notes = "Loops from the painting while its transformation video plays (Proximity and Gaze Dwell modes): fades in over 2 s when the video starts, out over 1.5 s on Replay or Rescan." },
         };
 
         [MenuItem("Memories/Audio/Set Up Sound Slots and Mixer", priority = 100)]
@@ -108,11 +116,13 @@ namespace Memories.Audio.EditorTools
             Folder(AudioPaths.Drop);
 
             var mixer = AssetDatabase.LoadAssetAtPath<AudioMixer>(AudioPaths.Mixer) ?? CreateMixer(AudioPaths.Mixer);
+            EnsureGroups(mixer);
 
             var slots = new Dictionary<string, SoundSlot>();
             foreach (var d in Defs) slots[d.name] = GetOrCreateSlot(d, mixer);
             AssetDatabase.SaveAssets();
 
+            WireScene(AudioPaths.PaintingScene, slots, mixer);
             WireScene(AudioPaths.HeadsetScene, slots, mixer);
             WireScene(AudioPaths.DesktopScene, slots, mixer);
             AssetDatabase.SaveAssets();
@@ -151,6 +161,46 @@ namespace Memories.Audio.EditorTools
             return slot;
         }
 
+        // ------------------------------------------------------------ mix made in the desktop app
+
+        [MenuItem("Memories/Audio/Import Mix From Desktop App", priority = 101)]
+        public static void ImportMixInteractive() => ImportMix(true);
+
+        /// <summary>Apply ~/MemoriesOfTheFuture/SoundMix.json to the Sound Slot assets. Returns the change summary (null: no mix).</summary>
+        public static string ImportMix(bool dialogs)
+        {
+            var mix = SoundMixFile.Load();
+            if (mix == null || mix.slots == null || mix.slots.Count == 0)
+            {
+                Debug.LogWarning($"[SoundMix] No saved mix at {SoundMixFile.MixPath}");
+                if (dialogs) EditorUtility.DisplayDialog("No saved mix", $"There's no mix to import at\n{SoundMixFile.MixPath}\n\n" +
+                    "Save one from the desktop app first: Tab > Sound > Save mix.", "OK");
+                return null;
+            }
+            var bySlot = new Dictionary<string, SoundSlot>(StringComparer.OrdinalIgnoreCase);
+            foreach (var s in AudioPaths.AllSlots()) bySlot[s.name] = s;
+            var lines = new List<string>();
+            var unknown = new List<string>();
+            foreach (var v in mix.slots)
+            {
+                if (v == null || string.IsNullOrEmpty(v.name)) continue;
+                if (!bySlot.TryGetValue(v.name, out var slot)) { unknown.Add(v.name); continue; }
+                Undo.RecordObject(slot, "Import sound mix");
+                var changed = SoundMixFile.Apply(v, slot);
+                if (changed == "") continue;
+                EditorUtility.SetDirty(slot);
+                lines.Add($"{slot.name}: {changed}");
+            }
+            AssetDatabase.SaveAssets();
+            string summary = lines.Count == 0 ? "Nothing changed: the slots already match the saved mix." : string.Join("\n", lines);
+            if (unknown.Count > 0) summary += $"\n\nNo slot named: {string.Join(", ", unknown)}";
+            Debug.Log($"[SoundMix] Imported {SoundMixFile.MixPath} (saved {mix.savedAt} from the {mix.savedBy}):\n{summary}");
+            if (dialogs)
+                EditorUtility.DisplayDialog($"Imported mix ({lines.Count} slot{(lines.Count == 1 ? "" : "s")} changed)",
+                    $"From {SoundMixFile.MixPath}, saved {mix.savedAt}.\n\n{summary}", "OK");
+            return summary;
+        }
+
         // ------------------------------------------------------------ mixer (Unity has no public API for building one)
 
         const BindingFlags All = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
@@ -187,6 +237,29 @@ namespace Memories.Audio.EditorTools
             return mixer;
         }
 
+        /// <summary>Add any group in <see cref="AudioPaths.Groups"/> the mixer doesn't have yet (e.g. Painting, added later).</summary>
+        static void EnsureGroups(AudioMixer mixer)
+        {
+            var missing = new List<string>();
+            foreach (var name in AudioPaths.Groups) if (AudioPaths.Group(mixer, name) == null) missing.Add(name);
+            if (missing.Count == 0) return;
+            var t = mixer.GetType();
+            var master = t.GetProperty("masterGroup", All).GetValue(mixer);
+            var newGroup = t.GetMethod("CreateNewGroup", All);
+            var addChild = t.GetMethod("AddChildToParent", All);
+            var addToView = t.GetMethod("AddGroupToCurrentView", All);
+            EnsureView(t, mixer, master);
+            foreach (var name in missing)
+            {
+                var g = newGroup.Invoke(mixer, new object[] { name, false });
+                addChild.Invoke(mixer, new[] { g, master });
+                addToView.Invoke(mixer, new[] { g });
+            }
+            EditorUtility.SetDirty(mixer);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[AudioSetup] Added mixer group(s) {string.Join(", ", missing)} to {AssetDatabase.GetAssetPath(mixer)}");
+        }
+
         /// <summary>A mixer made from code has no group view (the window adds one later); groups need one to be added to.</summary>
         static void EnsureView(Type t, AudioMixer mixer, object master)
         {
@@ -215,10 +288,22 @@ namespace Memories.Audio.EditorTools
 
         // ------------------------------------------------------------ scenes
 
+        /// <summary>
+        /// Point one scene's sound fields at the Sound Slots and add the "Sound Mix" MixDirector.
+        /// Opens the scene (replacing the open ones) and saves it. Used by CupSpike > Create Desktop Scene.
+        /// </summary>
+        public static void WireScene(string path)
+        {
+            var slots = new Dictionary<string, SoundSlot>();
+            foreach (var d in Defs) slots[d.name] = null;
+            WireScene(path, slots, null);
+        }
+
         static void WireScene(string path, Dictionary<string, SoundSlot> slots, AudioMixer mixer)
         {
             if (AssetDatabase.LoadAssetAtPath<SceneAsset>(path) == null) { Debug.LogWarning($"[AudioSetup] No scene {path}"); return; }
-            var scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+            var scene = EditorSceneManager.GetActiveScene().path == path ? EditorSceneManager.GetActiveScene()
+                      : EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
             // Opening a scene unloads assets nothing references yet, so load the slots and mixer again.
             foreach (var key in new List<string>(slots.Keys))
                 slots[key] = AssetDatabase.LoadAssetAtPath<SoundSlot>($"{AudioPaths.Slots}/{key}.asset");
@@ -228,6 +313,9 @@ namespace Memories.Audio.EditorTools
                                    ("backgroundLeftSlot", "Background Left"), ("backgroundRightSlot", "Background Right"));
             n += Assign<MugInterior>(slots, ("droneSlot", "Drone"));
             n += Assign<DreamState>(slots, ("whisperSlot", "Whisper"));
+            n += Assign<PaintingStages>(slots, ("swapSlot", "Painting Scream"));
+            n += Assign<PictureCanvas>(slots, ("soundtrackSlot", "Painting Soundtrack"));
+            n += RemoveOldPaintingSources(scene);
 
             if (Object.FindFirstObjectByType<MixDirector>(FindObjectsInactive.Include) == null)
             {
@@ -241,6 +329,24 @@ namespace Memories.Audio.EditorTools
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             Debug.Log($"[AudioSetup] {path}: wired {n} reference(s)");
+        }
+
+        /// <summary>
+        /// 01-PictureChanges played the painting's sounds from two AudioSources (SwapScream, Soundtrack);
+        /// their clips and levels now live in the Painting slots, so the unused objects go.
+        /// </summary>
+        static int RemoveOldPaintingSources(UnityEngine.SceneManagement.Scene scene)
+        {
+            int n = 0;
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                if ((root.name != "SwapScream" && root.name != "Soundtrack") || root.GetComponent<AudioSource>() == null ||
+                    root.transform.childCount > 0 || root.GetComponents<Component>().Length != 2) continue;
+                Debug.Log($"[AudioSetup] {scene.path}: removed the old '{root.name}' AudioSource (now a Sound Slot)");
+                Object.DestroyImmediate(root);
+                n++;
+            }
+            return n;
         }
 
         /// <summary>Point empty slot fields at the slots; leaves any field already set alone.</summary>

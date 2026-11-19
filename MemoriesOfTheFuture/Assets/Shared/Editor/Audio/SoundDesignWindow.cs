@@ -113,6 +113,8 @@ namespace Memories.Audio.EditorTools
                 if (GUILayout.Button(new GUIContent("Drop Folder", "Show Assets/Audio/Drop in Finder: put new sound files there"), EditorStyles.toolbarButton))
                     EditorUtility.RevealInFinder(Path.GetFullPath(AudioPaths.Drop) + "/");
                 if (GUILayout.Button(new GUIContent("New Slot", "Make a new Sound Slot asset"), EditorStyles.toolbarButton)) NewSlot();
+                if (GUILayout.Button(new GUIContent("Import mix", "Bring in the mix saved from the desktop app (Tab > Sound > Save mix): levels, pitch, space"), EditorStyles.toolbarButton))
+                    AudioSetup.ImportMixInteractive();
                 if (GUILayout.Button(new GUIContent("Add Sound to Scene", "Place a Sound Emitter: plays a slot from a point, at a moment you choose"), EditorStyles.toolbarButton)) AddEmitter();
                 GUILayout.FlexibleSpace();
                 _showInScene = GUILayout.Toggle(_showInScene, new GUIContent("Show in Scene", "Draw playing sounds and their ranges in the Scene view"), EditorStyles.toolbarButton);
