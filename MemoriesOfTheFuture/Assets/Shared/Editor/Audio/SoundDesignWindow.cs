@@ -125,7 +125,7 @@ namespace Memories.Audio.EditorTools
             using (new EditorGUILayout.HorizontalScope())
             {
                 GUI.enabled = !EditorApplication.isPlayingOrWillChangePlaymode;
-                if (GUILayout.Button(new GUIContent("▶  Test on desktop", "Open 03-CupDesktop and press Play: mouse and keyboard, no headset"), GUILayout.Height(26)))
+                if (GUILayout.Button(new GUIContent("▶  Test on desktop", "Open 03-DesktopTesting and press Play: mouse and keyboard, no headset"), GUILayout.Height(26)))
                     PlayScene(AudioPaths.DesktopScene);
                 if (GUILayout.Button(new GUIContent("Open headset scene", "Open 02-CupSpike (what gets built to the Quest)"), GUILayout.Height(26)))
                     OpenScene(AudioPaths.HeadsetScene);

@@ -20,7 +20,7 @@ namespace Memories.Audio.EditorTools
         public const string Mixer = Root + "/Memories Mixer.mixer";
         public const string Readme = Root + "/README - Sound Design.md";
         public const string HeadsetScene = "Assets/Scenes/02-CupSpike.unity";
-        public const string DesktopScene = "Assets/Scenes/03-CupDesktop.unity";
+        public const string DesktopScene = "Assets/Scenes/03-DesktopTesting.unity";
         public const string PaintingScene = "Assets/Scenes/01-PictureChanges.unity";
         public static readonly string[] Groups = { "Ambience", "Mug", "Dream", "Painting", "UI" };
 
@@ -290,7 +290,7 @@ namespace Memories.Audio.EditorTools
 
         /// <summary>
         /// Point one scene's sound fields at the Sound Slots and add the "Sound Mix" MixDirector.
-        /// Opens the scene (replacing the open ones) and saves it. Used by CupSpike > Create Desktop Scene.
+        /// Opens the scene (replacing the open ones) and saves it. Used by CupSpike > Create Desktop Testing Scene.
         /// </summary>
         public static void WireScene(string path)
         {

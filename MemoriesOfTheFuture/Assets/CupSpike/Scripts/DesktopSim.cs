@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Memories.Audio;
 using PictureChanges;
@@ -7,7 +8,7 @@ using UnityEngine.InputSystem;
 namespace CupSpike
 {
     /// <summary>
-    /// Desktop debug mode (scene 03-CupDesktop, macOS app): walk a stand-in room with both
+    /// Desktop debug mode (scene 03-DesktopTesting, macOS app): walk a stand-in room with both
     /// experiences live, the mug on the table and the painting on the east wall, and try their
     /// sound design with a mouse and keyboard, no headset. The scream, look-inside, dream and
     /// painting code is the same as on the headset; this only stands in for what the headset provides:
@@ -17,9 +18,12 @@ namespace CupSpike
     ///  - a hand (Up / Down or the scroll wheel move a fingertip towards the mug and away)
     ///  - the real room (a simple stand-in room, tinted through RoomLook instead of passthrough)
     ///
-    /// On-screen guide: what each experience is doing, the controls, and (Tab) a panel with the
-    /// Sound panel (every Sound Slot, live) and timings. Sound files in ~/MemoriesOfTheFuture/Sounds
-    /// replace a slot's files (see SoundPanel); L reloads them.
+    /// The on-screen guide, the welcome card and the Tab panel (Sound, Timings, Help) are drawn by
+    /// DesktopUI from the state here. Sound files in ~/MemoriesOfTheFuture/Sounds replace a slot's
+    /// files (see SoundPanel); L reloads them.
+    ///
+    /// XR is switched off at start: the project starts XR on Standalone (for the headset scenes),
+    /// which on a Mac would take over the view.
     /// </summary>
     public class DesktopSim : MonoBehaviour
     {
@@ -62,8 +66,6 @@ namespace CupSpike
         [SerializeField] float reachSpeed = 0.45f;
         [SerializeField] float leanTime = 0.6f;
 
-        enum Tab { Sound, Timings }
-
         float _yaw, _pitch;
         Vector3 _body;          // standing head position
         readonly System.Collections.Generic.List<Material> _roomMats = new System.Collections.Generic.List<Material>();
@@ -73,13 +75,40 @@ namespace CupSpike
         bool _leanTarget;
         Coroutine _aim;
         float _reach;           // 0 = withdrawn, 1 = touching the mug
-        bool _hud = true, _panel;
-        Tab _tab;
-        Vector2 _timingScroll;
         Transform _hand;
         SoundPanel _sound;
         string _bedFiles = "";
-        GUIStyle _title, _body2, _small, _phase, _paintPhase;
+
+        // ------------------------------------------------------------ read by DesktopUI
+
+        public MugScream Mug => mugScream;
+        public MugInterior Interior => interior;
+        public DreamState Dream => dream;
+        public PictureCanvas Painting => painting;
+        public SoundPanel Sound => _sound;
+        /// <summary>The Tab panel is open (the mouse is free while it is).</summary>
+        public bool PanelOpen { get; set; }
+        /// <summary>The guide card with the keys is shown (H).</summary>
+        public bool GuideVisible { get; set; } = true;
+        /// <summary>The welcome card is up: nothing reacts to the mouse until it's closed (Enter or its button).</summary>
+        public bool WelcomeOpen { get; set; } = true;
+        public bool MouseLook => Cursor.lockState == CursorLockMode.Locked;
+        /// <summary>Short messages for the screen ("Painting trigger: proximity").</summary>
+        public event Action<string> Toast;
+
+        void Say(string message) => Toast?.Invoke(message);
+
+        void Awake() => StopXR();
+
+        /// <summary>The project starts XR on Standalone for the headset scenes; on a Mac it only gets in the way.</summary>
+        static void StopXR()
+        {
+            var xr = UnityEngine.XR.Management.XRGeneralSettings.Instance;
+            if (xr == null || xr.Manager == null || xr.Manager.activeLoader == null) return;
+            Debug.Log($"[DesktopSim] Stopping XR ({xr.Manager.activeLoader.name}): desktop testing uses the screen, mouse and keyboard");
+            xr.Manager.StopSubsystems();
+            xr.Manager.DeinitializeLoader();
+        }
 
         void Start()
         {
@@ -171,11 +200,20 @@ namespace CupSpike
             var mouse = Mouse.current;
             if (kb == null || mouse == null) return;
 
+            if (WelcomeOpen)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+                if (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame) WelcomeOpen = false;
+                return;
+            }
+
             // Cursor: click to look around, Esc to free it. Always free while the Tab panel is open.
-            if (kb.tabKey.wasPressedThisFrame) _panel = !_panel;
-            if (kb.escapeKey.wasPressedThisFrame) Cursor.lockState = CursorLockMode.None;
-            if (_panel) Cursor.lockState = CursorLockMode.None;
-            else if (mouse.leftButton.wasPressedThisFrame) Cursor.lockState = CursorLockMode.Locked;
+            if (kb.tabKey.wasPressedThisFrame) PanelOpen = !PanelOpen;
+            if (kb.escapeKey.wasPressedThisFrame) { if (PanelOpen) PanelOpen = false; Cursor.lockState = CursorLockMode.None; }
+            if (PanelOpen) Cursor.lockState = CursorLockMode.None;
+            else if (mouse.leftButton.wasPressedThisFrame && !(PointerOverUi != null && PointerOverUi(mouse.position.ReadValue())))
+                Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = Cursor.lockState != CursorLockMode.Locked;
 
             if (Cursor.lockState == CursorLockMode.Locked)
@@ -200,7 +238,7 @@ namespace CupSpike
 
             // Hand: reach in and out (from beside wherever you stand at the mug).
             float move = (kb.upArrowKey.isPressed ? 1f : 0f) - (kb.downArrowKey.isPressed ? 1f : 0f);
-            _reach = Mathf.Clamp01(_reach + move * reachSpeed * Time.deltaTime + (_panel ? 0f : mouse.scroll.ReadValue().y * 0.0006f));
+            _reach = Mathf.Clamp01(_reach + move * reachSpeed * Time.deltaTime + (PanelOpen ? 0f : mouse.scroll.ReadValue().y * 0.0006f));
             var tipPos = Vector3.Lerp(handRest, TouchPoint, _reach);
             _hand.SetPositionAndRotation(tipPos, Quaternion.LookRotation(TouchPoint - handRest));
             if (mugScream != null) mugScream.SimulatedFingertip = tipPos;
@@ -208,23 +246,55 @@ namespace CupSpike
             if (detector != null) detector.Simulate(new Pose(mugBase, Quaternion.Euler(0f, 180f, 0f)), false);
 
             // Shortcuts.
-            if (kb.digit1Key.wasPressedThisFrame) Teleport(headRest, Rim);
-            if (kb.digit2Key.wasPressedThisFrame) Teleport(PaintingSpot, paintingCentre);
-            if (kb.hKey.wasPressedThisFrame) _hud = !_hud;
-            if (kb.zKey.wasPressedThisFrame && mugScream != null) mugScream.ShowZone = !mugScream.ShowZone;
-            if (kb.lKey.wasPressedThisFrame) _sound.ReloadFiles();
+            if (kb.digit1Key.wasPressedThisFrame) GoToMug();
+            if (kb.digit2Key.wasPressedThisFrame) GoToPainting();
+            if (kb.hKey.wasPressedThisFrame) GuideVisible = !GuideVisible;
+            if (kb.zKey.wasPressedThisFrame && mugScream != null)
+            {
+                mugScream.ShowZone = !mugScream.ShowZone;
+                Say(mugScream.ShowZone ? "Touch zones shown" : "Touch zones hidden");
+            }
+            if (kb.lKey.wasPressedThisFrame) ReloadSounds();
             if (dream != null)
             {
-                if (kb.fKey.wasPressedThisFrame) { if (dream.Dreaming) dream.WakeNow(); else dream.ForceDream = true; }
-                if (kb.mKey.wasPressedThisFrame)
-                    dream.Wake = dream.Wake == DreamState.WakeMode.Scream ? DreamState.WakeMode.Silent : DreamState.WakeMode.Scream;
+                if (kb.fKey.wasPressedThisFrame) ToggleDream();
+                if (kb.mKey.wasPressedThisFrame) CycleWake();
             }
-            if (kb.spaceKey.wasPressedThisFrame && mugScream != null) mugScream.Scream("space bar");
+            if (kb.spaceKey.wasPressedThisFrame) ScreamNow();
             if (painting != null)
             {
-                if (kb.pKey.wasPressedThisFrame) painting.Replay();
-                if (kb.tKey.wasPressedThisFrame) painting.CycleMode();
+                if (kb.pKey.wasPressedThisFrame) ReplayPainting();
+                if (kb.tKey.wasPressedThisFrame) CyclePaintingMode();
             }
+        }
+
+        // ------------------------------------------------------------ actions (keys and the panel's buttons)
+
+        /// <summary>Set by DesktopUI: is this screen point over a card or button? Clicks there don't grab the mouse.</summary>
+        public Func<Vector2, bool> PointerOverUi;
+
+        public void GoToMug() { Teleport(headRest, Rim); Say("At the mug"); }
+        public void GoToPainting() { Teleport(PaintingSpot, paintingCentre); Say("In front of the painting"); }
+        public void ReloadSounds() { _sound.ReloadFiles(); Say("Reloading the Sounds folder..."); }
+        public void ScreamNow() { if (mugScream != null) mugScream.Scream("space bar"); }
+        public void ToggleDream()
+        {
+            if (dream == null) return;
+            if (dream.Dreaming) { dream.WakeNow(); Say("Waking up"); }
+            else { dream.ForceDream = true; Say("Dreaming"); }
+        }
+        public void CycleWake()
+        {
+            if (dream == null) return;
+            dream.Wake = dream.Wake == DreamState.WakeMode.Scream ? DreamState.WakeMode.Silent : DreamState.WakeMode.Scream;
+            Say(dream.Wake == DreamState.WakeMode.Scream ? "Wake-up: the mug screams" : "Wake-up: silent");
+        }
+        public void ReplayPainting() { if (painting == null) return; painting.Replay(); Say("Painting replayed: back to the first stage"); }
+        public void CyclePaintingMode()
+        {
+            if (painting == null) return;
+            painting.CycleMode();
+            Say("Painting trigger: " + PictureCanvas.ModeName(painting.Mode));
         }
 
         void Walk(Keyboard kb)
@@ -290,172 +360,59 @@ namespace CupSpike
 
         // ------------------------------------------------------------ on-screen guide
 
-        string MugPhase()
+        /// <summary>A line of the guide: what is happening, what to do next, and how far along (negative: no bar).</summary>
+        public struct Phase
+        {
+            public string title, hint;
+            public float progress;
+            public Phase(string title, string hint, float progress = -1f) { this.title = title; this.hint = hint; this.progress = progress; }
+        }
+
+        /// <summary>What the mug is doing, in plain words.</summary>
+        public Phase MugPhase()
         {
             if (dream != null)
             {
-                if (dream.Waking) return "Waking up...";
-                if (dream.Depth >= 1f) return "Deep in the dream. Look away to wake";
-                if (dream.Depth > 0f) return $"The dream is spreading ({dream.Depth * 100f:0}%). Keep looking at the mug";
+                if (dream.Waking) return new Phase("Waking up", "The dream breaks off");
+                if (dream.Depth >= 1f) return new Phase("Deep in the dream", "Move the mouse to look away and wake (or press F)", 1f);
+                if (dream.Depth > 0f) return new Phase("The dream is spreading", "Keep looking at the mug", dream.Depth);
             }
             if (mugScream != null)
             {
-                if (mugScream.InSilence) return "Touched: silence...";
-                if (mugScream.ScreamPlaying) return "THE MUG SCREAMS";
+                if (mugScream.InSilence) return new Phase("Touched: silence...", "The scream comes next");
+                if (mugScream.ScreamPlaying) return new Phase("The mug screams", "Pull the hand back (Down arrow) to re-arm it");
             }
-            if (interior != null && interior.Reveal > 0.05f) return "Looking inside: the tunnel is open. Keep staring to dream";
-            if (mugScream != null && mugScream.Approach > 0f) return $"Hand approaching: the mug breathes ({mugScream.Approach * 100f:0}%)";
-            if (mugScream != null && !mugScream.Armed) return "Pull the hand back to re-arm the scream";
-            return "Idle. Reach for the mug, or lean over it";
+            if (interior != null && interior.Reveal > 0.05f) return new Phase("Looking inside", "The tunnel is open. Keep staring and the dream begins", interior.Reveal);
+            if (mugScream != null && mugScream.Approach > 0f) return new Phase("A hand approaches: it breathes", "Keep reaching (Up arrow) to touch it, or pull back and it stops dead", mugScream.Approach);
+            if (mugScream != null && !mugScream.Armed)
+                return new Phase("Re-arming", !float.IsNaN(mugScream.NearestTip) && mugScream.NearestTip < mugScream.TouchZone + 0.06f
+                    ? "Pull the hand back (Down arrow) to re-arm it" : "Ready again in a moment");
+            return new Phase("Waiting", "Reach for it (Up arrow or scroll), or lean over it (E)");
         }
 
-        string PaintingPhase()
+        /// <summary>What the painting is doing, in plain words.</summary>
+        public Phase PaintingPhase()
         {
-            if (painting == null) return "";
-            if (paintingBoard != null && !paintingBoard.IsLocked) return "Painting: not placed";
-            if (!painting.Revealed) return "Painting: revealing...";
-            var mode = PictureCanvas.ModeName(painting.Mode);
+            if (painting == null) return new Phase("", "");
+            if (paintingBoard != null && !paintingBoard.IsLocked) return new Phase("Not placed", "");
+            if (!painting.Revealed) return new Phase("Appearing...", "It washes in once it's found on the wall");
             var st = painting.Stages;
             if (painting.Mode == PictureCanvas.TriggerMode.UnseenSwap && st != null)
             {
                 int last = st.StageCount - 1;
-                string state = st.Stage >= last ? "final stage: P to replay"
-                             : st.InView ? (st.Armed ? "armed: look away to swap" : $"in view, being seen {st.SeenProgress * 100f:0}%")
-                             : st.Armed ? $"out of view: swapping {st.UnseenProgress * 100f:0}%" : "out of view: look at it first";
-                return $"Painting ({mode}): stage {st.Stage}/{last}, {state}";
+                if (st.Stage >= last) return new Phase("Final stage", "It screamed as it changed. Press P to start again");
+                if (st.InView)
+                    return st.Armed ? new Phase("Seen: it's waiting", "Turn away. It changes while you can't see it", 1f)
+                                    : new Phase("Being looked at", "Keep it in view a moment", st.SeenProgress);
+                if (st.Armed)
+                    return new Phase("Out of view: changing", st.Stage + 1 >= last && !st.CameClose
+                        ? "To reach the last stage, walk close to it (within 1.5 m) between looks" : "Look back to see what changed", st.UnseenProgress);
+                return new Phase("Out of view", "Look at it first (2 puts you in front of it)");
             }
-            if (painting.HasPlayed) return $"Painting ({mode}): transforming{(painting.IsPlaying ? "" : ", finished")}. P to replay";
-            return $"Painting ({mode}): waiting. {(painting.Mode == PictureCanvas.TriggerMode.Proximity ? $"Walk within {painting.TriggerDistance:0.0} m and face it" : "Look at it for a while")}";
-        }
-
-        void OnGUI()
-        {
-            float s = Mathf.Max(1f, Screen.height / 800f);
-            GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
-            float w = Screen.width / s, h = Screen.height / s;
-            if (_title == null)
-            {
-                _title = new GUIStyle(GUI.skin.label) { fontSize = 15, fontStyle = FontStyle.Bold };
-                _phase = new GUIStyle(GUI.skin.label) { fontSize = 16, fontStyle = FontStyle.Bold, wordWrap = true };
-                _phase.normal.textColor = new Color(1f, 0.55f, 0.4f);
-                _paintPhase = new GUIStyle(_phase) { fontSize = 14 };
-                _paintPhase.normal.textColor = new Color(0.55f, 0.8f, 1f);
-                _body2 = new GUIStyle(GUI.skin.label) { fontSize = 12, wordWrap = true, richText = true };
-                _small = new GUIStyle(GUI.skin.label) { fontSize = 10, wordWrap = true };
-                _small.normal.textColor = new Color(1f, 1f, 1f, 0.6f);
-            }
-
-            if (_panel) DrawPanel(w, h);
-
-            if (!_hud)
-            {
-                GUI.Label(new Rect(10, h - 22, 300, 20), "H: show the guide", _small);
-                return;
-            }
-
-            GUILayout.BeginArea(new Rect(12, 12, 360, h - 24), GUI.skin.box);
-            GUILayout.Label("Memories of the Future: desktop room", _title);
-            GUILayout.Label(MugPhase(), _phase);
-            var pp = PaintingPhase();
-            if (pp != "") GUILayout.Label(pp, _paintPhase);
-            GUILayout.Space(6);
-            GUILayout.Label(
-                "<b>Mouse</b>  look around (click to start, Esc frees the cursor)\n" +
-                "<b>W A S D</b>  walk\n" +
-                "<b>1</b>  go to the mug    <b>2</b>  go to the painting\n" +
-                "<b>Tab</b>  Sound panel and timings    <b>L</b>  reload sound files\n" +
-                "<b>H</b>  hide this guide", _body2);
-            GUILayout.Space(4);
-            GUILayout.Label(
-                "<b>The mug</b>\n" +
-                "<b>Up / Down</b> or scroll  move the hand towards the mug / away\n" +
-                "<b>E</b>  lean over the mug / lean back\n" +
-                "<b>F</b>  start the dream now / wake up    <b>M</b>  wake-up: scream or silent\n" +
-                "<b>Space</b>  scream now    <b>Z</b>  show zones", _body2);
-            GUILayout.Space(4);
-            GUILayout.Label(
-                "<b>The painting</b> (east wall)\n" +
-                "<b>P</b>  replay    <b>T</b>  trigger: unseen swap / proximity / gaze", _body2);
-            GUILayout.Space(6);
-            GUILayout.Label(
-                "<b>Things to try</b>\n" +
-                "1. Reach slowly: the mug breathes. Pull back: it stops dead.\n" +
-                "2. Reach all the way: silence, then the scream.\n" +
-                "3. Press E and look into the mug: the tunnel opens; keep staring to dream.\n" +
-                "4. Press 2, look at the painting, then turn away: it changes behind your back. " +
-                "Walk close (W) between looks to let it reach the last stage and scream.", _body2);
-            GUILayout.FlexibleSpace();
-            if (mugScream != null) GUILayout.Label(mugScream.StatusLine, _small);
-            if (interior != null) GUILayout.Label(interior.StatusLine, _small);
-            if (dream != null) GUILayout.Label(dream.StatusLine, _small);
-            GUILayout.EndArea();
-        }
-
-        void DrawPanel(float w, float h)
-        {
-            const float width = 430f;
-            GUILayout.BeginArea(new Rect(w - width - 12, 12, width, h - 24), GUI.skin.box);
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Toggle(_tab == Tab.Sound, "Sound", GUI.skin.button)) _tab = Tab.Sound;
-            if (GUILayout.Toggle(_tab == Tab.Timings, "Timings", GUI.skin.button)) _tab = Tab.Timings;
-            GUILayout.EndHorizontal();
-            GUILayout.Space(4);
-            if (_tab == Tab.Sound) _sound.Draw(_title, _body2, _small);
-            else DrawTimings();
-            GUILayout.EndArea();
-        }
-
-        void DrawTimings()
-        {
-            _timingScroll = GUILayout.BeginScrollView(_timingScroll);
-            if (mugScream != null)
-            {
-                GUILayout.Label("The mug", _title);
-                mugScream.ApproachStart = Slider("Breath starts at (cm from the mug)", mugScream.ApproachStart * 100f, 8f, 60f, "0") / 100f;
-                mugScream.SilenceBeat = Slider("Silence before the scream (s)", mugScream.SilenceBeat, 0f, 2f, "0.00");
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"Touch distance: {mugScream.TouchZone * 100f:0} cm", _body2);
-                if (GUILayout.Button("Switch", GUILayout.Width(70))) mugScream.CycleZone();
-                GUILayout.EndHorizontal();
-            }
-            if (dream != null)
-            {
-                dream.StareBeforeDream = Slider("Stare before the dream starts (s)", dream.StareBeforeDream, 0.5f, 10f, "0.0");
-                dream.DeepenTime = Slider("Time to go fully into the dream (s)", dream.DeepenTime, 2f, 30f, "0.0");
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"Wake-up: {(dream.Wake == DreamState.WakeMode.Scream ? "the mug screams" : "silent")}", _body2);
-                if (GUILayout.Button("Switch", GUILayout.Width(70)))
-                    dream.Wake = dream.Wake == DreamState.WakeMode.Scream ? DreamState.WakeMode.Silent : DreamState.WakeMode.Scream;
-                GUILayout.EndHorizontal();
-            }
-            if (painting != null)
-            {
-                GUILayout.Space(8);
-                GUILayout.Label("The painting", _title);
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"Trigger: {PictureCanvas.ModeName(painting.Mode)}", _body2);
-                if (GUILayout.Button("Switch (T)", GUILayout.Width(80))) painting.CycleMode();
-                if (GUILayout.Button("Replay (P)", GUILayout.Width(80))) painting.Replay();
-                GUILayout.EndHorizontal();
-                painting.RevealDuration = Slider("Reveal when found (s)", painting.RevealDuration, 0.5f, 8f, "0.0");
-                var st = painting.Stages;
-                if (st != null)
-                {
-                    st.SeenDwell = Slider("Look at it this long before it may change (s)", st.SeenDwell, 0f, 5f, "0.00");
-                    st.UnseenTime = Slider("Out of view this long to swap (s)", st.UnseenTime, 0.1f, 5f, "0.00");
-                }
-            }
-            GUILayout.EndScrollView();
-            GUILayout.Label("Timings aren't saved. Note the values you like.", _small);
-        }
-
-        float Slider(string label, float value, float min, float max, string format)
-        {
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(label, _body2, GUILayout.Width(300));
-            GUILayout.Label(value.ToString(format), _body2, GUILayout.Width(40));
-            GUILayout.EndHorizontal();
-            return GUILayout.HorizontalSlider(value, min, max);
+            if (painting.HasPlayed) return new Phase(painting.IsPlaying ? "Transforming" : "Transformed", "The soundtrack plays from the painting. P to replay");
+            return painting.Mode == PictureCanvas.TriggerMode.Proximity
+                ? new Phase("Waiting for you", $"Walk within {painting.TriggerDistance:0.0} m and face it")
+                : new Phase("Waiting for you", "Look at it for a couple of seconds");
         }
     }
 }
