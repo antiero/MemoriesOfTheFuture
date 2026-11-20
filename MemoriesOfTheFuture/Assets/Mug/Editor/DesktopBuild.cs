@@ -25,13 +25,17 @@ namespace MemoriesOfTheFuture.Mug.EditorTools
     ///    (README - Adding Spatial Sound.md) to the open scene, and their slots if missing. Part of the above.
     ///  - Memories > Desktop Testing > Build macOS Desktop Testing App: builds only that scene to
     ///    Builds/macOS/MemoriesOfTheFuture-DesktopTesting.app.
-    ///    This switches the editor to the macOS platform; switch back with
+    ///  - Memories > Desktop Testing > Build Windows Desktop Testing App: the same for Windows, to
+    ///    Builds/Windows/MemoriesOfTheFuture-DesktopTesting/ (the .exe needs the whole folder beside it).
+    ///    Each needs its Unity build module (Mac / Windows Build Support, Mono) on the machine building it.
+    ///    Building switches the editor to that platform; switch back with
     ///    Memories > Desktop Testing > Switch Back To Meta Quest (or File > Build Profiles).
     /// </summary>
     public static class DesktopBuild
     {
         public const string ScenePath = "Assets/Scenes/03-DesktopTesting.unity";
         public const string AppPath = "Builds/macOS/MemoriesOfTheFuture-DesktopTesting.app";
+        public const string WindowsAppPath = "Builds/Windows/MemoriesOfTheFuture-DesktopTesting/MemoriesOfTheFuture-DesktopTesting.exe";
         const string UiFolder = "Assets/Mug/UI";
         const string UiStyle = UiFolder + "/DesktopTesting.uss";
         const string UiTheme = UiFolder + "/DesktopTestingTheme.tss";
@@ -282,22 +286,38 @@ namespace MemoriesOfTheFuture.Mug.EditorTools
         [MenuItem("Memories/Desktop Testing/Build macOS Desktop Testing App")]
         public static void BuildMac()
         {
-            if (!File.Exists(ScenePath)) CreateScene();
-            // Only the Mono variant of Mac standalone support is installed.
-            PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone, ScriptingImplementation.Mono2x);
             // The Meta SDK references the Microphone class, so macOS requires a usage description (the app never records).
             if (string.IsNullOrEmpty(PlayerSettings.macOS.microphoneUsageDescription))
                 PlayerSettings.macOS.microphoneUsageDescription = "Not used. Required by an included library.";
-            Directory.CreateDirectory(Path.GetDirectoryName(AppPath));
+            BuildDesktop(BuildTarget.StandaloneOSX, AppPath, "macOS", "Mac Build Support (Mono)");
+        }
+
+        [MenuItem("Memories/Desktop Testing/Build Windows Desktop Testing App")]
+        public static void BuildWindows() =>
+            BuildDesktop(BuildTarget.StandaloneWindows64, WindowsAppPath, "Windows", "Windows Build Support (Mono)");
+
+        /// <summary>Builds only the desktop testing scene for a desktop platform. Mono, because only the
+        /// Mono variants of the desktop build modules are needed (no IL2CPP toolchain).</summary>
+        static void BuildDesktop(BuildTarget target, string path, string platform, string module)
+        {
+            if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Standalone, target))
+            {
+                Debug.LogError($"[DesktopBuild] Can't build for {platform}: add the \"{module}\" module to Unity " +
+                               $"{Application.unityVersion} in Unity Hub (Installs > ⚙ > Add modules), then restart Unity.");
+                return;
+            }
+            if (!File.Exists(ScenePath)) CreateScene();
+            PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone, ScriptingImplementation.Mono2x);
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
                 scenes = new[] { ScenePath },
-                locationPathName = AppPath,
-                target = BuildTarget.StandaloneOSX,
+                locationPathName = path,
+                target = target,
                 options = BuildOptions.None,
             });
             var s = report.summary;
-            Debug.Log($"[DesktopBuild] macOS build {s.result}: {s.totalErrors} errors, {s.totalSize / (1024 * 1024)} MB, {s.totalTime.TotalSeconds:0} s -> {AppPath}");
+            Debug.Log($"[DesktopBuild] {platform} build {s.result}: {s.totalErrors} errors, {s.totalSize / (1024 * 1024)} MB, {s.totalTime.TotalSeconds:0} s -> {path}");
         }
 
         [MenuItem("Memories/Desktop Testing/Switch Back To Meta Quest")]

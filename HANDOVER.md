@@ -16,8 +16,8 @@ If you only read one other document, make it the
    the background sound drains away.
 2. Touch it: a beat of total **silence**, then it **screams**, and the room's colour crushes for a
    moment.
-3. Lean over and look in: the inside opens into a bottomless **tunnel**, with the client's **rune**
-   glowing red at the bottom and a low drone.
+3. Lean over and look in: the inside opens into a bottomless **tunnel** fading into darkness, with
+   a low drone. (The client's glowing **rune** can be shown at the bottom: it's switched off for now.)
 4. Pick it up and hold it: **dread** for 5 seconds (the room greys, edges glow red, a heartbeat
    quickens, **echoes** ripple out of the mug), then the **dream** spreads from the mug: a dome,
    embers, whispers circling you, a ghostly scan of the room.
@@ -56,8 +56,12 @@ key is listed bottom left (**H** hides them). The ones you'll use most:
 | **G** | Pick the mug up / put it down (the dream) |
 | **Tab** | The panel: **Sound**, **Timings** and **Help** |
 
-There is also a **Mac app** of this room, which runs without Unity:
-`MemoriesOfTheFuture/Builds/macOS/MemoriesOfTheFuture-DesktopTesting.app`.
+There is also a **desktop app** of this room, which runs without Unity:
+- Mac: `MemoriesOfTheFuture/Builds/macOS/MemoriesOfTheFuture-DesktopTesting.app`
+- Windows: `MemoriesOfTheFuture\Builds\Windows\MemoriesOfTheFuture-DesktopTesting\MemoriesOfTheFuture-DesktopTesting.exe`
+  (keep the whole folder together: the `.exe` needs the files beside it)
+
+Builds aren't in Git, so each is made on a machine of that kind (see *Rebuilding the desktop app*).
 
 The desktop room is for content, timing and levels. **Spatial sound, colour and scale must be
 checked on the headset.**
@@ -121,8 +125,9 @@ Open **Memories > Sound Design** in the menu bar. From that one window you can:
   holding the mug, while dreaming, when it screams...) and *where* (in the room, on the mug, by
   your head).
 
-**In the Mac app**, press **Tab** for the same controls. Drop test files in
-`~/MemoriesOfTheFuture/Sounds` and press **L** to hear them. **Save mix** keeps your levels. A
+**In the desktop app**, press **Tab** for the same controls. Drop test files in the Sounds folder
+(**Open sounds folder** opens it: `~/MemoriesOfTheFuture/Sounds` on a Mac,
+`C:\Users\<you>\MemoriesOfTheFuture\Sounds` on Windows) and press **L** to hear them. **Save mix** keeps your levels. A
 developer, or you in Unity, then brings that mix into the project with
 **Memories > Audio > Import Mix From Desktop App**.
 
@@ -167,7 +172,7 @@ playing, and are kept.
 
 | Effect | Material | Things to try |
 | --- | --- | --- |
-| The rune at the bottom of the tunnel | `MugRuneGlow` (image: `Mug/Textures/Rune.png`) | **Glow colour**, **Intensity**. To redraw the rune, replace `Rune.png` with a PNG whose strokes are solid and everything else transparent |
+| The rune at the bottom of the tunnel (**off by default**: tick **Show Rune** on **Mug Interior** to bring it back) | `MugRuneGlow` (image: `Mug/Textures/Rune.png`) | **Glow colour**, **Intensity**. To redraw the rune, replace `Rune.png` with a PNG whose strokes are solid and everything else transparent |
 | The tunnel inside the mug | `MugWell` | **Colour at the rim**, **Colour deep down**, **Depth to full dark**, **Ring spacing** and **Ring strength** (the bands down the shaft) |
 | Echoes around the held mug | `CupEchoes` | **Echo growth** (how far the ghost copies swell), **Echoes per second**, **Ripple strength**, **Monochrome**, **Tint**, **Wavefront colour** |
 | The dream's dome | `DreamDome` | **Void colour** up and down, **Spiral colour**, **Edge softness** |
@@ -226,12 +231,15 @@ note the values you like, then type them into the Inspector, or pass them to the
 | Test | Hang a virtual painting on any wall (no board needed) |
 | Trigger | Unseen swap / Proximity / Gaze dwell |
 
-### Rebuilding the Mac app
+### Rebuilding the desktop app
 
-1. **Memories > Desktop Testing > Build macOS Desktop Testing App**. It takes a few minutes and
-   writes `Builds/macOS/MemoriesOfTheFuture-DesktopTesting.app`.
+1. On a Mac: **Memories > Desktop Testing > Build macOS Desktop Testing App**.
+   On Windows: **Memories > Desktop Testing > Build Windows Desktop Testing App**.
+   It takes a few minutes and writes into `Builds/macOS/` or `Builds/Windows/`. If the Console
+   says a build module is missing, add it in Unity Hub (**Installs > ⚙ > Add modules**:
+   *Mac Build Support (Mono)* or *Windows Build Support (Mono)*) and restart Unity.
 2. Then **Memories > Desktop Testing > Switch Back To Meta Quest**, so the next headset build
-   isn't a Mac one.
+   isn't a desktop one.
 
 Don't use **Memories > Desktop Testing > Create Desktop Testing Scene** unless you mean to: it
 rebuilds `03-DesktopTesting` from scratch, and anything added to that scene by hand is lost.
@@ -248,7 +256,23 @@ rebuilds `03-DesktopTesting` from scratch, and anything added to that scene by h
 - **Scenes don't merge.** If two people change the same scene on the same day, one person's changes
   get lost. Agree who has which scene. Slots, materials and the mixer are separate files, so
   several people can work on those at once.
-- Unity can undo (**Cmd+Z**), and Git keeps every version you've committed.
+- Unity can undo (**Cmd+Z** on a Mac, **Ctrl+Z** on Windows), and Git keeps every version you've
+  committed.
+
+### Working on Windows
+
+The project works the same on Windows and Mac. A few differences:
+
+- **Clone to a short folder**, such as `C:\Dev\MotF`. Some of Unity's package files have very long
+  paths, and Windows refuses paths over 260 characters, which shows up as package errors the first
+  time Unity opens the project.
+- Where these guides say **Cmd**, use **Ctrl** (Cmd+S is Ctrl+S, Cmd+D is Ctrl+D).
+- **Finder** is **File Explorer**: the **Drop Folder** and **Open sounds folder** buttons open it.
+- The desktop app's files live in `C:\Users\<you>\MemoriesOfTheFuture` (Sounds folder,
+  `SoundMix.json`) instead of `~/MemoriesOfTheFuture`.
+- Line endings are handled for you (the project's `.gitattributes`), so GitHub Desktop shows only
+  the files you actually changed. If it ever lists lots of files you didn't touch, tell the
+  developer rather than committing them.
 
 ---
 

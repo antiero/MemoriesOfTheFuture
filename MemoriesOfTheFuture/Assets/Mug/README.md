@@ -63,7 +63,7 @@ Debug (off at launch; the **Debug** button shows them with the panel): a faint r
 
 ## Looking inside the mug (rune prototype, step 1)
 
-`MugInterior` (on `CupDetection`): look down into the real mug and its inside opens into a bottomless tunnel, with the client's rune (`Textures/Rune.png`, traced from their photo) glowing red at the bottom and a low drone rising from the mug. Look away and it closes.
+`MugInterior` (on `CupDetection`): look down into the real mug and its inside opens into a bottomless tunnel, fading into darkness, and a low drone rising from the mug. Look away and it closes.
 
 - **Trigger:** all of these must hold for 0.4 s, after which it opens over 1.5 s and closes in 0.6 s:
   - the head is within 0.9 m
@@ -72,7 +72,7 @@ Debug (off at launch; the **Debug** button shows them with the panel): a faint r
 - **How it's drawn:** children of the proxy mug, so it follows the tracked mug and hides when tracking is lost.
   - `Occluder`: the proxy mesh, depth only (`Mug/MugOccluder`). Virtual things behind the real walls are hidden and passthrough shows through. The visible proxy is now **hidden by default**; the **Proxy** button shows it.
   - `Portal`: a disc across the opening at the rim (`Mug/MugPortalMask`) that marks the stencil buffer.
-  - `Well` + `Rune`: a tunnel 0.6 m deep, drawn only through the portal and ignoring depth, so it goes "through" the real floor (`Mug/MugWell`, `Mug/MugRuneGlow`). The shaft turns to run away from the viewer, so you always look straight down it at the rune; a straight well would only show its bottom from directly above.
+  - `Well` (+ `Rune`, off by default: **Show Rune** on `MugInterior` draws the client's rune, `Textures/Rune.png`, glowing at the bottom): a tunnel 0.6 m deep, drawn only through the portal and ignoring depth, so it goes "through" the real floor (`Mug/MugWell`, `Mug/MugRuneGlow`). The shaft turns to run away from the viewer, so you always look straight down it; a straight well would only show its bottom from directly above.
 - **Drone:** for now, the breath placeholder pitched down to 0.55.
 - **Buttons:**
   - **Inside** keeps it open, to check the effect.

@@ -127,7 +127,7 @@ Sound.md`** (or **Adding spatial sound** in the Sound Design window). The short 
      While Dreaming (these loop and fade with the moment), or When Mug Screams, When Waking (these
      play once).
    - **Where**: here in the scene, on the mug, or on the listener (with an offset).
-3. Save the scene (Cmd+S).
+3. Save the scene (Cmd+S, or Ctrl+S on Windows).
 
 Do this in **02-Mug** (the headset scene) and **03-DesktopTesting** (the desktop test) if you
 want it in both. (Rebuilding the desktop room with *Memories > Desktop Testing > Create Desktop Testing Scene* starts
@@ -195,15 +195,15 @@ The same slots as the Sound Design window, live, in the game view, so it works i
 **In Unity**, panel edits change the slot assets, so they're kept when you stop, just like the
 Sound Design window.
 
-**In the Mac app**, press **Save mix**. It writes `~/MemoriesOfTheFuture/SoundMix.json` (your
+**In the desktop app**, press **Save mix**. It writes `~/MemoriesOfTheFuture/SoundMix.json` (on Windows, `C:\Users\<you>\MemoriesOfTheFuture\SoundMix.json`; your
 home folder, then *MemoriesOfTheFuture*), and the app loads it every time it starts, so your mix is
 still there tomorrow. To bring it into the project, the developer (or you, in Unity) runs
 **Memories > Audio > Import Mix From Desktop App**, or clicks **Import mix** in the Sound Design
-window. The Console lists what changed; Cmd+Z undoes it.
+window. The Console lists what changed; Cmd+Z (Ctrl+Z on Windows) undoes it.
 
 ### Trying a file in the desktop room
 
-1. **Open sounds folder** in the Sound panel opens `~/MemoriesOfTheFuture/Sounds`.
+1. **Open sounds folder** in the Sound panel opens `~/MemoriesOfTheFuture/Sounds` (on Windows, `C:\Users\<you>\MemoriesOfTheFuture\Sounds`).
 2. Copy in a file whose name starts with the slot's Drop Name: `scream_take3.wav`,
    `painting_soundtrack_v2.wav`. The newest one wins if several match. A `background` file
    (stereo) replaces the whole bed, left and right. The folder's `README.txt` lists every name.
@@ -230,4 +230,4 @@ slot's own files again.
   slot's Drop Name, or drag it onto the slot in the Sound Design window.
 - **A component says "no Sound Slot assigned"**: run **Memories > Audio > Set Up Sound Slots and
   Mixer**. It only fills in what's missing and never overwrites your slots.
-- **Anything else**: Cmd+Z undoes changes, and Git has every saved version.
+- **Anything else**: Cmd+Z (Ctrl+Z on Windows) undoes changes, and Git has every saved version.

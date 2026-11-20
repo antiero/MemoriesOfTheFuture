@@ -32,7 +32,9 @@ namespace MemoriesOfTheFuture
             foreach (var e in scenes)
             {
                 var scene = e.scene;
-                menu.AddButton(e.label, () => SceneSwitcher.Load(scene), () => SceneSwitcher.Current == scene);
+                // Lit for the open scene, and for the one being switched to while the menu fades out.
+                menu.AddButton(e.label, () => SceneSwitcher.Load(scene),
+                    () => SceneSwitcher.IsSwitching ? SceneSwitcher.Target == scene : SceneSwitcher.Current == scene);
             }
         }
     }

@@ -35,6 +35,8 @@ namespace MemoriesOfTheFuture.Mug
         [SerializeField] Material portalMaterial;
         [SerializeField] Material wellMaterial;
         [SerializeField] Material runeMaterial;
+        [Tooltip("Draw the glowing rune at the bottom of the tunnel. Off: the tunnel fades into darkness with nothing at the bottom.")]
+        [SerializeField] bool showRune = false;
         [Tooltip("Low drone from inside the mug while it's open. Its file, level and pitch live in the Sound Slot (Memories > Sound Design).")]
         [SerializeField] SoundSlot droneSlot;
 
@@ -107,9 +109,12 @@ namespace MemoriesOfTheFuture.Mug
             _shaft.SetParent(interior, false);
             _well = new Material(wellMaterial);
             Part("Well", _shaft, Cone(openingRadius * throatScale, wellBottomRadius, wellDepth, 48, 24), _well);
-            _rune = new Material(runeMaterial);
-            var rune = Part("Rune", _shaft, Disc(wellBottomRadius * 0.95f, 48), _rune);
-            rune.localPosition = new Vector3(0f, -wellDepth, 0f);
+            if (showRune && runeMaterial != null)
+            {
+                _rune = new Material(runeMaterial);
+                var rune = Part("Rune", _shaft, Disc(wellBottomRadius * 0.95f, 48), _rune);
+                rune.localPosition = new Vector3(0f, -wellDepth, 0f);
+            }
 
             _drone = SlotVoice.Create(droneSlot, interior, "Drone", true);
             SetReveal(0f);

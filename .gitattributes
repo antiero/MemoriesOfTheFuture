@@ -1,0 +1,77 @@
+# Keeps files identical on Windows and Mac.
+#
+# Text files are stored with LF line endings in Git. Git for Windows (and GitHub Desktop) may
+# check general text out with CRLF and convert it back on commit, so nobody sees "changed"
+# files they didn't touch.
+
+* text=auto
+
+# Unity's own files (scenes, prefabs, materials, settings) are YAML, and Unity always writes
+# them with LF. Keep them LF on every machine, so saving in Unity on Windows doesn't rewrite
+# every line. merge=unityyamlmerge uses Unity's Smart Merge for these where it's set up
+# (see https://docs.unity3d.com/Manual/SmartMerge.html); without it Git merges them as text.
+*.unity             text eol=lf merge=unityyamlmerge
+*.prefab            text eol=lf merge=unityyamlmerge
+*.asset             text eol=lf merge=unityyamlmerge
+*.mat               text eol=lf merge=unityyamlmerge
+*.meta              text eol=lf merge=unityyamlmerge
+*.anim              text eol=lf merge=unityyamlmerge
+*.controller        text eol=lf merge=unityyamlmerge
+*.overrideController text eol=lf merge=unityyamlmerge
+*.mixer             text eol=lf merge=unityyamlmerge
+*.preset            text eol=lf merge=unityyamlmerge
+*.lighting          text eol=lf merge=unityyamlmerge
+*.physicMaterial    text eol=lf merge=unityyamlmerge
+*.playable          text eol=lf merge=unityyamlmerge
+*.mask              text eol=lf merge=unityyamlmerge
+*.renderTexture     text eol=lf merge=unityyamlmerge
+*.spriteatlas       text eol=lf merge=unityyamlmerge
+*.signal            text eol=lf merge=unityyamlmerge
+*.shadergraph       text eol=lf
+*.shadersubgraph    text eol=lf
+*.inputactions      text eol=lf
+*.uss               text eol=lf
+*.uxml              text eol=lf
+*.tss               text eol=lf
+
+# Baked data that Unity writes as binary even in text serialization mode.
+LightingData.asset  binary
+*NavMesh*.asset     binary
+
+# Images, sound, video, 3D and other binary files: never convert or text-merge them.
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.tif    binary
+*.tiff   binary
+*.tga    binary
+*.psd    binary
+*.exr    binary
+*.hdr    binary
+*.gif    binary
+*.wav    binary
+*.mp3    binary
+*.ogg    binary
+*.aif    binary
+*.aiff   binary
+*.flac   binary
+*.mp4    binary
+*.mov    binary
+*.webm   binary
+*.fbx    binary
+*.obj    binary
+*.blend  binary
+*.usdz   binary
+*.ply    binary
+*.onnx   binary
+*.ttf    binary
+*.otf    binary
+*.dll    binary
+*.so     binary
+*.dylib  binary
+*.bundle binary
+*.apk    binary
+*.unitypackage binary
+*.bytes  binary
+*.zip    binary
+*.pdf    binary

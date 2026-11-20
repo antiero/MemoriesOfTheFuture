@@ -65,8 +65,8 @@ namespace PictureChanges.UI
         // Explicit draw order, back to front. Left to distance sorting, the panel was sometimes drawn over
         // the buttons (dulling the lit ones) and the plates over their labels.
         const int PanelQueue = 3006, DividerQueue = 3008, PlateQueue = 3010, TextQueue = 3020;
-        const float TitleSpace = 0.020f;     // room above the buttons for the title
         const float GroupSpace = 0.008f;     // extra space (with a divider) between button groups
+        const float ArrivalFadeSpeed = 2f;   // fade-in in a scene's first moments (after a switch), per second
 
         const float IndexEnterDot = 0.68f, IndexExitDot = 0.56f;
         const float HoverDepth = 0.05f;      // hover zone in front of a button
@@ -93,7 +93,6 @@ namespace PictureChanges.UI
         readonly List<Transform> _dividers = new List<Transform>();
         Transform _menu;
         Material _panelMat;
-        TextMeshPro _title;
         AudioSource _audio;
         bool _shown, _indexExtended, _breakBeforeNext;
         float _alpha;
@@ -146,9 +145,6 @@ namespace PictureChanges.UI
             _panelMat.SetColor("_BorderColor", PanelBorder);
             _panelMat.SetFloat("_Radius", 0.018f);
             _panelMat.renderQueue = PanelQueue;
-
-            _title = Text("Title", _menu, "Memories of the Future", 0.0062f, new Color(1f, 1f, 1f, 0.8f));
-            _title.characterSpacing = 4f;
 
             _audio = _menu.gameObject.AddComponent<AudioSource>();
             _audio.playOnAwake = false;
@@ -237,7 +233,7 @@ namespace PictureChanges.UI
 
             float stepX = buttonWidth + buttonGap, stepY = buttonSize + buttonGap;
             float w = cols * stepX + buttonGap;
-            float h = TitleSpace + rows * stepY + buttonGap + groupBreaks * GroupSpace;
+            float h = rows * stepY + buttonGap + groupBreaks * GroupSpace;
             const float centreY = -0.006f;
             float top = centreY + h * 0.5f;
 
@@ -245,12 +241,10 @@ namespace PictureChanges.UI
             panel.localScale = new Vector3(w, h, 1f);
             panel.localPosition = new Vector3(0f, centreY, 0.002f);
             _panelMat.SetVector("_Size", new Vector4(w, h, 0, 0));
-            _title.rectTransform.sizeDelta = new Vector2(w - 0.01f, TitleSpace);
-            _title.rectTransform.localPosition = new Vector3(0f, top - TitleSpace * 0.55f, -0.001f);
 
-            // Top edge of each row, walking down from under the title.
+            // Top edge of each row, walking down from the top of the panel.
             var rowTop = new float[rows];
-            float y = top - TitleSpace;
+            float y = top;
             int dividerCount = 0;
             for (int r = 0; r < rows; r++)
             {
@@ -313,8 +307,14 @@ namespace PictureChanges.UI
         void Update()
         {
             bool hasPose = TryGetMenuPose(out var pose);
-            float target = hasPose && _shown ? 1f : 0f;
-            _alpha = Mathf.MoveTowards(_alpha, target, fadeSpeed * Time.deltaTime);
+            // While switching scenes the menu fades out (over SceneSwitcher.FadeOutTime) and takes no
+            // presses, so nothing virtual is left on screen when the new scene is switched in.
+            bool switching = MemoriesOfTheFuture.SceneSwitcher.IsSwitching;
+            float target = hasPose && _shown && !switching ? 1f : 0f;
+            float speed = switching ? 1f / (MemoriesOfTheFuture.SceneSwitcher.FadeOutTime * 0.85f)
+                        : Time.timeSinceLevelLoad < 2f ? ArrivalFadeSpeed   // just switched in: ease in gently
+                        : fadeSpeed;
+            _alpha = Mathf.MoveTowards(_alpha, target, speed * Time.deltaTime);
             SetAlpha(_alpha);
             if (!hasPose && _alpha <= 0f) return;
 
@@ -325,7 +325,7 @@ namespace PictureChanges.UI
                 else _menu.SetPositionAndRotation(Vector3.Lerp(_menu.position, pose.position, t),
                                                   Quaternion.Slerp(_menu.rotation, pose.rotation, t));
             }
-            UpdateButtons(_alpha > 0.8f);
+            UpdateButtons(_alpha > 0.8f && !switching);
         }
 
         /// <summary>Pezzi's palm test, ported: palm normal from knuckles and wrist, signed per hand.</summary>
@@ -430,7 +430,6 @@ namespace PictureChanges.UI
             _panelMat.SetFloat("_Opacity", eased);
             foreach (var b in _buttons) { if (b.mat != null) b.mat.SetFloat("_Opacity", eased); if (b.text != null) b.text.alpha = eased; }
             foreach (var m in _dividerMats) m.SetFloat("_Opacity", eased);
-            _title.alpha = eased * 0.8f;
         }
     }
 }
