@@ -83,6 +83,7 @@ namespace CupSpike
         float _hold;            // 0 = on the table, 1 = in the hand
         Transform _hand;
         SoundPanel _sound;
+        SoundMarkers _markers;
         string _bedFiles = "";
 
         // ------------------------------------------------------------ read by DesktopUI
@@ -125,6 +126,7 @@ namespace CupSpike
             Face(Rim);
             BuildHand();
             // The echoes around the held mug warp a copy of the view here (no passthrough camera).
+            _markers = FindAnyObjectByType<SoundMarkers>();
             var echoes = FindAnyObjectByType<CupEchoes>();
             if (echoes != null) echoes.UseScreen = true;
             if (room != null)
@@ -273,6 +275,7 @@ namespace CupSpike
                 Say(mugScream.ShowZone ? "Touch zones shown" : "Touch zones hidden");
             }
             if (kb.lKey.wasPressedThisFrame) ReloadSounds();
+            if (kb.oKey.wasPressedThisFrame) ToggleSoundMarkers();
             if (dream != null)
             {
                 if (kb.fKey.wasPressedThisFrame) ToggleDream();
@@ -294,6 +297,13 @@ namespace CupSpike
 
         public void GoToMug() { Teleport(headRest, Rim); Say("At the mug"); }
         public void GoToPainting() { Teleport(PaintingSpot, paintingCentre); Say("In front of the painting"); }
+        public bool SoundMarkersShown => _markers != null && _markers.Visible;
+        public void ToggleSoundMarkers()
+        {
+            if (_markers == null) return;
+            _markers.Visible = !_markers.Visible;
+            Say(_markers.Visible ? "Showing where every sound is" : "Sound markers hidden");
+        }
         public void ReloadSounds() { _sound.ReloadFiles(); Say("Reloading the Sounds folder..."); }
         public void ScreamNow() { if (mugScream != null) mugScream.Scream("space bar"); }
         public void ToggleHold()

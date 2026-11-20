@@ -19,8 +19,8 @@ MonoBehaviour:
   UploadBatchSize: 100000
   MaxRenderOrder: 1
   DisplayBoundingBoxes: 0
-  CameraTranslationRefreshTreshold: 0.2
-  CameraRotationRefreshTreshold: 10
+  CameraTranslationRefreshTreshold: 0.05
+  CameraRotationRefreshTreshold: 5
   ShowImportErrors: 1
   Materials:
   - {fileID: 11400000, guid: 52d6acd34c7b8c8458e1547991be8d7b, type: 2}

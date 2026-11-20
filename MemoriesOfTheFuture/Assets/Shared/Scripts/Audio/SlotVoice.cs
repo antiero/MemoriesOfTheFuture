@@ -22,6 +22,13 @@ namespace Memories.Audio
 
         int _version = int.MinValue;
 
+        static readonly System.Collections.Generic.List<SlotVoice> _all = new System.Collections.Generic.List<SlotVoice>();
+        /// <summary>Every voice that still exists (for the desktop app's sound markers).</summary>
+        public static System.Collections.Generic.IReadOnlyList<SlotVoice> All
+        {
+            get { _all.RemoveAll(v => v.Source == null); return _all; }
+        }
+
         SlotVoice(SoundSlot slot, AudioSource source) { Slot = slot; Source = source; }
 
         /// <summary>Make a child GameObject with an AudioSource set up from the slot. Silent until played.</summary>
@@ -43,6 +50,7 @@ namespace Memories.Audio
             var v = new SlotVoice(slot, a);
             v.Tick();
             slot.Register(v);
+            _all.Add(v);
             return v;
         }
 

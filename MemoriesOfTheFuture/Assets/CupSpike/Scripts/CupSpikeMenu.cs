@@ -16,6 +16,7 @@ namespace CupSpike
         [SerializeField] DreamState dream;
         [SerializeField] RimTracker rimTracker;
         [SerializeField] CupEchoes echoes;
+        [SerializeField] DreamSplatRoom splatRoom;
         [Tooltip("Renderers of the proxy mug, shown by the Proxy button. Hidden by default: the real mug is the " +
                  "star, and an invisible occluder (MugInterior) still hides virtual things behind it.")]
         [SerializeField] Renderer[] proxyRenderers;
@@ -69,6 +70,9 @@ namespace CupSpike
             }
             // Echo: show the echoes around the mug at full strength, held or not (for tuning them).
             if (echoes != null) menu.AddButton("Echo", () => echoes.ForceOn = !echoes.ForceOn, () => echoes.ForceOn, developer: true);
+            // Splat: the dream scan's quality, Full (default) -> Balanced -> Fast (lit when not Full; the debug panel shows fps).
+            if (splatRoom != null) menu.AddButton("Splat", () => splatRoom.Quality = (DreamSplatRoom.SplatQuality)(((int)splatRoom.Quality + 1) % 3),
+                                                  () => splatRoom.Quality != DreamSplatRoom.SplatQuality.Full, developer: true);
         }
 
         void ToggleProxy()

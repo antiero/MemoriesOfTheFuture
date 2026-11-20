@@ -221,6 +221,7 @@ namespace CupSpike
             Text(_guide, "SOUND", "dt-keygroup");
             KeyRow(_guide, "Sound panel, timings, help", "Tab");
             KeyRow(_guide, "Reload your sound files", "L");
+            KeyRow(_guide, "Show where every sound is", "O");
             KeyRow(_guide, "Free the mouse", "Esc");
 
             _guidePill = El(_root, "dt-pill", "dt-guide-pill");
@@ -590,6 +591,13 @@ namespace CupSpike
             "Happy with it? Press Save mix and send the developer the SoundMix.json file next to that folder.",
         };
 
+        static readonly string[] SpatialSteps =
+        {
+            "Press O to see where every sound is: a ball with its name and level, lit while it plays. The three examples are in the room: walk up to them.",
+            "Fox Outside (north wall) always plays from one spot: turn and walk, and hear it stay put. Corner Hum (south-west corner) only fades in when you come close. Held Mug Heartbeat comes from the mug while you hold it (G).",
+            "To add your own, in Unity: Memories > Sound Design > New Slot, then Add Sound to Scene. Pick the slot, when it plays and where. The full guide is Assets/Audio/README - Adding Spatial Sound.md.",
+        };
+
         void BuildHelpTab(VisualElement page)
         {
             Text(page, "What this is", "dt-h");
@@ -602,6 +610,8 @@ namespace CupSpike
             Steps(page, "painting", PaintingSteps);
             Text(page, "Changing the sound", "dt-h");
             Steps(page, "sound", SoundSteps);
+            Text(page, "Spatial sound: examples and your own", "dt-h");
+            Steps(page, "sound", SpatialSteps);
             Text(page, "Where things are", "dt-h");
             Text(page, "Your sound files:  " + SoundMixFile.SoundsFolder + "\nYour saved mix:  " + SoundMixFile.MixPath +
                        "\nThe Sounds folder's README.txt lists every sound's file name.", "dt-p");

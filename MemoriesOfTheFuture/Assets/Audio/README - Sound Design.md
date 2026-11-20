@@ -25,7 +25,7 @@ Unity Editor, mostly in one window: **Memories > Sound Design** (menu bar at the
 | Touch | Touches the mug | Total silence (0.35 s), then the Scream; the bed ducks under it | Approach / Room |
 | Looking in | Looks down into the mug | Drone fades in as the mug opens | LookingIn |
 | Dream | Holds the mug (whispers creep in during the 5 s dread, then the dream) | Two Whispers circle the head; the bed muffles | Dream |
-| Waking | Looks away | Dream snaps off, 0.6 s of silence, then the Scream | Dream to Room |
+| Waking | Puts the mug down | The dream eases out over 2.5 s, 0.6 s of silence, then the Scream (or silent: Wake button) | Dream to Room |
 
 The painting (scene 01-PictureChanges, and the east wall of the desktop room):
 
@@ -115,19 +115,23 @@ and files, but on the Mac you're hearing it through laptop audio, not the Quest'
 
 ## Adding a sound of your own
 
+**Step-by-step guide, with three working examples in 03-DesktopTesting: `README - Adding Spatial
+Sound.md`** (or **Adding spatial sound** in the Sound Design window). The short version:
+
 1. **New Slot** in the Sound Design window. Rename it in the Project window and fill in its
    *Drop Name* and *Notes*.
 2. **Add Sound to Scene** places a **Sound Emitter** in the open scene. Move it where the sound
    should come from, and in the Inspector choose:
    - **Slot**: your new slot.
-   - **When**: Always, While Hand Approaches, While Looking In, While Dreaming (these loop and fade
-     with the moment), or When Mug Screams, When Waking (these play once).
+   - **When**: Always, While Near, While Hand Approaches, While Looking In, While Holding Mug,
+     While Dreaming (these loop and fade with the moment), or When Mug Screams, When Waking (these
+     play once).
    - **Where**: here in the scene, on the mug, or on the listener (with an offset).
 3. Save the scene (Cmd+S).
 
 Do this in **02-CupSpike** (the headset scene) and **03-DesktopTesting** (the desktop test) if you
 want it in both. (Rebuilding the desktop room with *CupSpike > Create Desktop Testing Scene* starts
-it afresh, so emitters added to 03 by hand have to be added again.) **Open headset scene** in the Sound Design window opens 02-CupSpike.
+it afresh, so emitters added to 03 by hand have to be added again; the three examples come back.) **Open headset scene** in the Sound Design window opens 02-CupSpike.
 
 ## Testing
 
@@ -160,13 +164,16 @@ Tab > **Help** has the whole welcome card again. Headphones help a lot.
 | 1 / 2 | Go to the mug / go to the painting (2.5 m in front of it, facing it) |
 | Up / Down, scroll | Move a fingertip towards the mug / away |
 | E | Go back to the mug and lean over it; E again leans back. Walking also stands you up |
+| G | Pick the mug up / put it down (holding it brings the dread, then the dream) |
 | F | Start the dream now / wake up |
 | M | Wake-up: scream or silent |
 | Space | The mug screams now |
 | Z | Show the mug's touch zones |
-| P | Replay the painting (back to its first stage) |
+| P | Reset the painting (back to its first stage) |
+| V | Animate the painting now (plays its transformation video) |
 | T | Painting trigger: unseen swap / proximity / gaze dwell |
 | L | Reload sound files from the Sounds folder |
+| O | Show where every sound is (a labelled ball per spatial sound, lit while playing) |
 | Tab | The panel: **Sound**, **Timings** and **Help** |
 | Enter | Close the welcome card |
 | H | Hide the guide |

@@ -1,4 +1,6 @@
 using System.IO;
+using Memories.Audio;
+using Memories.Audio.EditorTools;
 using PictureChanges;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
@@ -19,6 +21,8 @@ namespace CupSpike.EditorTools
     ///  - CupSpike > Create Desktop Testing Scene: (re)creates Assets/Scenes/03-DesktopTesting.unity, with
     ///    the artists' on-screen guide (DesktopUI), then points its sounds at the Sound Slots
     ///    (Memories > Audio > Set Up Sound Slots and Mixer first).
+    ///  - CupSpike > Add Sound Examples To Open Scene: (re)adds the three spatial-sound examples
+    ///    (README - Adding Spatial Sound.md) to the open scene, and their slots if missing. Part of the above.
     ///  - CupSpike > Build macOS Desktop Testing App: builds only that scene to
     ///    Builds/macOS/MemoriesOfTheFuture-DesktopTesting.app.
     ///    This switches the editor to the macOS platform; switch back with
@@ -104,9 +108,14 @@ namespace CupSpike.EditorTools
 
             var ds = go.AddComponent<DreamState>();
             Set(ds, ("detector", det), ("interior", mi), ("mugScream", ms), ("domeMaterial", Mat("Assets/CupSpike/Materials/DreamDome.mat")),
-                ("emberMaterial", Mat("Assets/CupSpike/Materials/DreamEmber.mat")), ("runeFloatMaterial", Mat("Assets/CupSpike/Materials/RuneFloat.mat")));
+                ("emberMaterial", Mat("Assets/CupSpike/Materials/DreamEmber.mat")));
             var splatRoom = go.AddComponent<DreamSplatRoom>();
             Set(splatRoom, ("dream", ds), ("interior", mi), ("splat", AssetDatabase.LoadAssetAtPath<ScriptableObject>(DreamSplatRoom.DefaultSplatPath)));
+            var echoes = go.AddComponent<CupEchoes>();
+            Set(echoes, ("detector", det), ("material", Mat("Assets/CupSpike/Materials/CupEchoes.mat")));
+            Set(ds, ("echoes", echoes));
+            // O in the app: a labelled ball at every spatial sound.
+            Set(go.AddComponent<SoundMarkers>(), ("material", Mat("Assets/PictureChanges/Materials/DebugUnlit.mat")));
 
             var handMat = Mat("Assets/CupSpike/Materials/DesktopHand.mat");
             if (handMat == null)
@@ -136,6 +145,8 @@ namespace CupSpike.EditorTools
             var audioRoom = new GameObject("AudioRoom");
             audioRoom.AddComponent<MetaXRAudioRoomAcousticProperties>();
             audioRoom.AddComponent<RoomAcoustics>();
+
+            AddSoundExamples(room);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             AssetDatabase.SaveAssets();
@@ -296,6 +307,99 @@ namespace CupSpike.EditorTools
             if (profile != null) UnityEditor.Build.Profile.BuildProfile.SetActiveBuildProfile(profile);
             else EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
             Debug.Log("[DesktopBuild] Active build target: " + EditorUserBuildSettings.activeBuildTarget);
+        }
+
+        // ------------------------------------------------------------ spatial sound examples
+
+        const string ExampleSlots = AudioPaths.Slots + "/Examples";
+
+        [MenuItem("CupSpike/Add Sound Examples To Open Scene")]
+        public static void AddSoundExamplesToOpenScene()
+        {
+            var room = GameObject.Find("Room");
+            AddSoundExamples(room != null ? room.transform : null);
+            EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        }
+
+        /// <summary>
+        /// Three Sound Emitters showing the main ways to place a spatial sound, each with a prop so it can
+        /// be found in the room (O shows them all). Replaces any earlier "Sound Examples".
+        ///  - Fox Outside: Always, fixed in the room (a window on the north wall).
+        ///  - Corner Hum: While Near, fixed (a speaker in the south-west corner): fades in as you walk up.
+        ///  - Held Mug Heartbeat: While Holding Mug, on the mug: follows it, and builds with the dread.
+        /// </summary>
+        public static void AddSoundExamples(Transform room)
+        {
+            var old = GameObject.Find("Sound Examples");
+            if (old != null) Object.DestroyImmediate(old);
+            if (room != null)
+                foreach (var n in new[] { "ExampleWindow", "ExampleSpeaker" })
+                {
+                    var t = room.Find(n);
+                    if (t != null) Object.DestroyImmediate(t.gameObject);
+                }
+
+            if (!AssetDatabase.IsValidFolder(ExampleSlots)) AssetDatabase.CreateFolder(AudioPaths.Slots, "Examples");
+            var mixer = AssetDatabase.LoadAssetAtPath<UnityEngine.Audio.AudioMixer>(AudioPaths.Mixer);
+            var fox = ExampleSlot("Fox Outside", "fox_outside", "Assets/Audio/fox_ambience.mp3", AudioPaths.Group(mixer, "Ambience"), -10f, 1f, 0.6f, 10f,
+                "EXAMPLE (03-DesktopTesting, 'Sound - Fox Outside'): an ambience from one fixed spot, the window on the north wall. " +
+                "Always on. Turn and walk around: it stays at the window.");
+            var hum = ExampleSlot("Corner Hum", "corner_hum", "Assets/CupSpike/Audio/Breath_placeholder.wav", AudioPaths.Group(mixer, "Ambience"), -2f, 0.4f, 0.4f, 4f,
+                "EXAMPLE (03-DesktopTesting, 'Sound - Corner Hum'): a sound you discover. Fixed in the south-west corner, it only fades in " +
+                "as you walk within 1.6 m (the emitter's Near Distance). Placeholder: the breath, pitched right down.");
+            var beat = ExampleSlot("Held Mug Heartbeat", "heartbeat", "Assets/CupSpike/Audio/Heartbeat_placeholder.wav", AudioPaths.Group(mixer, "Mug"), 0f, 1f, 0.3f, 6f,
+                "EXAMPLE (03-DesktopTesting, 'Sound - Held Mug Heartbeat'): a sound on a moving thing. It follows the mug, and fades in " +
+                "with the dread as the mug is held, staying through the dream. Placeholder: a synthesised heartbeat.");
+
+            var root = new GameObject("Sound Examples").transform;
+            if (room != null)
+            {
+                Box(room, "ExampleWindow", new Vector3(-1.2f, 1.75f, 2.99f), new Vector3(1.0f, 0.8f, 0.02f), RoomMat("DesktopRoom_Window", new Color(0.55f, 0.68f, 0.8f), 0.2f));
+                Box(room, "ExampleSpeaker", new Vector3(-2.65f, 0.3f, -2.65f), new Vector3(0.32f, 0.6f, 0.28f), RoomMat("DesktopRoom_Speaker", new Color(0.18f, 0.18f, 0.2f), 0f));
+            }
+            Emitter(root, "Sound - Fox Outside", fox, SoundEmitter.When.Always, SoundEmitter.Where.HereInTheScene, new Vector3(-1.2f, 1.75f, 2.9f));
+            var e = Emitter(root, "Sound - Corner Hum", hum, SoundEmitter.When.WhileNear, SoundEmitter.Where.HereInTheScene, new Vector3(-2.65f, 0.75f, -2.65f));
+            e.nearDistance = 1.6f;
+            e.fade = 1f;
+            e = Emitter(root, "Sound - Held Mug Heartbeat", beat, SoundEmitter.When.WhileHoldingMug, SoundEmitter.Where.OnTheMug, new Vector3(0f, 0.8f, 0f));
+            e.offset = new Vector3(0f, 0.05f, 0f);
+            e.fade = 0.3f;
+            AssetDatabase.SaveAssets();
+            Debug.Log("[DesktopBuild] Added the spatial sound examples (Sound Examples)");
+        }
+
+        static SoundEmitter Emitter(Transform parent, string name, SoundSlot slot, SoundEmitter.When when, SoundEmitter.Where where, Vector3 pos)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.position = pos;
+            var e = go.AddComponent<SoundEmitter>();
+            e.slot = slot;
+            e.when = when;
+            e.where = where;
+            return e;
+        }
+
+        /// <summary>The example's slot: made once, never overwritten (the artists own it after that).</summary>
+        static SoundSlot ExampleSlot(string name, string drop, string clip, UnityEngine.Audio.AudioMixerGroup group, float db, float pitch, float min, float max, string notes)
+        {
+            string path = $"{ExampleSlots}/{name}.asset";
+            var slot = AssetDatabase.LoadAssetAtPath<SoundSlot>(path);
+            if (slot != null) return slot;
+            slot = ScriptableObject.CreateInstance<SoundSlot>();
+            slot.notes = notes;
+            slot.dropName = drop;
+            var c = AssetDatabase.LoadAssetAtPath<AudioClip>(clip);
+            if (c != null) slot.clips.Add(c); else Debug.LogWarning($"[DesktopBuild] Example slot {name}: no file at {clip}");
+            slot.volumeDb = db;
+            slot.pitch = pitch;
+            slot.output = group;
+            slot.spatial = true;
+            slot.minDistance = min;
+            slot.maxDistance = max;
+            AssetDatabase.CreateAsset(slot, path);
+            Debug.Log($"[DesktopBuild] Created example slot {path}");
+            return slot;
         }
 
         // ------------------------------------------------------------ helpers

@@ -21,6 +21,7 @@ namespace CupSpike
         [SerializeField] RimTracker rimTracker;
         [SerializeField] RuneCapture runeCapture;
         [SerializeField] DreamState dream;
+        [SerializeField] DreamSplatRoom splatRoom;
         [SerializeField] Transform head;
         [Tooltip("URP Unlit material asset, referenced so the shader is kept in builds.")]
         [SerializeField] Material unlitMaterial;
@@ -205,6 +206,7 @@ namespace CupSpike
                 $"{(interior != null ? $"\n<color=#B10DC9>{interior.StatusLine}</color>" : "")}" +
                 $"{(rimTracker != null ? $"\n<color=#7FDBFF>{rimTracker.StatusLine}</color>" : "")}" +
                 $"{(dream != null ? $"\n<color=#F012BE>{dream.StatusLine}</color>" : "")}" +
+                $"{(splatRoom != null ? $"\n<color=#01FF70>{splatRoom.StatusLine}</color>" : "")}" +
                 $"{(runeCapture != null && (runeCapture.Recording || runeCapture.Saved > 0) ? $"   <color=#FF4136>REC {runeCapture.Saved}{(runeCapture.Recording ? "" : " (stopped)")}</color>" : "")}" +
                 $"{(d.Frozen ? "   <color=#7FDBFF>FROZEN</color>" : "")}</size>";
         }

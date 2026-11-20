@@ -147,10 +147,20 @@ namespace Memories.Audio.EditorTools
                     "• Mixer: one group per family (Ambience, Mug, Dream, UI) and one snapshot per moment (Room, Approach, LookingIn, Dream). " +
                     "The game blends the snapshots; untick 'Blending' below while you adjust one.\n" +
                     "• Undo (Cmd+Z) works for everything here.", _wrap);
-                if (GUILayout.Button("Open the full guide", EditorStyles.miniButton, GUILayout.Width(140)))
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    var readme = AssetDatabase.LoadAssetAtPath<Object>(AudioPaths.Readme);
-                    if (readme != null) AssetDatabase.OpenAsset(readme);
+                    if (GUILayout.Button("Open the full guide", EditorStyles.miniButton, GUILayout.Width(140)))
+                    {
+                        var readme = AssetDatabase.LoadAssetAtPath<Object>(AudioPaths.Readme);
+                        if (readme != null) AssetDatabase.OpenAsset(readme);
+                    }
+                    if (GUILayout.Button(new GUIContent("Adding spatial sound", "Step by step, with the three examples in 03-DesktopTesting"),
+                                         EditorStyles.miniButton, GUILayout.Width(140)))
+                    {
+                        var guide = AssetDatabase.LoadAssetAtPath<Object>(AudioPaths.SpatialGuide);
+                        if (guide != null) AssetDatabase.OpenAsset(guide);
+                    }
+                    GUILayout.FlexibleSpace();
                 }
             }
         }

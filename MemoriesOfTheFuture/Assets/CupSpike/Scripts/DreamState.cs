@@ -20,7 +20,7 @@ namespace CupSpike
     /// quickens; the real room's edges glow red (passthrough edge rendering); <see cref="CupEchoes"/>
     /// ripples the room around the mug and sends ghost copies of it outward; embers start to rise from
     /// the rim; whispers creep in; the background bed sinks.
-    /// Dream: as before: a world-locked dome spreads out from the mug, embers, drifting runes, circling
+    /// Dream: as before: a world-locked dome spreads out from the mug, embers, circling
     /// whispers, the scanned room (<see cref="DreamSplatRoom"/>), ghostly hands. The mug's occluder
     /// cuts the real mug out of it, so the mug stays real throughout.
     /// Waking: put the mug down (it must read as down for <see cref="releaseGrace"/> s, so a tracking
@@ -44,8 +44,6 @@ namespace CupSpike
         [SerializeField] CupEchoes echoes;
         [SerializeField] Material domeMaterial;
         [SerializeField] Material emberMaterial;
-        [Tooltip("CupSpike/MugRuneGlow with Stencil Comp = Always and ZTest = LEqual.")]
-        [SerializeField] Material runeFloatMaterial;
         [Tooltip("Two whispers circling the viewer. Their file, level and pitch live in the Sound Slot (Memories > Sound Design).")]
         [SerializeField] SoundSlot whisperSlot;
         [Tooltip("The second whisper plays at this pitch relative to the first, so they don't phase.")]
@@ -90,6 +88,8 @@ namespace CupSpike
         public WakeMode Wake { get => wakeMode; set => wakeMode = value; }
         public bool Waking => _phase == Phase.Waking;
         public bool InDread => _phase == Phase.Dread;
+        /// <summary>Benchmarks: stay in the dream (no time limit, walking or put-down wake) until WakeNow.</summary>
+        public bool KeepDreaming { get; set; }
         // Tuning (used by the desktop debug build's panel).
         public float HoldBeforeDream { get => holdBeforeDream; set => holdBeforeDream = Mathf.Max(0.5f, value); }
         public float DeepenTime { get => deepenTime; set => deepenTime = Mathf.Max(0.5f, value); }
@@ -112,14 +112,13 @@ namespace CupSpike
         Coroutine _wake;
 
         Transform _root, _dome;
-        Material _domeMat, _runeMat;
+        Material _domeMat;
         ParticleSystem _embers;
-        readonly List<Transform> _runes = new List<Transform>();
         readonly List<SlotVoice> _whispers = new List<SlotVoice>();
 
         static readonly int DepthId = Shader.PropertyToID("_Depth"), SpreadId = Shader.PropertyToID("_Spread"),
             VignetteId = Shader.PropertyToID("_Vignette"), MugDirId = Shader.PropertyToID("_MugDir"),
-            HeadFwdId = Shader.PropertyToID("_HeadFwd"), RevealId = Shader.PropertyToID("_Reveal");
+            HeadFwdId = Shader.PropertyToID("_HeadFwd");
 
         bool Held => detector != null && detector.TrackingSource == CupDetector.Source.Hand;
 
@@ -163,6 +162,7 @@ namespace CupSpike
                     if (Depth >= 1f && _fullSince < 0f) { _fullSince = Time.time; Debug.Log("[DreamState] Fully in the dream"); }
 
                     var moved = Vector3.ProjectOnPlane(cam.transform.position - _startHead, Vector3.up).magnitude;
+                    if (KeepDreaming) break;
                     if (putDown) StartWake("put the mug down");
                     else if (_fullSince >= 0f && Time.time - _fullSince > maxFullTime) StartWake($"time limit ({maxFullTime:0} s)");
                     else if (moved > walkWakeDistance) StartWake($"walked {moved:0.00} m");
@@ -326,18 +326,6 @@ namespace CupSpike
             var em = _embers.emission;
             em.rateOverTime = Mathf.Max(6f * dr, 25f * Smooth(0.1f, 0.6f, d));
 
-            // Runes drifting around the viewer, facing them.
-            _runeMat.SetFloat(RevealId, 0.8f * Smooth(0.5f, 0.9f, d));
-            for (int i = 0; i < _runes.Count; i++)
-            {
-                float a = i * Mathf.PI * 2f / _runes.Count + Time.time * 0.05f * (i % 2 == 0 ? 1f : -0.7f);
-                float r = 1.7f + 0.5f * Mathf.Sin(i * 1.7f);
-                float y = -0.3f + 1.1f * ((i * 0.37f) % 1f) + 0.08f * Mathf.Sin(Time.time * 0.3f + i);
-                var p = head.position + new Vector3(Mathf.Cos(a) * r, y, Mathf.Sin(a) * r);
-                _runes[i].position = p;
-                _runes[i].rotation = Quaternion.LookRotation(p - head.position, Vector3.up);
-            }
-
             // Whispers: creeping in with the dread, circling in the dream.
             for (int i = 0; i < _whispers.Count; i++)
             {
@@ -415,20 +403,6 @@ namespace CupSpike
             var pr = eg.GetComponent<ParticleSystemRenderer>();
             pr.sharedMaterial = emberMaterial;
             pr.renderMode = ParticleSystemRenderMode.Billboard;
-
-            _runeMat = new Material(runeFloatMaterial);
-            for (int i = 0; i < 6; i++)
-            {
-                var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                Destroy(q.GetComponent<Collider>());
-                q.name = "FloatingRune" + i;
-                q.transform.SetParent(_root, false);
-                q.transform.localScale = Vector3.one * (0.28f + 0.1f * (i % 3));
-                var r = q.GetComponent<Renderer>();
-                r.sharedMaterial = _runeMat;
-                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                _runes.Add(q.transform);
-            }
 
             for (int i = 0; i < 2; i++)
             {

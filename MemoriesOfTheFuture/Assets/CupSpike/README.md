@@ -116,7 +116,7 @@ While it's locking, the older YOLO sideways correction is switched off, because 
    - a few embers rise from the rim, the whispers creep in and the background bed sinks
 
    Put the mug down during the dread and it all sinks away over 1.5 s, with no wake-up.
-2. **Dream:** the dome spreads from the mug, then embers, runes, whispers, the scanned room and ghostly hands, over `Deepen Time` (8 s). It only deepens while you hold the mug.
+2. **Dream:** the dome spreads from the mug, then embers, whispers, the scanned room and ghostly hands, over `Deepen Time` (8 s). It only deepens while you hold the mug.
 3. **Waking:** put the mug down. It must read as down for 0.5 s, so a tracking blip doesn't count. Everything then eases out together over **2.5 s** (`Wake Fade Time`). With the Scream wake-up (the default), a beat of silence follows and then the mug screams; the **Wake** button makes it silent. The dream also ends if you walk more than 1.2 m, after `Max Full Time` at full depth, or when you press **Dream** again.
 
 The mug counts as held when `CupDetector` tracks it from the hand. Looking into the mug still opens the tunnel (above), but it no longer starts the dream. **Dream** in the hand menu starts the dread straight away without the mug, quickened to 1 s.

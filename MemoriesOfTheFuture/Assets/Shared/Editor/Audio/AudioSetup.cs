@@ -19,6 +19,7 @@ namespace Memories.Audio.EditorTools
         public const string Drop = Root + "/Drop";
         public const string Mixer = Root + "/Memories Mixer.mixer";
         public const string Readme = Root + "/README - Sound Design.md";
+        public const string SpatialGuide = Root + "/README - Adding Spatial Sound.md";
         public const string HeadsetScene = "Assets/Scenes/02-CupSpike.unity";
         public const string DesktopScene = "Assets/Scenes/03-DesktopTesting.unity";
         public const string PaintingScene = "Assets/Scenes/01-PictureChanges.unity";

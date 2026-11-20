@@ -177,6 +177,8 @@ namespace CupSpike
 
         /// <summary>When frozen, detection keeps running but the target stays where it is.</summary>
         public bool Frozen { get; set; }
+        /// <summary>Stop running the cup model (it uses the GPU). Set by the splat dream to free the GPU for the scan.</summary>
+        public bool PauseVision { get; set; }
         public DistanceMode Mode { get => distanceMode; set => distanceMode = value; }
 
         // ------------------------------------------------------------ internals
@@ -296,7 +298,7 @@ namespace CupSpike
         {
             if (simulate) { UpdateSimulated(); UpdateTarget(); return; }
             UpdateStatus();
-            if (ModelReady && !_busy && cameraAccess != null && cameraAccess.IsPlaying && cameraAccess.IsUpdatedThisFrame)
+            if (ModelReady && !_busy && !PauseVision && cameraAccess != null && cameraAccess.IsPlaying && cameraAccess.IsUpdatedThisFrame)
                 StartCoroutine(Analyse());
             UpdateHands();
             UpdateHold();
