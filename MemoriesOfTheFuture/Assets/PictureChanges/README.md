@@ -86,6 +86,8 @@ The test-mode readout shows the mode, the stage, in view / out of view, and the 
 
 Turn your **left palm towards your face**: the menu fades in just off the palm (Pezzi / Meta hand-menu convention, with enter/exit hysteresis). Press with your **right index finger**.
 
+Artists and visitors see **Replay, Rescan, Test and Trigger**, plus the scene row. **Debug, Grid and Capture** are developer buttons, hidden unless **Developer Buttons** is ticked on the `HandMenu` component.
+
 | Button | Does |
 | --- | --- |
 | Replay | Back to the still (stage 0); the transformation can trigger again |

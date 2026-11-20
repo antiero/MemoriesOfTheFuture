@@ -10,14 +10,16 @@ namespace PictureChanges.UI
         [SerializeField] BoardDebugView debugView;
         [SerializeField] TestMode testMode;
 
+        // Artists see Replay, Rescan, Test and Trigger. Debug, Grid and Capture are developer buttons:
+        // tick Developer Buttons on the HandMenu to show them.
         void Awake()
         {
             menu.AddButton("Replay", () => canvas.Replay());
             menu.AddButton("Rescan", () => { if (testMode != null && testMode.Active) testMode.Reposition(); else canvas.Rescan(); });
             menu.AddButton("Test", () => testMode.Toggle(), () => testMode != null && testMode.Active);
-            menu.AddButton("Debug", () => debugView.Toggle(), () => debugView.Visible);
-            menu.AddButton("Grid", () => canvas.ShowAlignmentGrid = !canvas.ShowAlignmentGrid, () => canvas.ShowAlignmentGrid);
-            menu.AddButton("Capture", () => FindAnyObjectByType<BoardPoseEstimator>()?.RequestCapture());
+            menu.AddButton("Debug", () => debugView.Toggle(), () => debugView.Visible, developer: true);
+            menu.AddButton("Grid", () => canvas.ShowAlignmentGrid = !canvas.ShowAlignmentGrid, () => canvas.ShowAlignmentGrid, developer: true);
+            menu.AddButton("Capture", () => FindAnyObjectByType<BoardPoseEstimator>()?.RequestCapture(), developer: true);
             // Trigger: unseen swap (default) -> proximity -> gaze dwell. Lit when not the default.
             menu.AddButton("Trigger", () =>
             {

@@ -20,6 +20,8 @@ namespace CupSpike
         [SerializeField] Renderer[] proxyRenderers;
         [SerializeField] bool proxyVisible = false;
 
+        // Artists and visitors see Inside, Dream and Wake (plus the scene row). Everything else is for
+        // tuning the detector and is a developer button: tick Developer Buttons on the HandMenu to show it.
         void Awake()
         {
             ApplyProxy();
@@ -28,32 +30,32 @@ namespace CupSpike
             {
                 debugView.Toggle();
                 if (mugScream != null) mugScream.ShowZone = debugView.Visible;
-            }, () => debugView.Visible);
-            menu.AddButton("Proxy", ToggleProxy, () => proxyVisible);
-            if (handVisibility != null) menu.AddButton("Hands", handVisibility.Toggle, () => handVisibility.Visible);
-            menu.AddButton("Freeze", () => detector.Frozen = !detector.Frozen, () => detector.Frozen);
+            }, () => debugView.Visible, developer: true);
+            menu.AddButton("Proxy", ToggleProxy, () => proxyVisible, developer: true);
+            if (handVisibility != null) menu.AddButton("Hands", handVisibility.Toggle, () => handVisibility.Visible, developer: true);
+            menu.AddButton("Freeze", () => detector.Frozen = !detector.Frozen, () => detector.Frozen, developer: true);
             // Cycles Auto -> depth only -> size only; lit when not Auto. The debug panel shows which.
             menu.AddButton("Dist", () => detector.Mode = (CupDetector.DistanceMode)(((int)detector.Mode + 1) % 3),
-                           () => detector.Mode != CupDetector.DistanceMode.Auto);
+                           () => detector.Mode != CupDetector.DistanceMode.Auto, developer: true);
             // Held-mug tilt: Damped -> Upright -> Rigid -> Damped (lit when not Damped; the panel shows which).
             menu.AddButton("Tilt", () => detector.TiltMode = (CupDetector.HeldTilt)(((int)detector.TiltMode + 2) % 3),
-                           () => detector.TiltMode != CupDetector.HeldTilt.Damped);
+                           () => detector.TiltMode != CupDetector.HeldTilt.Damped, developer: true);
             if (mugScream != null)
             {
                 menu.AddRowBreak();
                 // Zone: touch at 3 cm (contact, default) <-> 10 cm (lit). Pin: lit while pinned / placing; pinch at the mug to place.
-                menu.AddButton("Zone", mugScream.CycleZone, () => mugScream.TouchZone > 0.05f);
-                menu.AddButton("Pin", mugScream.TogglePin, () => mugScream.ZoneMode != MugScream.Mode.Tracked);
-                menu.AddButton("Miss", mugScream.LogMiss);
-                menu.AddButton("False", mugScream.LogFalse);
+                menu.AddButton("Zone", mugScream.CycleZone, () => mugScream.TouchZone > 0.05f, developer: true);
+                menu.AddButton("Pin", mugScream.TogglePin, () => mugScream.ZoneMode != MugScream.Mode.Tracked, developer: true);
+                menu.AddButton("Miss", mugScream.LogMiss, developer: true);
+                menu.AddButton("False", mugScream.LogFalse, developer: true);
             }
             if (interior != null)
             {
                 // Inside: keep the well open without looking in (to check it). Rec: save camera frames while looking in.
                 menu.AddButton("Inside", () => interior.ForceOpen = !interior.ForceOpen, () => interior.ForceOpen);
-                if (runeCapture != null) menu.AddButton("Rec", runeCapture.Toggle, () => runeCapture.Recording);
+                if (runeCapture != null) menu.AddButton("Rec", runeCapture.Toggle, () => runeCapture.Recording, developer: true);
                 // Rim: lock the held mug to the opening seen by the camera (lit = on, the default).
-                if (rimTracker != null) menu.AddButton("Rim", () => rimTracker.Locking = !rimTracker.Locking, () => rimTracker.Locking);
+                if (rimTracker != null) menu.AddButton("Rim", () => rimTracker.Locking = !rimTracker.Locking, () => rimTracker.Locking, developer: true);
             }
             if (dream != null)
             {

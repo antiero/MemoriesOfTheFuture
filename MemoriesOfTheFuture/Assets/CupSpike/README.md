@@ -164,7 +164,7 @@ The debug panel is **off at launch**, so artists and visitors see only the exper
 
 In the world, a yellow dot marks the estimated cup centre and a cyan dot marks where the depth ray hit. The console logs every change of state with the prefix `[CupDetector]`.
 
-Hand menu (left palm up), top row:
+Hand menu (left palm up). Artists and visitors see only **Inside, Dream and Wake**, plus the scene row. The buttons below are developer buttons apart from Inside, hidden unless **Developer Buttons** is ticked on the `HandMenu` component:
 
 | Button | Does |
 | --- | --- |
