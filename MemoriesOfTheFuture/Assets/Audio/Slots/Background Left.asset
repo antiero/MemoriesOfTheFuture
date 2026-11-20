@@ -18,7 +18,7 @@ MonoBehaviour:
   variation: 0
   dropName: background_left
   volumeDb: -9.1
-  pitch: 1
+  pitch: 0.8
   output: {fileID: -8797887577951236248, guid: 69e9049d2eadd4976bc9b9afa31dc9ad, type: 2}
   spatial: 1
   minDistance: 2

@@ -150,7 +150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.MixDirector
   mixer: {fileID: 24100000, guid: 69e9049d2eadd4976bc9b9afa31dc9ad, type: 2}
   blending: 1
-  smoothing: 0.1
+  smoothing: 0.11
 --- !u!4 &52750087
 Transform:
   m_ObjectHideFlags: 0
@@ -1000,6 +1000,7 @@ MonoBehaviour:
   portalMaterial: {fileID: 2100000, guid: 22178bdd1b71045c9a0d1ef6d1cc57fb, type: 2}
   wellMaterial: {fileID: 2100000, guid: 69a86e5282f25435abba82b095e2e3b5, type: 2}
   runeMaterial: {fileID: 2100000, guid: 81c23b901ea6a4681a63b92fce00ab55, type: 2}
+  showRune: 0
   droneSlot: {fileID: 11400000, guid: 80adeb8cf55694ee6a2fb8043bd32ad5, type: 2}
   openingRadius: 0.0365
   wellDepth: 0.6
