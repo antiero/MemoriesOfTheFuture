@@ -2444,6 +2444,7 @@ GameObject:
   - component: {fileID: 2111826141}
   - component: {fileID: 2111826147}
   - component: {fileID: 2111826140}
+  - component: {fileID: 2111826148}
   m_Layer: 0
   m_Name: CupDesktop
   m_TagString: Untagged
@@ -2485,6 +2486,8 @@ MonoBehaviour:
   walkSpeed: 1.4
   reachSpeed: 0.45
   leanTime: 0.6
+  heldOffset: {x: 0.08, y: -0.2, z: 0.36}
+  pickUpTime: 0.4
 --- !u!114 &2111826141
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2502,20 +2505,24 @@ MonoBehaviour:
   mugScream: {fileID: 2111826144}
   hands: {fileID: 0}
   passthrough: {fileID: 0}
+  echoes: {fileID: 2111826148}
   domeMaterial: {fileID: 2100000, guid: 96fc6e90f53674032a5a42acc2a79ad2, type: 2}
   emberMaterial: {fileID: 2100000, guid: ee528bc1a64a144beb18b2f09feebfa6, type: 2}
   runeFloatMaterial: {fileID: 2100000, guid: 7584123a6bc0144c28fb31a31f4e9cca, type: 2}
   whisperSlot: {fileID: 11400000, guid: cc1f09377d20541b9bad41956f6f33cc, type: 2}
   secondWhisperPitch: 1.24
-  stareBeforeDream: 2
+  holdBeforeDream: 5
+  dreadFade: 1.5
   deepenTime: 8
   maxFullTime: 20
-  lookAwayToWake: 1
-  wakeTime: 0.25
+  releaseGrace: 0.5
+  wakeFadeTime: 2.5
   wakeSilence: 0.6
   cooldown: 6
-  stayGazeAngle: 35
-  walkLimit: 0.4
+  dreadLook: {x: -0.1, y: 0.3, z: -0.85}
+  edgeGlow: {r: 0.85, g: 0.12, b: 0.08, a: 0.55}
+  heartbeat: {x: 0.9, y: 1.7}
+  walkWakeDistance: 1.2
   wakeMode: 0
   forceDream: 0
 --- !u!114 &2111826142
@@ -2708,6 +2715,24 @@ MonoBehaviour:
   brightenIn: {x: 0.35, y: 1}
   maxBrightness: 1
   shDegree: 0
+--- !u!114 &2111826148
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2111826139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5303906cc01a1423b9a90de081a1c8e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.CupEchoes
+  detector: {fileID: 2111826146}
+  cameraAccess: {fileID: 0}
+  material: {fileID: 2100000, guid: 21be7c7bd39884793949d7aada5d6307, type: 2}
+  radius: 0.3
+  maxIntensity: 1
+  forceOn: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

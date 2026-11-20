@@ -10,11 +10,15 @@ namespace PictureChanges.UI
         [SerializeField] BoardDebugView debugView;
         [SerializeField] TestMode testMode;
 
-        // Artists see Replay, Rescan, Test and Trigger. Debug, Grid and Capture are developer buttons:
+        // Artists see Reset, Animate, Rescan, Test and Trigger. Debug, Grid and Capture are developer buttons:
         // tick Developer Buttons on the HandMenu to show them.
         void Awake()
         {
-            menu.AddButton("Replay", () => canvas.Replay());
+            // Reset: back to the first still (video stopped, look-away stages from the start).
+            menu.AddButton("Reset", () => { canvas.Replay(); PictureChangesInput.Instance?.Say("Reset"); });
+            // Animate: play the transformation video from the start now, in any trigger mode.
+            menu.AddButton("Animate", () => PictureChangesInput.Instance?.Say(canvas.Animate() ? "Animating" : "Not placed yet"),
+                           () => canvas.IsPlaying);
             menu.AddButton("Rescan", () => { if (testMode != null && testMode.Active) testMode.Reposition(); else canvas.Rescan(); });
             menu.AddButton("Test", () => testMode.Toggle(), () => testMode != null && testMode.Active);
             menu.AddButton("Debug", () => debugView.Toggle(), () => debugView.Visible, developer: true);

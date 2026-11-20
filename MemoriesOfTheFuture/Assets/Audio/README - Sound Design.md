@@ -24,7 +24,7 @@ Unity Editor, mostly in one window: **Memories > Sound Design** (menu bar at the
 | Approach | Brings a finger towards the mug (from 30 cm) | Breath rises in level and pitch; the bed drains away | Approach |
 | Touch | Touches the mug | Total silence (0.35 s), then the Scream; the bed ducks under it | Approach / Room |
 | Looking in | Looks down into the mug | Drone fades in as the mug opens | LookingIn |
-| Dream | Keeps staring for 2 s | Two Whispers circle the head; the bed muffles | Dream |
+| Dream | Holds the mug (whispers creep in during the 5 s dread, then the dream) | Two Whispers circle the head; the bed muffles | Dream |
 | Waking | Looks away | Dream snaps off, 0.6 s of silence, then the Scream | Dream to Room |
 
 The painting (scene 01-PictureChanges, and the east wall of the desktop room):

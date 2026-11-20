@@ -208,12 +208,14 @@ namespace CupSpike
             Text(_guide, "THE MUG", "dt-keygroup");
             KeyRow(_guide, "Reach for it / pull back (or scroll)", "↑", "↓");
             KeyRow(_guide, "Lean over it / lean back", "E");
+            KeyRow(_guide, "Pick it up / put it down (the dream)", "G");
             KeyRow(_guide, "Start the dream / wake up", "F");
             KeyRow(_guide, "Scream now", "Space");
             KeyRow(_guide, "Wake-up: scream or silent", "M");
 
             Text(_guide, "THE PAINTING", "dt-keygroup");
             KeyRow(_guide, "Start it again", "P");
+            KeyRow(_guide, "Animate it now", "V");
             KeyRow(_guide, "Change how it's triggered", "T");
 
             Text(_guide, "SOUND", "dt-keygroup");
@@ -514,8 +516,9 @@ namespace CupSpike
             {
                 Text(page, "THE DREAM", "dt-section");
                 var box = El(page, "dt-box");
-                TimingField(box, "Stare before it starts", 0.5f, 10f, () => dream.StareBeforeDream, v => dream.StareBeforeDream = v, v => v.ToString("0.0") + " s");
+                TimingField(box, "Hold before it starts", 0.5f, 15f, () => dream.HoldBeforeDream, v => dream.HoldBeforeDream = v, v => v.ToString("0.0") + " s");
                 TimingField(box, "Time to go fully in", 2f, 30f, () => dream.DeepenTime, v => dream.DeepenTime = v, v => v.ToString("0.0") + " s");
+                TimingField(box, "Waking fade", 0.2f, 8f, () => dream.WakeFadeTime, v => dream.WakeFadeTime = v, v => v.ToString("0.0") + " s");
                 ChoiceRow(box, "Waking up", () => dream.Wake == DreamState.WakeMode.Scream ? "the mug screams" : "silent", "Switch (M)", sim.CycleWake);
             }
             if (painting != null)
@@ -533,6 +536,7 @@ namespace CupSpike
                 var row = El(box, "dt-row");
                 row.style.marginTop = 8;
                 Btn(row, "Replay the painting (P)", sim.ReplayPainting, "dt-btn--small");
+                Btn(row, "Animate now (V)", sim.AnimatePainting, "dt-btn--small");
             }
             Text(page, "Timings aren't saved: note the values you like and pass them on.", "dt-note");
         }
@@ -568,7 +572,8 @@ namespace CupSpike
         {
             "Reach slowly with the Up arrow (or scroll). The mug starts to breathe. Pull back with Down: it stops dead.",
             "Reach all the way: a beat of silence, then the scream.",
-            "Press E to lean over it and look in: the tunnel opens. Keep staring and the dream spreads. Move the mouse away to wake.",
+            "Press E to lean over it and look in: the tunnel opens.",
+            "Press G to pick it up and hold it: the room drains and echoes ripple out of it, then the dream spreads. G again puts it down and you drift back.",
         };
 
         static readonly string[] PaintingSteps =
@@ -636,7 +641,7 @@ namespace CupSpike
             var k2 = El(keys, "dt-column");
             KeyRow(k2, "Reach / pull back", "↑", "↓");
             KeyRow(k2, "Lean over the mug", "E");
-            KeyRow(k2, "Dream now / wake", "F");
+            KeyRow(k2, "Pick up / put down the mug", "G");
             var k3 = El(keys, "dt-column", "dt-column--last");
             KeyRow(k3, "Sound panel and help", "Tab");
             KeyRow(k3, "Reload your files", "L");

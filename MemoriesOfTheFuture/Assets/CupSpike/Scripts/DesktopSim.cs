@@ -15,7 +15,8 @@ namespace CupSpike
     ///  - the mug's pose (fixed on a table, fed to CupDetector.Simulate)
     ///  - the painting's pose (force-locked on the wall instead of found by the camera)
     ///  - the head (mouse look, WASD to walk; E leans over the mug and back)
-    ///  - a hand (Up / Down or the scroll wheel move a fingertip towards the mug and away)
+    ///  - a hand (Up / Down or the scroll wheel move a fingertip towards the mug and away; G picks the
+    ///    mug up and puts it down, which starts and ends the dream)
     ///  - the real room (a simple stand-in room, tinted through RoomLook instead of passthrough)
     ///
     /// The on-screen guide, the welcome card and the Tab panel (Sound, Timings, Help) are drawn by
@@ -65,6 +66,9 @@ namespace CupSpike
         [SerializeField] float walkSpeed = 1.4f;
         [SerializeField] float reachSpeed = 0.45f;
         [SerializeField] float leanTime = 0.6f;
+        [Tooltip("Where the held mug sits: right, up and forward of the eyes (m).")]
+        [SerializeField] Vector3 heldOffset = new Vector3(0.08f, -0.2f, 0.36f);
+        [SerializeField] float pickUpTime = 0.4f;
 
         float _yaw, _pitch;
         Vector3 _body;          // standing head position
@@ -75,6 +79,8 @@ namespace CupSpike
         bool _leanTarget;
         Coroutine _aim;
         float _reach;           // 0 = withdrawn, 1 = touching the mug
+        bool _holding;          // G: the mug is in the hand
+        float _hold;            // 0 = on the table, 1 = in the hand
         Transform _hand;
         SoundPanel _sound;
         string _bedFiles = "";
@@ -84,6 +90,7 @@ namespace CupSpike
         public MugScream Mug => mugScream;
         public MugInterior Interior => interior;
         public DreamState Dream => dream;
+        public bool Holding => _holding;
         public PictureCanvas Painting => painting;
         public SoundPanel Sound => _sound;
         /// <summary>The Tab panel is open (the mouse is free while it is).</summary>
@@ -117,6 +124,9 @@ namespace CupSpike
             cam.transform.position = headRest;
             Face(Rim);
             BuildHand();
+            // The echoes around the held mug warp a copy of the view here (no passthrough camera).
+            var echoes = FindAnyObjectByType<CupEchoes>();
+            if (echoes != null) echoes.UseScreen = true;
             if (room != null)
                 foreach (var r in room.GetComponentsInChildren<Renderer>()) _roomMats.AddRange(r.materials);   // instances, so the assets stay as they are
             if (mugScream != null) mugScream.ShowZone = false;
@@ -243,7 +253,15 @@ namespace CupSpike
             _hand.SetPositionAndRotation(tipPos, Quaternion.LookRotation(TouchPoint - handRest));
             if (mugScream != null) mugScream.SimulatedFingertip = tipPos;
 
-            if (detector != null) detector.Simulate(new Pose(mugBase, Quaternion.Euler(0f, 180f, 0f)), false);
+            // G: pick the mug up / put it down. Held, it sits in front of you and turns with you.
+            if (kb.gKey.wasPressedThisFrame) ToggleHold();
+            _hold = Mathf.MoveTowards(_hold, _holding ? 1f : 0f, Time.deltaTime / pickUpTime);
+            var onTable = new Pose(mugBase, Quaternion.Euler(0f, 180f, 0f));
+            var yawRot = Quaternion.Euler(0f, _yaw, 0f);
+            var inHand = new Pose(cam.transform.position + yawRot * heldOffset + Vector3.down * 0.0475f, yawRot * Quaternion.Euler(0f, 180f, 0f));
+            float h = Mathf.SmoothStep(0f, 1f, _hold);
+            if (detector != null)
+                detector.Simulate(new Pose(Vector3.Lerp(onTable.position, inHand.position, h), Quaternion.Slerp(onTable.rotation, inHand.rotation, h)), _holding);
 
             // Shortcuts.
             if (kb.digit1Key.wasPressedThisFrame) GoToMug();
@@ -264,6 +282,7 @@ namespace CupSpike
             if (painting != null)
             {
                 if (kb.pKey.wasPressedThisFrame) ReplayPainting();
+                if (kb.vKey.wasPressedThisFrame) AnimatePainting();
                 if (kb.tKey.wasPressedThisFrame) CyclePaintingMode();
             }
         }
@@ -277,10 +296,17 @@ namespace CupSpike
         public void GoToPainting() { Teleport(PaintingSpot, paintingCentre); Say("In front of the painting"); }
         public void ReloadSounds() { _sound.ReloadFiles(); Say("Reloading the Sounds folder..."); }
         public void ScreamNow() { if (mugScream != null) mugScream.Scream("space bar"); }
+        public void ToggleHold()
+        {
+            _holding = !_holding;
+            if (_holding && Vector3.Distance(cam.transform.position, mugBase) > 1.5f) { _holding = false; Say("Go to the mug first (1)"); return; }
+            Say(_holding ? "Holding the mug" : "Mug put down");
+        }
+        public void AnimatePainting() { if (painting == null) return; Say(painting.Animate() ? "Painting: animating from the start" : "The painting isn't placed yet"); }
         public void ToggleDream()
         {
             if (dream == null) return;
-            if (dream.Dreaming) { dream.WakeNow(); Say("Waking up"); }
+            if (dream.Active) { dream.WakeNow(); Say("Waking up"); }
             else { dream.ForceDream = true; Say("Dreaming"); }
         }
         public void CycleWake()
@@ -373,21 +399,22 @@ namespace CupSpike
         {
             if (dream != null)
             {
-                if (dream.Waking) return new Phase("Waking up", "The dream breaks off");
-                if (dream.Depth >= 1f) return new Phase("Deep in the dream", "Move the mouse to look away and wake (or press F)", 1f);
-                if (dream.Depth > 0f) return new Phase("The dream is spreading", "Keep looking at the mug", dream.Depth);
+                if (dream.Waking) return new Phase("Waking up", "The dream lets go");
+                if (dream.Depth >= 1f) return new Phase("Deep in the dream", "Put the mug down (G) to wake", 1f);
+                if (dream.Depth > 0f) return new Phase("The dream is spreading", "Keep holding the mug. Put it down (G) to wake", dream.Depth);
+                if (dream.InDread) return new Phase("Holding it: something's wrong", "Keep holding and the dream comes. Put it down (G) and it fades", dream.Dread);
             }
             if (mugScream != null)
             {
                 if (mugScream.InSilence) return new Phase("Touched: silence...", "The scream comes next");
                 if (mugScream.ScreamPlaying) return new Phase("The mug screams", "Pull the hand back (Down arrow) to re-arm it");
             }
-            if (interior != null && interior.Reveal > 0.05f) return new Phase("Looking inside", "The tunnel is open. Keep staring and the dream begins", interior.Reveal);
+            if (interior != null && interior.Reveal > 0.05f) return new Phase("Looking inside", "The tunnel is open. Pick the mug up (G) and hold it for the dream", interior.Reveal);
             if (mugScream != null && mugScream.Approach > 0f) return new Phase("A hand approaches: it breathes", "Keep reaching (Up arrow) to touch it, or pull back and it stops dead", mugScream.Approach);
             if (mugScream != null && !mugScream.Armed)
                 return new Phase("Re-arming", !float.IsNaN(mugScream.NearestTip) && mugScream.NearestTip < mugScream.TouchZone + 0.06f
                     ? "Pull the hand back (Down arrow) to re-arm it" : "Ready again in a moment");
-            return new Phase("Waiting", "Reach for it (Up arrow or scroll), or lean over it (E)");
+            return new Phase("Waiting", "Reach for it (Up arrow or scroll), lean over it (E), or pick it up (G)");
         }
 
         /// <summary>What the painting is doing, in plain words.</summary>

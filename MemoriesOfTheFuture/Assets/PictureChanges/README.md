@@ -54,7 +54,7 @@ Wrong spacing/size scales the distance estimate, so the painting lands in front 
 
 ## Trigger modes
 
-Concept board 01 asks for a picture that "is never caught in the act". It offers three triggers to try side by side. The **Trigger** button in the hand menu cycles through them; each switch also does a Replay. The button is lit when the mode isn't the default.
+Concept board 01 asks for a picture that "is never caught in the act". It offers three triggers to try side by side. The **Trigger** button in the hand menu cycles through them; each switch also does a Reset. The button is lit when the mode isn't the default.
 
 | Mode | What happens |
 | --- | --- |
@@ -72,11 +72,11 @@ How **Unseen swap** works (`PaintingStages`, logs prefixed `[Stages]`):
 
 **The scream:** on the swap to the last stage, `SwapScream` plays `Audio/mono-scream.mp3` from the painting. You've just looked away, so it comes from behind or beside you, and when you turn back the picture has reached its final stage.
 - It's spatialised with Meta XR Audio. Its distances are 1.5 m before it starts to fall off and 15 m maximum.
-- Replay and Rescan cut it off.
+- Reset and Rescan cut it off.
 - **Swap Sound Only On Last** on `PaintingStages` is on by default. Turn it off to play the sound on every swap.
 - The file is the client's scream downmixed to mono with ffmpeg. The delivered "mono" file was a stereo copy of `scream.mp3`.
 
-**Distance** follows the board ("3 m ordinary, 1.5 m it notices you"): unless you've come within 1.5 m since the last swap, it goes no further than stage 1 (**Far Max Stage**). The last stage holds until Replay.
+**Distance** follows the board ("3 m ordinary, 1.5 m it notices you"): unless you've come within 1.5 m since the last swap, it goes no further than stage 1 (**Far Max Stage**). The last stage holds until Reset.
 
 **Stages:** stage 0 is `PictureCanvas > Still Image`. Stages 1–4 are in `Artwork/Stages/`. They are **placeholders**, frames from `painting.mp4` at 4, 12, 15 and 29.5 s. Swap in the painted stages by replacing the files or editing the **Stages** list on `PaintingStages`; any number of stages works.
 
@@ -86,17 +86,18 @@ The test-mode readout shows the mode, the stage, in view / out of view, and the 
 
 Turn your **left palm towards your face**: the menu fades in just off the palm (Pezzi / Meta hand-menu convention, with enter/exit hysteresis). Press with your **right index finger**.
 
-Artists and visitors see **Replay, Rescan, Test and Trigger**, plus the scene row. **Debug, Grid and Capture** are developer buttons, hidden unless **Developer Buttons** is ticked on the `HandMenu` component.
+Artists and visitors see **Reset, Animate, Rescan, Test and Trigger**, plus the scene row. **Debug, Grid and Capture** are developer buttons, hidden unless **Developer Buttons** is ticked on the `HandMenu` component.
 
 | Button | Does |
 | --- | --- |
-| Replay | Back to the still (stage 0); the transformation can trigger again |
+| Reset | Back to the still (stage 0), video stopped; the transformation can trigger again |
+| Animate | Play the transformation video from the start now, in any trigger mode (lit while it plays). It holds its last frame; look-away swaps pause until Reset. Desktop: **V** |
 | Rescan | Forget the placement and find the board again (in Test mode: re-place the virtual painting) |
 | Test | Test mode on/off (below) |
 | Debug | Detector panel + world overlay (off by default) |
 | Grid | 10 mm alignment grid instead of the painting |
 | Capture | Save the detector's current camera frame |
-| Trigger | Trigger mode: Unseen swap → Proximity → Gaze dwell (lit when not Unseen swap). Also does a Replay |
+| Trigger | Trigger mode: Unseen swap → Proximity → Gaze dwell (lit when not Unseen swap). Also does a Reset |
 | Painting / Cup | Bottom row (`SceneMenu`): switch scene. The open scene is lit. See `Assets/Shared/README.md` |
 
 ## Test mode (no physical painting needed)
@@ -113,8 +114,8 @@ A readout (lower right) shows live distance and angle, Near/Far, Facing/Away, dw
 | --- | --- |
 | Approach / Leave | Head within 1.5 m of the painting centre / beyond 1.7 m |
 | FaceToward / FaceAway | Head direction within 25° of the painting / beyond 35° |
-| Triggered | Near and Facing for 0.5 s (once, until Replay). Starts the movie in Proximity mode |
-| GazeTriggered | Facing for 2 s within 5 m (once, until Replay). Starts the movie in Gaze dwell mode |
+| Triggered | Near and Facing for 0.5 s (once, until Reset). Starts the movie in Proximity mode |
+| GazeTriggered | Facing for 2 s within 5 m (once, until Reset). Starts the movie in Gaze dwell mode |
 
 ## Controls (controllers or hands)
 

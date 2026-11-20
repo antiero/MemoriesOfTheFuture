@@ -22,5 +22,27 @@ namespace CupSpike
             if (layer != null) layer.DisableColorMap();
             Shader.SetGlobalVector(Id, Vector4.zero);
         }
+
+        static readonly int EdgeId = Shader.PropertyToID("_CupRoomEdge");
+
+        /// <summary>
+        /// Glowing outlines on the real room's edges (the passthrough layer's edge rendering), in
+        /// <paramref name="colour"/>; its alpha is the strength. Also sets _CupRoomEdge for the desktop room.
+        /// </summary>
+        public static void SetEdges(OVRPassthroughLayer layer, Color colour)
+        {
+            if (layer != null)
+            {
+                if (!layer.edgeRenderingEnabled) layer.edgeRenderingEnabled = true;
+                layer.edgeColor = colour;
+            }
+            Shader.SetGlobalColor(EdgeId, colour);
+        }
+
+        public static void ClearEdges(OVRPassthroughLayer layer)
+        {
+            if (layer != null) layer.edgeRenderingEnabled = false;
+            Shader.SetGlobalColor(EdgeId, Color.clear);
+        }
     }
 }

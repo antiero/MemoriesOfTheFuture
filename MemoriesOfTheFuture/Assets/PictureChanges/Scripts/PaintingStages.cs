@@ -96,7 +96,8 @@ namespace PictureChanges
         {
             _swap?.Tick();
             if (canvas == null || presence == null || head == null) return;
-            if (canvas.Mode != PictureCanvas.TriggerMode.UnseenSwap || !canvas.Revealed || !presence.Active)
+            // Animate (hand menu) took over with the video: no swaps over it until Reset.
+            if (canvas.Mode != PictureCanvas.TriggerMode.UnseenSwap || canvas.Animated || !canvas.Revealed || !presence.Active)
             {
                 _seen = _unseen = 0f;
                 InView = false;

@@ -61,7 +61,9 @@ namespace PictureChanges
         Coroutine _reveal, _soundFade;
 
         /// <summary>The painting has started to change (the movie played, or a stage swapped).</summary>
-        public bool HasPlayed => triggerMode == TriggerMode.UnseenSwap ? stages != null && stages.Stage > 0 : _played;
+        public bool HasPlayed => _animated || (triggerMode == TriggerMode.UnseenSwap ? stages != null && stages.Stage > 0 : _played);
+        /// <summary>The transformation video was started from the menu (Animate). Look-away swaps pause until Reset.</summary>
+        public bool Animated => _animated;
         /// <summary>Placed and the reveal has finished.</summary>
         public bool Revealed => estimator.IsLocked && _reveal == null && canvasRoot.gameObject.activeInHierarchy;
         public Transform PaintingTransform => canvasQuad.transform;
@@ -112,7 +114,7 @@ namespace PictureChanges
         OVRSpatialAnchor _anchor;
         Material _material;
         Vector2 _nudge;
-        bool _played;
+        bool _played, _animated;
         Texture _stageTexture;
         SlotVoice _soundtrack;
 
@@ -175,8 +177,8 @@ namespace PictureChanges
         /// <summary>Back to the still, ready to transform again (the board stays locked).</summary>
         public void Replay()
         {
-            if (video != null) { video.Stop(); video.Prepare(); }
-            _played = false;
+            StopVideo();
+            _played = _animated = false;
             _stageTexture = null;
             stages?.ResetStages();
             _material.mainTexture = StillTexture();
@@ -268,14 +270,49 @@ namespace PictureChanges
             if (_reveal != null) { StopCoroutine(_reveal); _reveal = null; }
             _material.SetFloat(RevealId, 0f);
             canvasRoot.gameObject.SetActive(false);
-            _played = false;
+            _played = _animated = false;
             _stageTexture = null;
             stages?.ResetStages();
-            if (video != null) { video.Stop(); video.Prepare(); }
+            StopVideo();
             _material.mainTexture = StillTexture();
             FadeSoundtrack(false);
             presence?.ResetState();
             estimator.Restart();
+        }
+
+        /// <summary>
+        /// Play the transformation video from the start now, whatever the trigger mode (hand menu: Animate).
+        /// It replaces whatever is showing once its first frame is ready, and holds its last frame at the
+        /// end. Look-away swaps pause until Reset.
+        /// </summary>
+        public bool Animate()
+        {
+            if (video == null || (video.clip == null && string.IsNullOrEmpty(video.url))) { Debug.LogWarning("[PictureCanvas] Animate: no video"); return false; }
+            if (!estimator.IsLocked) { Debug.Log("[PictureCanvas] Animate: the painting isn't placed yet"); return false; }
+            StopVideo(prepare: false);
+            _played = _animated = true;
+            Debug.Log("[PictureCanvas] Animate: transformation restarted on demand");
+            StartVideo();
+            return true;
+        }
+
+        void StartVideo()
+        {
+            video.isLooping = false;
+            video.sendFrameReadyEvents = true;
+            video.frameReady -= OnFirstFrame;
+            video.frameReady += OnFirstFrame;
+            video.time = 0;
+            video.Play();   // prepares first if needed, then plays from the start
+        }
+
+        void StopVideo(bool prepare = true)
+        {
+            if (video == null) return;
+            video.frameReady -= OnFirstFrame;
+            video.sendFrameReadyEvents = false;
+            video.Stop();
+            if (prepare) video.Prepare();
         }
 
         void CheckTrigger()
@@ -287,10 +324,7 @@ namespace PictureChanges
 
             _played = true;
             Debug.Log("[PictureCanvas] Transformation started");
-            video.isLooping = false;
-            video.sendFrameReadyEvents = true;
-            video.frameReady += OnFirstFrame;
-            video.Play();
+            StartVideo();
         }
 
         void OnFirstFrame(VideoPlayer source, long frame)

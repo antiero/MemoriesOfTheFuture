@@ -105,6 +105,24 @@ While it's locking, the older YOLO sideways correction is switched off, because 
 
 **Offline checks:** `Rec` captures can be checked against the prediction by projecting the proxy's rim into each frame. The camera model is in `PassthroughCameraAccess.WorldToViewportPoint`; frame row 0 is the bottom of the image.
 
+## Holding the mug: dread, dream and echoes
+
+`DreamState` (on `CupDetection`). Pick the mug up and keep holding it; put it down to come back.
+
+1. **Dread** (the first **5 s** of holding, `Hold Before Dream`):
+   - the passthrough drains towards grey and darkens, with a heartbeat pulse that quickens
+   - the real room's edges glow red (passthrough edge rendering)
+   - **echoes** ripple out of the mug: the room around it wobbles like heat haze, and grey ghost copies of the mug swell out of it and fade, with faint red wavefronts (`CupEchoes`, below)
+   - a few embers rise from the rim, the whispers creep in and the background bed sinks
+
+   Put the mug down during the dread and it all sinks away over 1.5 s, with no wake-up.
+2. **Dream:** the dome spreads from the mug, then embers, runes, whispers, the scanned room and ghostly hands, over `Deepen Time` (8 s). It only deepens while you hold the mug.
+3. **Waking:** put the mug down. It must read as down for 0.5 s, so a tracking blip doesn't count. Everything then eases out together over **2.5 s** (`Wake Fade Time`). With the Scream wake-up (the default), a beat of silence follows and then the mug screams; the **Wake** button makes it silent. The dream also ends if you walk more than 1.2 m, after `Max Full Time` at full depth, or when you press **Dream** again.
+
+The mug counts as held when `CupDetector` tracks it from the hand. Looking into the mug still opens the tunnel (above), but it no longer starts the dream. **Dream** in the hand menu starts the dread straight away without the mug, quickened to 1 s.
+
+**Echoes** (`CupEchoes`, `CupSpike/CupEchoes`): a disc 0.3 m in radius, centred on the mug and facing you. It shows the passthrough camera's image projected onto it, warped and drained to grey, and fades out at its edge into the real passthrough and over the mug itself, so the real mug stays crisp. Because the camera image arrives a few frames late, it may slip slightly when you turn your head fast; the warping hides most of that. In the desktop build it warps a half-resolution copy of the view instead. The **Echo** developer button shows the echoes at full strength, held or not, for tuning. Shape and speed are on `Materials/CupEchoes.mat`.
+
 ## Cup detection
 
 ```
@@ -180,6 +198,7 @@ Hand menu (left palm up). Artists and visitors see only **Inside, Dream and Wake
 | Inside | Keep the mug's interior open (without looking in) |
 | Rec | Save camera frames while looking into the mug, for the rune detector |
 | Rim | Rim lock on/off (lit = on, the default) |
+| Echo | Echoes around the mug at full strength, held or not (for tuning) |
 
 In the Editor, MRUK's mock camera shows colour bars. Set **Editor Test Image** on `CupDetector` to a frame from a headset recording to test the whole chain without the headset (depth isn't available in the Editor, so it uses the size estimate).
 

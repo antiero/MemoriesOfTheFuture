@@ -15,6 +15,7 @@ namespace CupSpike
         [SerializeField] RuneCapture runeCapture;
         [SerializeField] DreamState dream;
         [SerializeField] RimTracker rimTracker;
+        [SerializeField] CupEchoes echoes;
         [Tooltip("Renderers of the proxy mug, shown by the Proxy button. Hidden by default: the real mug is the " +
                  "star, and an invisible occluder (MugInterior) still hides virtual things behind it.")]
         [SerializeField] Renderer[] proxyRenderers;
@@ -59,13 +60,15 @@ namespace CupSpike
             }
             if (dream != null)
             {
-                // Dream: start the dream without looking in (press again while dreaming to wake).
+                // Dream: start the dread and dream without holding the mug (press again to wake; putting a held mug down wakes too).
                 // Wake: lit = silent wake-up, unlit = the mug screams when you wake.
-                menu.AddButton("Dream", () => { if (dream.Dreaming) dream.WakeNow(); else dream.ForceDream = true; },
-                               () => dream.Dreaming);
+                menu.AddButton("Dream", () => { if (dream.Active) dream.WakeNow(); else dream.ForceDream = true; },
+                               () => dream.Active);
                 menu.AddButton("Wake", () => dream.Wake = dream.Wake == DreamState.WakeMode.Scream ? DreamState.WakeMode.Silent : DreamState.WakeMode.Scream,
                                () => dream.Wake == DreamState.WakeMode.Silent);
             }
+            // Echo: show the echoes around the mug at full strength, held or not (for tuning them).
+            if (echoes != null) menu.AddButton("Echo", () => echoes.ForceOn = !echoes.ForceOn, () => echoes.ForceOn, developer: true);
         }
 
         void ToggleProxy()

@@ -730,6 +730,7 @@ GameObject:
   - component: {fileID: 982673533}
   - component: {fileID: 982673534}
   - component: {fileID: 982673535}
+  - component: {fileID: 982673536}
   m_Layer: 0
   m_Name: CupDetection
   m_TagString: Untagged
@@ -773,6 +774,7 @@ MonoBehaviour:
   runeCapture: {fileID: 982673531}
   dream: {fileID: 982673533}
   rimTracker: {fileID: 982673534}
+  echoes: {fileID: 982673536}
   proxyRenderers:
   - {fileID: 1305061110}
   proxyVisible: 0
@@ -1026,20 +1028,24 @@ MonoBehaviour:
   mugScream: {fileID: 982673528}
   hands: {fileID: 982673530}
   passthrough: {fileID: 963901709}
+  echoes: {fileID: 982673536}
   domeMaterial: {fileID: 2100000, guid: 96fc6e90f53674032a5a42acc2a79ad2, type: 2}
   emberMaterial: {fileID: 2100000, guid: ee528bc1a64a144beb18b2f09feebfa6, type: 2}
   runeFloatMaterial: {fileID: 2100000, guid: 7584123a6bc0144c28fb31a31f4e9cca, type: 2}
   whisperSlot: {fileID: 11400000, guid: cc1f09377d20541b9bad41956f6f33cc, type: 2}
   secondWhisperPitch: 1.24
-  stareBeforeDream: 2
+  holdBeforeDream: 5
+  dreadFade: 1.5
   deepenTime: 8
   maxFullTime: 20
-  lookAwayToWake: 1
-  wakeTime: 0.25
+  releaseGrace: 0.5
+  wakeFadeTime: 2.5
   wakeSilence: 0.6
   cooldown: 6
-  stayGazeAngle: 35
-  walkLimit: 0.4
+  dreadLook: {x: -0.1, y: 0.3, z: -0.85}
+  edgeGlow: {r: 0.85, g: 0.12, b: 0.08, a: 0.55}
+  heartbeat: {x: 0.9, y: 1.7}
+  walkWakeDistance: 1.2
   wakeMode: 0
   forceDream: 0
 --- !u!114 &982673534
@@ -1089,6 +1095,24 @@ MonoBehaviour:
   brightenIn: {x: 0.35, y: 1}
   maxBrightness: 1
   shDegree: 0
+--- !u!114 &982673536
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 982673521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5303906cc01a1423b9a90de081a1c8e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.CupEchoes
+  detector: {fileID: 982673525}
+  cameraAccess: {fileID: 869232205}
+  material: {fileID: 2100000, guid: 21be7c7bd39884793949d7aada5d6307, type: 2}
+  radius: 0.3
+  maxIntensity: 1
+  forceOn: 0
 --- !u!1 &988729871
 GameObject:
   m_ObjectHideFlags: 0
@@ -1151,7 +1175,9 @@ MonoBehaviour:
   palmOffset: 0.045
   fingerwardOffset: 0.03
   buttonSize: 0.045
+  buttonWidth: 0.054
   buttonGap: 0.008
+  developerButtons: 0
 --- !u!4 &988729874
 Transform:
   m_ObjectHideFlags: 0
