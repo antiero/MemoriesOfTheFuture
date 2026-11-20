@@ -138,11 +138,6 @@ namespace CupSpike
             _left = El(_root, "dt-left");
             _left.pickingMode = PickingMode.Ignore;
 
-            var brand = El(_left, "dt-card");
-            Text(brand, "MEMORIES OF THE FUTURE", "dt-eyebrow");
-            Text(brand, "Desktop testing", "dt-title");
-            Text(brand, "A stand-in room with the mug and the painting. Tab opens the Sound panel.", "dt-sub");
-
             _mug = Status("THE MUG", "1 to go there", "dt-status--mug");
             _painting = Status("THE PAINTING", "", "dt-status--painting");
             _paintingMode = _painting.root.Q<Label>("mode");

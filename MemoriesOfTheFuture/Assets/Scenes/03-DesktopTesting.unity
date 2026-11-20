@@ -2882,6 +2882,7 @@ MonoBehaviour:
   dream: {fileID: 2111826141}
   cam: {fileID: 603516435}
   handMaterial: {fileID: 2100000, guid: d46bacde457f44613a6e321461e7b168, type: 2}
+  handModel: {fileID: 919132149155446097, guid: 56186ccf27ad7864681108ed88349071, type: 3}
   room: {fileID: 1427887198}
   painting: {fileID: 767260108}
   paintingBoard: {fileID: 767260107}

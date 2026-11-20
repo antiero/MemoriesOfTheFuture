@@ -34,6 +34,10 @@ namespace CupSpike
         [SerializeField] DreamState dream;
         [SerializeField] Camera cam;
         [SerializeField] Material handMaterial;
+        [Tooltip("Rigged right hand (XR Hands sample RightHand.fbx). Posed to point with the index finger. Empty: a plain capsule finger.")]
+        [SerializeField] GameObject handModel;
+        [Tooltip("Reach (0 = withdrawn, 1 = at the mug) where the pointing hand starts turning into a grip on the handle.")]
+        [Range(0f, 1f)] [SerializeField] float gripFrom = 0.6f;
         [Tooltip("The stand-in room. Its depth writes go off during the dream, like passthrough, which has no depth.")]
         [SerializeField] Transform room;
 
@@ -82,6 +86,14 @@ namespace CupSpike
         bool _holding;          // G: the mug is in the hand
         float _hold;            // 0 = on the table, 1 = in the hand
         Transform _hand;
+        // The rigged hand: finger bones with a pointing and a gripping pose, blended as it nears the mug.
+        Transform _handModel;
+        Transform[] _poseBones;
+        Quaternion[] _pointPose, _gripPose;
+        Pose _pointPlace;       // the model in _hand space while pointing (index tip on _hand's origin)
+        Pose _gripInMug;        // the model in mug space while gripping the handle
+        bool _canGrip;
+        static readonly Vector3 HoleInMug = new MugGrip().holeInMug;
         SoundPanel _sound;
         SoundMarkers _markers;
         string _bedFiles = "";
@@ -161,6 +173,105 @@ namespace CupSpike
         {
             _hand = new GameObject("SimulatedHand").transform;
             _hand.SetParent(transform, false);
+            if (handModel != null) BuildPointingHand();
+            else BuildCapsuleFinger();
+            foreach (var r in _hand.GetComponentsInChildren<Renderer>())
+            {
+                if (handMaterial != null) r.sharedMaterial = handMaterial;
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
+        }
+
+        /// <summary>
+        /// The rigged hand, with two poses: pointing (far from the mug) and hooked through the handle
+        /// (at the mug). Both are measured here once, with the model at rest under _hand, then blended
+        /// each frame in <see cref="PoseHand"/>.
+        /// </summary>
+        void BuildPointingHand()
+        {
+            var model = Instantiate(handModel, _hand, false);
+            model.name = "HandModel";
+            foreach (var a in model.GetComponentsInChildren<Animator>()) Destroy(a);
+            var m = _handModel = model.transform;
+            var bones = new System.Collections.Generic.Dictionary<string, Transform>();
+            foreach (var t in model.GetComponentsInChildren<Transform>()) bones[t.name] = t;
+            Transform Bone(string n) => bones.TryGetValue("R_" + n, out var t) ? t : null;
+
+            string[] fingers = { "Index", "Middle", "Ring", "Little" };
+            string[] joints = { "Proximal", "Intermediate", "Distal" };
+            var list = new System.Collections.Generic.List<Transform>();
+            foreach (var f in fingers) foreach (var j in joints) list.Add(Bone(f + j));
+            list.Add(Bone("ThumbProximal")); list.Add(Bone("ThumbDistal"));
+            _poseBones = list.ToArray();
+            var rest = Array.ConvertAll(_poseBones, b => b != null ? b.localRotation : Quaternion.identity);
+
+            // Bones run along +Z with the palm towards -Y, so a positive turn about X curls a finger in.
+            // Curls are degrees for proximal / intermediate / distal; thumb is extra turn on its rest pose.
+            Quaternion[] Shape(Vector3 index, Vector3 middle, Vector3 ring, Vector3 little, Vector3 thumb, Vector3 thumbTip)
+            {
+                var q = new Quaternion[_poseBones.Length];
+                Vector3[] curls = { index, middle, ring, little };
+                for (int f = 0; f < 4; f++)
+                    for (int j = 0; j < 3; j++) q[f * 3 + j] = Quaternion.Euler(curls[f][j], 0f, 0f);
+                q[12] = rest[12] * Quaternion.Euler(thumb);
+                q[13] = rest[13] * Quaternion.Euler(thumbTip);
+                return q;
+            }
+            void Apply(Quaternion[] q) { for (int i = 0; i < _poseBones.Length; i++) if (_poseBones[i] != null) _poseBones[i].localRotation = q[i]; }
+
+            // Pointing: index nearly straight, the rest curled, thumb tucked across them.
+            _pointPose = Shape(new Vector3(4f, 6f, 4f), new Vector3(70f, 95f, 50f), new Vector3(75f, 95f, 50f),
+                               new Vector3(80f, 90f, 45f), new Vector3(10f, 0f, -25f), new Vector3(25f, 0f, 0f));
+            // Gripping: index and middle hooked through the loop, ring and little tucked under it,
+            // thumb laid along the top of the handle.
+            _gripPose = Shape(new Vector3(75f, 80f, 35f), new Vector3(80f, 85f, 35f), new Vector3(90f, 100f, 55f),
+                              new Vector3(95f, 100f, 55f), new Vector3(0f, 10f, 15f), new Vector3(10f, 0f, 0f));
+
+            var tip = Bone("IndexTip"); var knuckle = Bone("IndexProximal"); var wrist = Bone("Wrist");
+            if (tip == null || knuckle == null) { Apply(_pointPose); return; }
+            var back = wrist != null ? m.InverseTransformDirection(wrist.up) : Vector3.up;   // model space
+
+            // Point placement: finger along +Z, back of the hand up, index tip on _hand's origin.
+            Apply(_pointPose);
+            var along = m.InverseTransformDirection(tip.position - knuckle.position);
+            var rot = Quaternion.Inverse(Quaternion.LookRotation(along, back));
+            _pointPlace = new Pose(-(rot * m.InverseTransformPoint(tip.position)), rot);
+
+            // Grip placement, as MugGrip reads a real hand holding the mug: the middle of the index and
+            // middle proximal phalanges in the hole, knuckle line (little -> index) up the mug, and out of
+            // the palm towards the body (mug +X; the handle is on -X).
+            var mid = Bone("MiddleProximal"); var littleK = Bone("LittleProximal");
+            var iMid = Bone("IndexIntermediate"); var mMid = Bone("MiddleIntermediate");
+            if (mid == null || littleK == null || iMid == null || mMid == null) { Apply(_pointPose); return; }
+            Apply(_gripPose);
+            var hole = m.InverseTransformPoint((knuckle.position + iMid.position + mid.position + mMid.position) * 0.25f);
+            var knuckles = m.InverseTransformDirection(knuckle.position - littleK.position);
+            var gripRot = Quaternion.LookRotation(Vector3.right, Vector3.up) * Quaternion.Inverse(Quaternion.LookRotation(-back, knuckles));
+            _gripInMug = new Pose(HoleInMug - gripRot * hole, gripRot);
+            _canGrip = true;
+            PoseHand(0f, default);
+        }
+
+        /// <summary>Blends the rigged hand from pointing (0) to gripping the handle of the mug at <paramref name="mug"/> (1).</summary>
+        void PoseHand(float grip, Pose mug)
+        {
+            if (_handModel == null) return;
+            if (!_canGrip) grip = 0f;
+            for (int i = 0; i < _poseBones.Length; i++)
+                if (_poseBones[i] != null) _poseBones[i].localRotation = Quaternion.Slerp(_pointPose[i], _gripPose[i], grip);
+            var pos = _pointPlace.position; var rot = _pointPlace.rotation;
+            if (grip > 0f)
+            {
+                var gripRot = Quaternion.Inverse(_hand.rotation) * (mug.rotation * _gripInMug.rotation);
+                var gripPos = _hand.InverseTransformPoint(mug.position + mug.rotation * _gripInMug.position);
+                pos = Vector3.Lerp(pos, gripPos, grip);
+                rot = Quaternion.Slerp(rot, gripRot, grip);
+            }
+            _handModel.SetLocalPositionAndRotation(pos, rot);
+        }
+
+        void BuildCapsuleFinger()
+        {
             var tip = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             Destroy(tip.GetComponent<Collider>());
             tip.transform.SetParent(_hand, false);
@@ -171,11 +282,6 @@ namespace CupSpike
             finger.transform.localScale = new Vector3(0.016f, 0.045f, 0.016f);
             finger.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
             finger.transform.localPosition = new Vector3(0f, 0f, -0.045f);   // behind the tip (the hand points along +Z)
-            foreach (var r in _hand.GetComponentsInChildren<Renderer>())
-            {
-                if (handMaterial != null) r.sharedMaterial = handMaterial;
-                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            }
         }
 
         Vector3 Rim => mugBase + Vector3.up * (detector != null ? detector.MugHeight : 0.095f);
@@ -262,8 +368,10 @@ namespace CupSpike
             var yawRot = Quaternion.Euler(0f, _yaw, 0f);
             var inHand = new Pose(cam.transform.position + yawRot * heldOffset + Vector3.down * 0.0475f, yawRot * Quaternion.Euler(0f, 180f, 0f));
             float h = Mathf.SmoothStep(0f, 1f, _hold);
-            if (detector != null)
-                detector.Simulate(new Pose(Vector3.Lerp(onTable.position, inHand.position, h), Quaternion.Slerp(onTable.rotation, inHand.rotation, h)), _holding);
+            var mugNow = new Pose(Vector3.Lerp(onTable.position, inHand.position, h), Quaternion.Slerp(onTable.rotation, inHand.rotation, h));
+            if (detector != null) detector.Simulate(mugNow, _holding);
+            // Close in on the mug and the pointing finger turns into a grip on its handle (and carries it when held).
+            PoseHand(Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(gripFrom, 1f, _reach)), mugNow);
 
             // Shortcuts.
             if (kb.digit1Key.wasPressedThisFrame) GoToMug();
