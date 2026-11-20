@@ -22,7 +22,7 @@ namespace MemoriesOfTheFuture
         [SerializeField] Entry[] scenes =
         {
             new Entry { label = "Painting", scene = "01-PictureChanges" },
-            new Entry { label = "Cup", scene = "02-CupSpike" },
+            new Entry { label = "Mug", scene = "02-Mug" },
         };
 
         // Start, not Awake, so the scene's own buttons (added in Awake) come first.

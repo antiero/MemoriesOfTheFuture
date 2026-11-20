@@ -98,7 +98,7 @@ Artists and visitors see **Reset, Animate, Rescan, Test and Trigger**, plus the 
 | Grid | 10 mm alignment grid instead of the painting |
 | Capture | Save the detector's current camera frame |
 | Trigger | Trigger mode: Unseen swap → Proximity → Gaze dwell (lit when not Unseen swap). Also does a Reset |
-| Painting / Cup | Bottom row (`SceneMenu`): switch scene. The open scene is lit. See `Assets/Shared/README.md` |
+| Painting / Mug | Bottom row (`SceneMenu`): switch scene. The open scene is lit. See `Assets/Shared/README.md` |
 
 ## Test mode (no physical painting needed)
 

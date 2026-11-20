@@ -1260,7 +1260,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1cbb7db7ac88f4c4095f1563fd2ce28c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.MixDirector
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.MixDirector
   mixer: {fileID: 24100000, guid: 69e9049d2eadd4976bc9b9afa31dc9ad, type: 2}
   blending: 1
   smoothing: 0.1
@@ -1632,8 +1632,8 @@ MonoBehaviour:
   scenes:
   - label: Painting
     scene: 01-PictureChanges
-  - label: Cup
-    scene: 02-CupSpike
+  - label: Mug
+    scene: 02-Mug
 --- !u!1 &1954634562
 GameObject:
   m_ObjectHideFlags: 0

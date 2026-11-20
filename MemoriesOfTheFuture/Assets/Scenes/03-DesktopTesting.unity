@@ -259,7 +259,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 654f33ed86dcf4488bab24c09d2092f5, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.SoundEmitter
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.SoundEmitter
   slot: {fileID: 11400000, guid: 06173c107928644d8b8cf699bc6942f2, type: 2}
   when: 6
   where: 1
@@ -602,7 +602,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 654f33ed86dcf4488bab24c09d2092f5, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.SoundEmitter
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.SoundEmitter
   slot: {fileID: 11400000, guid: 06961545d0b9e47f193624408ffbfa45, type: 2}
   when: 7
   where: 0
@@ -638,7 +638,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f0876bdb0e5634fcf977b499e34142ca, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.RoomAcoustics
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.RoomAcoustics
   fallbackSize: {x: 8, y: 3, z: 6}
   maxSize: {x: 15, y: 5, z: 15}
   clutter: 0.6
@@ -1621,7 +1621,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 237838433b3ef42159b7eead1a2948f5, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.DesktopUI
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.DesktopUI
   sim: {fileID: 2111826140}
   style: {fileID: 7433441132597879392, guid: 200d85fa339c84725bf5a6e69db53bd0, type: 3}
 --- !u!114 &1184086796
@@ -1870,7 +1870,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1cbb7db7ac88f4c4095f1563fd2ce28c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.MixDirector
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.MixDirector
   mixer: {fileID: 24100000, guid: 69e9049d2eadd4976bc9b9afa31dc9ad, type: 2}
   blending: 1
   smoothing: 0.1
@@ -2037,7 +2037,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1468036935}
   m_Layer: 0
-  m_Name: CupSpikeRoot
+  m_Name: MugRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2202,7 +2202,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 654f33ed86dcf4488bab24c09d2092f5, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.SoundEmitter
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.SoundEmitter
   slot: {fileID: 11400000, guid: fc9452b973e3546e3a4499a02a5ff561, type: 2}
   when: 0
   where: 0
@@ -2875,7 +2875,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 94506612a8283488692f8217a235488d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.DesktopSim
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.DesktopSim
   detector: {fileID: 2111826146}
   mugScream: {fileID: 2111826144}
   interior: {fileID: 2111826142}
@@ -2883,6 +2883,7 @@ MonoBehaviour:
   cam: {fileID: 603516435}
   handMaterial: {fileID: 2100000, guid: d46bacde457f44613a6e321461e7b168, type: 2}
   handModel: {fileID: 919132149155446097, guid: 56186ccf27ad7864681108ed88349071, type: 3}
+  gripFrom: 0.6
   room: {fileID: 1427887198}
   painting: {fileID: 767260108}
   paintingBoard: {fileID: 767260107}
@@ -2912,7 +2913,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: efe4a7ce43ccb4ae1acf88eb29b1bf46, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.DreamState
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.DreamState
   detector: {fileID: 2111826146}
   interior: {fileID: 2111826142}
   mugScream: {fileID: 2111826144}
@@ -2948,7 +2949,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 70a64845bb41449f58eaee00bb15cae1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.MugInterior
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.MugInterior
   detector: {fileID: 2111826146}
   proxy: {fileID: 1510605915}
   proxyMesh: {fileID: 1510605914}
@@ -2995,7 +2996,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e7161f9ec975942acbbc26fd51324feb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.MugScream
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.MugScream
   detector: {fileID: 2111826146}
   leftHand: {fileID: 0}
   rightHand: {fileID: 0}
@@ -3024,7 +3025,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 2111826145}
-        m_TargetAssemblyTypeName: CupSpike.RoomDrain, Assembly-CSharp
+        m_TargetAssemblyTypeName: MemoriesOfTheFuture.Mug.RoomDrain, Assembly-CSharp
         m_MethodName: Drain
         m_Mode: 0
         m_Arguments:
@@ -3046,7 +3047,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 669ad1201b74a438bbdc9ee14ae293d0, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.RoomDrain
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.RoomDrain
   passthrough: {fileID: 0}
   peak: {x: -0.15, y: 0.65, z: -1}
   attack: 0.12
@@ -3063,7 +3064,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 21162ad8610004a998db7d97a7c576b9, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.CupDetector
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.CupDetector
   cameraAccess: {fileID: 0}
   raycaster: {fileID: 0}
   head: {fileID: 603516434}
@@ -3114,7 +3115,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3c27cd25ca5c64380b6b94300a857c70, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.DreamSplatRoom
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.DreamSplatRoom
   dream: {fileID: 2111826141}
   interior: {fileID: 2111826142}
   splat: {fileID: 4599839170941234424, guid: 3a5bc230e26f249dcbe0035ddbfc1424, type: 3}
@@ -3141,7 +3142,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5303906cc01a1423b9a90de081a1c8e7, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CupSpike.CupEchoes
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.CupEchoes
   detector: {fileID: 2111826146}
   cameraAccess: {fileID: 0}
   material: {fileID: 2100000, guid: 21be7c7bd39884793949d7aada5d6307, type: 2}

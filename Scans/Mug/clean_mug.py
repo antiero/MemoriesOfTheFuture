@@ -5,7 +5,7 @@ Run headless from Terminal:
   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python Scans/Mug/clean_mug.py
 
 Input : Scans/Mug/Mug.usdz (Apple Object Capture: mesh + tex0 / norm0 / ao0)
-Output: MemoriesOfTheFuture/Assets/CupSpike/Models/Mug/
+Output: MemoriesOfTheFuture/Assets/Mug/Models/Mug/
           Mug_Visual.fbx   watertight, ~3k tris, UVs, baked textures
           Mug_Proxy.fbx    watertight, ~500 tris, for occlusion / trigger zone
           Mug_Albedo.png, Mug_Normal.png, Mug_AO.png  (2048)
@@ -34,7 +34,7 @@ def find_root():
 ROOT = find_root()
 SRC = os.path.join(ROOT, "Scans", "Mug", "Mug.usdz")
 OUT = os.path.join(ROOT, "Scans", "Mug", "out")
-UNITY = os.path.join(ROOT, "MemoriesOfTheFuture", "Assets", "CupSpike", "Models", "Mug")
+UNITY = os.path.join(ROOT, "MemoriesOfTheFuture", "Assets", "Mug", "Models", "Mug")
 os.makedirs(OUT, exist_ok=True)
 os.makedirs(UNITY, exist_ok=True)
 

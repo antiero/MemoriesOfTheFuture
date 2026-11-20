@@ -8,7 +8,7 @@ namespace MemoriesOfTheFuture
         void Start()
         {
             // The splat benchmark (adb ... --es splatbench 1) always opens the cup scene.
-            var scene = CupSpike.SplatBench.Requested ? CupSpike.SplatBench.CupScene : SceneSwitcher.LastScene;
+            var scene = Mug.SplatBench.Requested ? Mug.SplatBench.CupScene : SceneSwitcher.LastScene;
             Debug.Log($"[AppBoot] Opening last scene: {scene}");
             if (!SceneSwitcher.Load(scene)) SceneSwitcher.Load(SceneSwitcher.DefaultScene);
         }

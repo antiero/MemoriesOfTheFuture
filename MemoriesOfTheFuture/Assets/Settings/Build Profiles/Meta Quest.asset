@@ -50,7 +50,7 @@ MonoBehaviour:
     m_path: Assets/Scenes/01-PictureChanges.unity
     m_guid: 3c490b6f077304f97a16ce5962f08d75
   - m_enabled: 1
-    m_path: Assets/Scenes/02-CupSpike.unity
+    m_path: Assets/Scenes/02-Mug.unity
     m_guid: 668f5ad8780644da92abfa28359e8b4c
   m_HasScriptingDefines: 0
   m_ScriptingDefines: []

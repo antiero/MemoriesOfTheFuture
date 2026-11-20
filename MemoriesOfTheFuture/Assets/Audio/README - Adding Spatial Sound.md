@@ -67,7 +67,7 @@ Still under **⋯**:
 
 ### 4. Put it in the scene
 
-1. Open the scene: **03-DesktopTesting** to try it on the Mac, **02-CupSpike** for the headset.
+1. Open the scene: **03-DesktopTesting** to try it on the Mac, **02-Mug** for the headset.
 2. Select your slot in the Project window, then **Add Sound to Scene** in the Sound Design window.
    A **Sound - Clock Tick** object appears, already pointing at your slot.
 3. Move it to where the sound should come from (W in the Scene view, then drag the arrows).
@@ -114,13 +114,13 @@ spheres, and, for While Near, its Near Distance in orange.
 
 Spatial sound on a laptop is only a rough guide, so **always check on the headset**. Things to know:
 
-- In **02-CupSpike** the scene is the real room, and its origin is **where the visitor starts**.
+- In **02-Mug** the scene is the real room, and its origin is **where the visitor starts**.
   A sound placed 3 m in front of the origin is 3 m in front of where they put the headset on.
   The real room's walls aren't in the scene, so place fixed sounds by distance from the start,
   not by walls.
 - **On The Mug** and **On The Listener** work the same everywhere: they follow the real mug and
   the visitor's head.
-- Add your emitter to 02-CupSpike as well as 03-DesktopTesting if you want it in both (or build
+- Add your emitter to 02-Mug as well as 03-DesktopTesting if you want it in both (or build
   it once in 03, then copy and paste the object across: **Cmd+C** in one scene, **Cmd+V** in the
   other, and check its position).
 
@@ -152,7 +152,7 @@ Try not to change the same scene as someone else on the same day; scene files ar
   press G), the slot has no file, or its Level is -60 dB.
 - **It plays from the wrong place on the headset**: see *On the headset* above. The origin is
   where the visitor starts.
-- **Rebuilding the desktop room** (*CupSpike > Create Desktop Testing Scene*) starts the scene
+- **Rebuilding the desktop room** (*Memories > Desktop Testing > Create Desktop Testing Scene*) starts the scene
   afresh: the three examples come back, but emitters you added to 03 by hand don't. Copy yours to
-  a safe scene first, or re-add them. *CupSpike > Add Sound Examples To Open Scene* puts back just
+  a safe scene first, or re-add them. *Memories > Desktop Testing > Add Sound Examples To Open Scene* puts back just
   the examples.

@@ -9,7 +9,7 @@ namespace Memories.Audio
 {
     /// <summary>
     /// What the in-game Sound panel works on (the desktop testing app and Play mode; the panel itself is
-    /// drawn by CupSpike.DesktopUI): every Sound Slot in the scene, edits to them, saving the mix, and
+    /// drawn by Mug.DesktopUI): every Sound Slot in the scene, edits to them, saving the mix, and
     /// loading files from ~/MemoriesOfTheFuture/Sounds.
     ///
     /// Edits go straight to the Sound Slot assets, so in the Editor they are kept after Play mode.

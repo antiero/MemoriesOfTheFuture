@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
-using CupSpike;
+using MemoriesOfTheFuture.Mug;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -127,7 +127,7 @@ namespace Memories.Audio.EditorTools
                 GUI.enabled = !EditorApplication.isPlayingOrWillChangePlaymode;
                 if (GUILayout.Button(new GUIContent("▶  Test on desktop", "Open 03-DesktopTesting and press Play: mouse and keyboard, no headset"), GUILayout.Height(26)))
                     PlayScene(AudioPaths.DesktopScene);
-                if (GUILayout.Button(new GUIContent("Open headset scene", "Open 02-CupSpike (what gets built to the Quest)"), GUILayout.Height(26)))
+                if (GUILayout.Button(new GUIContent("Open headset scene", "Open 02-Mug (what gets built to the Quest)"), GUILayout.Height(26)))
                     OpenScene(AudioPaths.HeadsetScene);
                 GUI.enabled = true;
                 if (Application.isPlaying && GUILayout.Button("■  Stop", GUILayout.Height(26), GUILayout.Width(70))) EditorApplication.isPlaying = false;

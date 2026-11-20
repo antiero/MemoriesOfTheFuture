@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using CupSpike;
+using MemoriesOfTheFuture.Mug;
 using Memories.Audio;
 using PictureChanges;
 using UnityEditor;
@@ -20,7 +20,7 @@ namespace Memories.Audio.EditorTools
         public const string Mixer = Root + "/Memories Mixer.mixer";
         public const string Readme = Root + "/README - Sound Design.md";
         public const string SpatialGuide = Root + "/README - Adding Spatial Sound.md";
-        public const string HeadsetScene = "Assets/Scenes/02-CupSpike.unity";
+        public const string HeadsetScene = "Assets/Scenes/02-Mug.unity";
         public const string DesktopScene = "Assets/Scenes/03-DesktopTesting.unity";
         public const string PaintingScene = "Assets/Scenes/01-PictureChanges.unity";
         public static readonly string[] Groups = { "Ambience", "Mug", "Dream", "Painting", "UI" };
@@ -66,13 +66,13 @@ namespace Memories.Audio.EditorTools
             new SlotDef { name = "Scream", drop = "scream", group = "Mug", clips = new[] { "Assets/Audio/scream.mp3" },
                 db = 0f, pitch = 1f, spatial = true, min = 0.3f, max = 15f,
                 notes = "The payoff: plays from inside the mug when it's touched (after a beat of silence), and when you wake from the dream. Restarts rather than overlapping." },
-            new SlotDef { name = "Breath", drop = "breath", group = "Mug", clips = new[] { "Assets/CupSpike/Audio/Breath_placeholder.wav" },
+            new SlotDef { name = "Breath", drop = "breath", group = "Mug", clips = new[] { "Assets/Mug/Audio/Breath_placeholder.wav" },
                 db = -0.9f, pitch = 1f, spatial = true, min = 0.3f, max = 15f,
                 notes = "Loops from inside the mug as a hand approaches: silent at 30 cm, full level at the touch zone, rising in pitch (x0.9 to x1.15). Cuts dead if the hand pulls away." },
-            new SlotDef { name = "Drone", drop = "drone", group = "Mug", clips = new[] { "Assets/CupSpike/Audio/Breath_placeholder.wav" },
+            new SlotDef { name = "Drone", drop = "drone", group = "Mug", clips = new[] { "Assets/Mug/Audio/Breath_placeholder.wav" },
                 db = -3.1f, pitch = 0.55f, spatial = true, min = 0.3f, max = 500f,
                 notes = "Loops from inside the mug while you look into it; fades in with the opening. Placeholder: the breath, pitched down." },
-            new SlotDef { name = "Whisper", drop = "whisper", group = "Dream", clips = new[] { "Assets/CupSpike/Audio/Breath_placeholder.wav" },
+            new SlotDef { name = "Whisper", drop = "whisper", group = "Dream", clips = new[] { "Assets/Mug/Audio/Breath_placeholder.wav" },
                 db = -4.4f, pitch = 0.5f, spatial = true, min = 0.5f, max = 500f,
                 notes = "Two copies circle your head 1.3 m away during the dream (the second x1.24 higher), fading in as it deepens. Placeholder: the breath, pitched down." },
             new SlotDef { name = "Background", drop = "background", group = "Ambience", clips = new[] { "Assets/Audio/mugAudio.mp3" },
@@ -291,7 +291,7 @@ namespace Memories.Audio.EditorTools
 
         /// <summary>
         /// Point one scene's sound fields at the Sound Slots and add the "Sound Mix" MixDirector.
-        /// Opens the scene (replacing the open ones) and saves it. Used by CupSpike > Create Desktop Testing Scene.
+        /// Opens the scene (replacing the open ones) and saves it. Used by Memories > Desktop Testing > Create Desktop Testing Scene.
         /// </summary>
         public static void WireScene(string path)
         {

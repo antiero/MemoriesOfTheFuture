@@ -129,15 +129,15 @@ Sound.md`** (or **Adding spatial sound** in the Sound Design window). The short 
    - **Where**: here in the scene, on the mug, or on the listener (with an offset).
 3. Save the scene (Cmd+S).
 
-Do this in **02-CupSpike** (the headset scene) and **03-DesktopTesting** (the desktop test) if you
-want it in both. (Rebuilding the desktop room with *CupSpike > Create Desktop Testing Scene* starts
-it afresh, so emitters added to 03 by hand have to be added again; the three examples come back.) **Open headset scene** in the Sound Design window opens 02-CupSpike.
+Do this in **02-Mug** (the headset scene) and **03-DesktopTesting** (the desktop test) if you
+want it in both. (Rebuilding the desktop room with *Memories > Desktop Testing > Create Desktop Testing Scene* starts
+it afresh, so emitters added to 03 by hand have to be added again; the three examples come back.) **Open headset scene** in the Sound Design window opens 02-Mug.
 
 ## Testing
 
 - **Desktop** (no headset): **▶ Test on desktop** in Unity, or the Mac app. See *The desktop
   room* below. **■ Stop** to stop.
-- **Headset**: ask the developer for a build, or build from **02-CupSpike** (the mug) or
+- **Headset**: ask the developer for a build, or build from **02-Mug** (the mug) or
   **01-PictureChanges** (the painting).
 
 ## The desktop room
