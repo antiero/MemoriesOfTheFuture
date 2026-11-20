@@ -83,7 +83,7 @@ All paths are inside `MemoriesOfTheFuture/Assets/`.
 | `Mug/Materials/` | The look of the tunnel, rune, echoes, dream dome, embers and the desktop room | **Yes**: see *The look of the mug* |
 | `Mug/Splats/` | `RoomScan_400k.ply`, the scanned room that appears in the dream | Swap with care |
 | `Mug/Prefabs/` | `ProxyMug`, the virtual stand-in for the real mug | Rarely |
-| `Models/` | The mug model (`zipinkent-cambridge-mug.blend`, real size) | Rarely |
+| `Models/` | The mug model (`zipinkent-cambridge-mug.fbx`, real size) | Rarely |
 | `Mug/Audio/` | Placeholder sounds (breath, heartbeat) | Replace through the Sound Slots |
 | `Mug/`, `PictureChanges/`, `Shared/` (Scripts, Shaders, Editor, UI) | The code | No |
 | `Oculus/`, `XR/`, `XRI/`, `Resources/`, `Settings/`, `Plugins/`, `Samples/`, `MRTemplateAssets/`, `CompositionLayers/`, `Gsplat/`, `TextMesh Pro/` | Meta, Unity and package setup | **No**: leave these alone |
@@ -278,7 +278,9 @@ The project works the same on Windows and Mac. A few differences:
 
 ## 9. Good to know
 
-- **Blender must be installed**, or the mug model won't load (Unity reads it from the `.blend`).
+- **No Blender needed.** The mug model is an FBX. Its editable original is
+  `Scans/Mug/zipinkent-cambridge-mug.blend`, outside the Unity project: after editing it, export
+  it as FBX over `Assets/Models/zipinkent-cambridge-mug.fbx` (keep the name, so the prefab keeps it).
 - **Placeholders** still in the project: the Breath and Heartbeat sounds (`Mug/Audio/`), the
   painting stages (frames from the video), and the drone (the breath pitched down). The mug's
   printed design was estimated from phone photos and should be checked against the real mug.

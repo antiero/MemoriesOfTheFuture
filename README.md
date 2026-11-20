@@ -16,11 +16,9 @@ change the sound, the painting and the look without touching code.
 1. Install **Unity 6000.6.9f1** (Unity 6.6) through Unity Hub, with **Android Build Support** (for
    the headset), and **Mac Build Support (Mono)** or **Windows Build Support (Mono)** for the
    desktop test app on your own machine.
-2. Install **Blender**. Unity reads the mug model straight from its `.blend` file, and needs
-   Blender to do it.
-3. Clone the repository. **On Windows, clone it to a short folder** such as `C:\Dev\MotF`: some of
+2. Clone the repository. **On Windows, clone it to a short folder** such as `C:\Dev\MotF`: some of
    Unity's package files have very long paths, and Windows refuses paths over 260 characters.
-4. In Unity Hub, **Add > Add project from disk** and choose the `MemoriesOfTheFuture` folder inside
+3. In Unity Hub, **Add > Add project from disk** and choose the `MemoriesOfTheFuture` folder inside
    this repository (the one that contains `Assets`).
 
 Windows and Mac can share the project: `.gitattributes` keeps line endings the same on both, so
@@ -45,9 +43,9 @@ On the headset, turn your left palm towards your face to bring up the hand menu.
 | Folder | Contents |
 | --- | --- |
 | `MemoriesOfTheFuture/` | The Unity project |
-| `MemoriesOfTheFuture/Builds/` | Built apps: `Android/` (headset `.apk`), `macOS/` (desktop test app). Not in Git |
+| `MemoriesOfTheFuture/Builds/` | Built apps: `Android/` (headset `.apk`), `macOS/` and `Windows/` (desktop test app). Not in Git |
 | `Movies/` | Screen recordings from the headset. Not in Git |
-| `Scans/` | Scans of the real mug |
+| `Scans/` | Scans of the real mug, and the mug model's editable Blender file (`Scans/Mug/zipinkent-cambridge-mug.blend`). Not needed to open the project |
 
 ## Documentation
 
