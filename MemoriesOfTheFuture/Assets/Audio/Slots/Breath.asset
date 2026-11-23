@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Memories.Audio.SoundSlot
   notes: 'Loops from inside the mug as a hand approaches: silent at 30 cm, full level at the touch zone, rising in pitch (x0.9 to x1.15). Cuts dead if the hand pulls away.'
   clips:
-  - {fileID: 8300000, guid: 03655a4bd51d04e6f86ea475ff940f87, type: 3}
+  - {fileID: 8300000, guid: e9f12a77f37964abc8868f3598776f54, type: 3}
   variation: 0
   dropName: breath
   volumeDb: -0.9

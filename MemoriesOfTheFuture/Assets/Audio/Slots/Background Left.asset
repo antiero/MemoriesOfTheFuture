@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Memories.Audio.SoundSlot
   notes: Left channel of the bed, played from a fixed point 3 m left and 1 m in front of where you start, so the bed stays put when you turn. Starts in sync with Background Right.
   clips:
-  - {fileID: 8300000, guid: 078f00e9abc7d41bc87ec539c4d53686, type: 3}
+  - {fileID: 8300000, guid: e079e055f5e1f43c2a6548b22358d54a, type: 3}
   variation: 0
   dropName: background_left
   volumeDb: -9.1

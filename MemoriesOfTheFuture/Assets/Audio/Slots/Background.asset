@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Memories.Audio.SoundSlot
   notes: Stereo bed in your ears. Only used if Background Left / Right have no files. Drains as a hand approaches, cuts in the silence, ducks under the scream, muffles in the dream (all in code; shape it further with the Ambience group).
   clips:
-  - {fileID: 8300000, guid: 6160a88999a37472bb81bf4b33b613a8, type: 3}
+  - {fileID: 8300000, guid: e079e055f5e1f43c2a6548b22358d54a, type: 3}
   variation: 0
   dropName: background
   volumeDb: -9.1

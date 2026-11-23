@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Memories.Audio.SoundSlot
   notes: 'The payoff: plays from inside the mug when it''s touched (after a beat of silence), and when you wake from the dream. Restarts rather than overlapping.'
   clips:
+  - {fileID: 8300000, guid: 7b43b0cd70a6d45869a5bd431a54dc94, type: 3}
   - {fileID: 8300000, guid: 312691852e5894cd080dac1983384bd9, type: 3}
   variation: 0
   dropName: scream

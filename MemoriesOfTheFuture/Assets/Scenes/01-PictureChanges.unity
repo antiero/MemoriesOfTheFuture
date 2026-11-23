@@ -921,11 +921,11 @@ MonoBehaviour:
   seenDwell: 0.75
   hiddenHalfAngleH: 60
   hiddenHalfAngleV: 55
-  unseenTime: 1.2
+  unseenTime: 0.8
   noticeDistance: 1.5
   farMaxStage: 1
   swapSlot: {fileID: 11400000, guid: 05dc8d9c232dc4845a2369853a2648a0, type: 2}
-  swapSoundOnlyOnLast: 1
+  swapSoundOnlyOnLast: 0
 --- !u!1001 &963901701
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1200,6 +1200,56 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1825435415}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1264183989
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1264183991}
+  - component: {fileID: 1264183990}
+  m_Layer: 0
+  m_Name: Sound - Thuds
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1264183990
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1264183989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 654f33ed86dcf4488bab24c09d2092f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.SoundEmitter
+  slot: {fileID: 11400000, guid: 58506e00c1fb4423f98b4632c8cca12a, type: 2}
+  when: 7
+  where: 0
+  offset: {x: 0, y: 0, z: 0}
+  fade: 0.5
+  nearDistance: 0.94
+--- !u!4 &1264183991
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1264183989}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.377, z: 0.928}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1382652508
 GameObject:
@@ -1600,7 +1650,9 @@ MonoBehaviour:
   palmOffset: 0.045
   fingerwardOffset: 0.03
   buttonSize: 0.045
+  buttonWidth: 0.054
   buttonGap: 0.008
+  developerButtons: 0
 --- !u!4 &1837796101
 Transform:
   m_ObjectHideFlags: 0
@@ -1940,3 +1992,4 @@ SceneRoots:
   - {fileID: 784333098}
   - {fileID: 1837796101}
   - {fileID: 1502828092}
+  - {fileID: 1264183991}

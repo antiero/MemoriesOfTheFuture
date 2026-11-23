@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Memories.Audio.SoundSlot
   notes: 'Loops from inside the mug while you look into it; fades in with the opening. Placeholder: the breath, pitched down.'
   clips:
-  - {fileID: 8300000, guid: 03655a4bd51d04e6f86ea475ff940f87, type: 3}
+  - {fileID: 8300000, guid: 63aa32f50de604f49bf2f308452acee6, type: 3}
+  - {fileID: 8300000, guid: e9f12a77f37964abc8868f3598776f54, type: 3}
   variation: 0
   dropName: drone
   volumeDb: -3.1

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Memories.Audio.SoundSlot
   notes: Right channel of the bed (see Background Left).
   clips:
-  - {fileID: 8300000, guid: 3b87dd5b95dfa433aa64db7fc8eddba9, type: 3}
+  - {fileID: 8300000, guid: e079e055f5e1f43c2a6548b22358d54a, type: 3}
   variation: 0
   dropName: background_right
   volumeDb: -9.1

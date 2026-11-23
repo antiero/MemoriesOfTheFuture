@@ -1177,6 +1177,56 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!1 &609896333
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 609896335}
+  - component: {fileID: 609896334}
+  m_Layer: 0
+  m_Name: Sound - Ear close up
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &609896334
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 609896333}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 654f33ed86dcf4488bab24c09d2092f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.SoundEmitter
+  slot: {fileID: 11400000, guid: 47e49c5e9744a41c68ffe00fd0e7a790, type: 2}
+  when: 6
+  where: 2
+  offset: {x: -0.14, y: -0.13, z: -0.15}
+  fade: 0.5
+  nearDistance: 1.5
+--- !u!4 &609896335
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 609896333}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.422, y: 1.504, z: -1.139}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &684186315
 GameObject:
   m_ObjectHideFlags: 0
@@ -1408,11 +1458,11 @@ MonoBehaviour:
   seenDwell: 0.75
   hiddenHalfAngleH: 60
   hiddenHalfAngleV: 55
-  unseenTime: 1.2
+  unseenTime: 0.5
   noticeDistance: 1.5
   farMaxStage: 1
   swapSlot: {fileID: 11400000, guid: 05dc8d9c232dc4845a2369853a2648a0, type: 2}
-  swapSoundOnlyOnLast: 1
+  swapSoundOnlyOnLast: 0
 --- !u!114 &767260110
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1592,6 +1642,56 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1041693643}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1075989352
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1075989354}
+  - component: {fileID: 1075989353}
+  m_Layer: 0
+  m_Name: Sound - Thuds
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1075989353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1075989352}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 654f33ed86dcf4488bab24c09d2092f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.SoundEmitter
+  slot: {fileID: 11400000, guid: 58506e00c1fb4423f98b4632c8cca12a, type: 2}
+  when: 7
+  where: 0
+  offset: {x: 0, y: 0, z: 0}
+  fade: 0.5
+  nearDistance: 0.4
+--- !u!4 &1075989354
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1075989352}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.356, y: 1.6245731, z: 1.4205192}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1184086794
 GameObject:
   m_ObjectHideFlags: 0
@@ -2957,6 +3057,7 @@ MonoBehaviour:
   portalMaterial: {fileID: 2100000, guid: dfafed7cb54774d7098e6de486859d5a, type: 2}
   wellMaterial: {fileID: 2100000, guid: c2abad83d893a4fb395de6069e3875ca, type: 2}
   runeMaterial: {fileID: 2100000, guid: c873c51ed49cb426c82073e1ac58ec55, type: 2}
+  showRune: 0
   droneSlot: {fileID: 11400000, guid: 80adeb8cf55694ee6a2fb8043bd32ad5, type: 2}
   openingRadius: 0.0365
   wellDepth: 0.6
@@ -3016,7 +3117,7 @@ MonoBehaviour:
   zonePresets:
   - 0.03
   - 0.1
-  silenceBeat: 0.35
+  silenceBeat: 0.1
   rearmMargin: 0.05
   cooldown: 2
   unlitMaterial: {fileID: 2100000, guid: dd2245643e43c48e6944df551b787ee6, type: 2}
@@ -3181,3 +3282,5 @@ SceneRoots:
   - {fileID: 326405024}
   - {fileID: 1358760774}
   - {fileID: 166679830}
+  - {fileID: 1075989354}
+  - {fileID: 609896335}

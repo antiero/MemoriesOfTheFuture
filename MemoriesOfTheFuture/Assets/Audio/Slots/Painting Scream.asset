@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Memories.Audio.SoundSlot
   notes: 'Plays from the painting when it swaps to its last stage while you''re looking away, so it comes from behind or beside you. (PaintingStages: untick ''Swap Sound Only On Last'' to hear it on every swap.)'
   clips:
-  - {fileID: 8300000, guid: d6f6b372689384b95a7080740d5aba9c, type: 3}
+  - {fileID: 8300000, guid: ec1653026675f4ee1bfe11e9b6f7ad92, type: 3}
   variation: 0
   dropName: painting_scream
   volumeDb: 0

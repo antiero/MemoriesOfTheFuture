@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Memories.Audio.SoundSlot
   notes: 'Loops from the painting while its transformation video plays (Proximity and Gaze Dwell modes): fades in over 2 s when the video starts, out over 1.5 s on Replay or Rescan.'
   clips:
+  - {fileID: 8300000, guid: d11989bf36a2b4057b0d836bb09b879b, type: 3}
   - {fileID: 8300000, guid: 96934eb1b5160497e8ac516053f02ebb, type: 3}
   variation: 0
   dropName: painting_soundtrack
