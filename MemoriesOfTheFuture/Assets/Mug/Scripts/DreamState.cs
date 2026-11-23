@@ -44,6 +44,8 @@ namespace MemoriesOfTheFuture.Mug
         [SerializeField] CupEchoes echoes;
         [SerializeField] Material domeMaterial;
         [SerializeField] Material emberMaterial;
+        /// <summary>The ember particle material (also used by the ring at the mug's opening).</summary>
+        public Material EmberMaterial => emberMaterial;
         [Tooltip("Two whispers circling the viewer. Their file, level and pitch live in the Sound Slot (Memories > Sound Design).")]
         [SerializeField] SoundSlot whisperSlot;
         [Tooltip("The second whisper plays at this pitch relative to the first, so they don't phase.")]

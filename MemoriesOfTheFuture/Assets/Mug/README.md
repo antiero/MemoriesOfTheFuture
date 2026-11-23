@@ -63,13 +63,17 @@ Debug (off at launch; the **Debug** button shows them with the panel): a faint r
 
 ## Looking inside the mug (rune prototype, step 1)
 
-`MugInterior` (on `CupDetection`): look down into the real mug and its inside opens into a bottomless tunnel, fading into darkness, and a low drone rising from the mug. Look away and it closes.
+`MugInterior` (on `CupDetection`): look down into the real mug and something happens at its opening, with a low drone rising from the mug. Look away and it closes. **Look** on `MugInterior` picks what you see:
+
+- **Particle Ring** (the default): glowing gold motes gather on the rim and swirl slowly upward, widening as they rise. The real inside of the mug stays visible. Rate, rise, swirl and colours are under "Particle ring". It uses `Materials/DreamEmber.mat`; if **Ring Material** is empty it borrows the dream's.
+- **Tunnel**: the original bottomless tunnel, fading into darkness. On the headset it tended to read as a flat black disc over the opening, which is why it's no longer the default.
+- **None**: only the drone.
 
 - **Trigger:** all of these must hold for 0.4 s, after which it opens over 1.5 s and closes in 0.6 s:
   - the head is within 0.9 m
   - the gaze is within 25° of the opening
   - the head is above the opening, within 50° of the mug's own down axis, so it works for a held, tilted mug too
-- **How it's drawn:** children of the proxy mug, so it follows the tracked mug and hides when tracking is lost.
+- **How it's drawn** (Tunnel look; the ring is a particle system on the rim, and the occluder is built for every look): children of the proxy mug, so it follows the tracked mug and hides when tracking is lost.
   - `Occluder`: the proxy mesh, depth only (`Mug/MugOccluder`). Virtual things behind the real walls are hidden and passthrough shows through. The visible proxy is now **hidden by default**; the **Proxy** button shows it.
   - `Portal`: a disc across the opening at the rim (`Mug/MugPortalMask`) that marks the stencil buffer.
   - `Well` (+ `Rune`, off by default: **Show Rune** on `MugInterior` draws the client's rune, `Textures/Rune.png`, glowing at the bottom): a tunnel 0.6 m deep, drawn only through the portal and ignoring depth, so it goes "through" the real floor (`Mug/MugWell`, `Mug/MugRuneGlow`). The shaft turns to run away from the viewer, so you always look straight down it; a straight well would only show its bottom from directly above.
