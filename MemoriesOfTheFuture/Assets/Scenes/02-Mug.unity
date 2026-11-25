@@ -993,6 +993,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70a64845bb41449f58eaee00bb15cae1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MemoriesOfTheFuture.Mug.MugInterior
+  look: 0
   detector: {fileID: 982673525}
   proxy: {fileID: 1305061109}
   proxyMesh: {fileID: 1305061111}
@@ -1000,6 +1001,7 @@ MonoBehaviour:
   portalMaterial: {fileID: 2100000, guid: 22178bdd1b71045c9a0d1ef6d1cc57fb, type: 2}
   wellMaterial: {fileID: 2100000, guid: 69a86e5282f25435abba82b095e2e3b5, type: 2}
   runeMaterial: {fileID: 2100000, guid: 81c23b901ea6a4681a63b92fce00ab55, type: 2}
+  ringMaterial: {fileID: 0}
   showRune: 0
   droneSlot: {fileID: 11400000, guid: 80adeb8cf55694ee6a2fb8043bd32ad5, type: 2}
   openingRadius: 0.0365
@@ -1007,10 +1009,15 @@ MonoBehaviour:
   wellBottomRadius: 0.09
   throatScale: 1.3
   shaftFollow: 8
+  ringRate: 200
+  ringRise: 2
+  ringSwirl: 0.8
+  ringColour: {r: 1, g: 1, b: 1, a: 0.9}
+  ringColour2: {r: 0.89320046, g: 0.96516246, b: 0.9811321, a: 0.7}
   maxDistance: 0.9
   gazeAngle: 25
   intoAngle: 50
-  dwell: 0.4
+  dwell: 0.3
   openTime: 1.5
   closeTime: 0.6
   forceOpen: 0
